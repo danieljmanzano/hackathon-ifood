@@ -10,6 +10,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, Request, Response
 from pydantic import Field
 
+from app.core import logs
 from app.core.config import Settings, get_settings
 from app.core.exceptions import MacroError
 from app.core.search_logs import elapsed_ms, event, trace_search
@@ -58,6 +59,21 @@ from app.services.conversa import montar as montar_conversa, resumo_para_log as 
 router = APIRouter()
 _mock_provider = MockIFood()
 _live_provider: MCPIFood | None = None
+
+
+async def _com_descricoes(provider, recommendations, address):
+    """Troca a descrição vazia da busca pela do getItem antes da nutrição (marca e peso vêm dela)."""
+    ler = getattr(provider, "descricoes", None)
+    if ler is None or not recommendations:
+        return recommendations
+    try:
+        achadas = await ler([r.candidate for r in recommendations], address)
+    except Exception as e:  # a nutrição segue com o que já tem
+        logs.aviso("getItem", f"descrições indisponíveis: {logs.curto(e, 120)}")
+        return recommendations
+    return [r.model_copy(update={"candidate": r.candidate.model_copy(update={"description": achadas[chave]})})
+            if (chave := (r.candidate.merchant_id, r.candidate.item_id)) in achadas else r
+            for r in recommendations]
 
 
 def get_provider(settings: Settings = Depends(get_settings)):
@@ -293,6 +309,7 @@ async def search(
         aviso_vazio, aviso_adaptacao = resultado.aviso_vazio, resultado.aviso_adaptacao
         trace.stage = "nutrition"
         started = time.perf_counter()
+        recommendations = await _com_descricoes(provider, recommendations, session.address)
         recommendations = await enrich_recommendations(
             recommendations, settings, prazo=settings.nutrition_search_budget_seconds
         )

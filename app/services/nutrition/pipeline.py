@@ -14,6 +14,7 @@ from app.core.exceptions import AppError
 from app.schemas.macro import MealCandidate, NutritionResult
 from .entrada import baixar_imagem, foto_ilustrativa, montar_prompt, restaurante_valido
 from .etapas.bases import carregar_taco, consultar_bases
+from .etapas.classificar import classificar_item
 from .etapas.consenso import consenso, fundir
 from .etapas.estimar import EstimativaInvalida, decompor_ingredientes, estimar_a, estimar_b
 from .etapas.ingredientes import casar_ingredientes, somar_ingredientes
@@ -42,11 +43,25 @@ async def _nada():
 
 async def _online(settings: Settings, candidate: MealCandidate, opcoes: list[str] | None,
                   descricao: str, imagem) -> InfoOnline | Leitura | None:
-    """Bases de dados primeiro; a web só roda se elas não acharem.
+    """Onde achar os valores: produto de marca -> tabela oficial na web primeiro; prato -> bases primeiro.
 
     A web devolve uma InfoOnline (tabela oficial de produto industrializado) ou uma Leitura
     (estimativa pesquisada para prato de restaurante, que entra no consenso).
+    Produto de marca tem rótulo publicado: a TACO genérica ("Bolo, pronto, chocolate") não pode tomar o lugar dele.
     """
+    web_possivel = (settings.calorias_busca_web and bool(settings.web_api_key) and restaurante_valido(candidate))
+    web_tentada = False
+
+    if settings.calorias_classificar and settings.llm_api_key and web_possivel:
+        classe = await _seguro(classificar_item(settings, descricao, imagem), "classificar")
+        if classe and classe["tipo_item"] == "industrializado":
+            logs.info("web", "item de marca/embalagem: procurando a tabela oficial ANTES das bases genéricas")
+            web_tentada = True
+            achado = await _seguro(buscar_na_web(settings, candidate, opcoes, imagem, marca=classe["marca"]), "web")
+            if achado is not None:
+                return achado
+            logs.info("web", "tabela oficial não encontrada; caindo para as bases genéricas")
+
     info = None
     if not settings.calorias_buscar_bases:
         logs.info("bases", "desligadas (CALORIAS_BUSCAR_BASES=false)")
@@ -57,6 +72,8 @@ async def _online(settings: Settings, candidate: MealCandidate, opcoes: list[str
 
     if info is not None:
         logs.info("web", "não consultada: as bases já acharam")
+    elif web_tentada:
+        pass  # a web já foi tentada acima (produto de marca)
     elif not settings.calorias_busca_web:
         logs.info("web", "desligada (CALORIAS_BUSCA_WEB=false)")
     elif not settings.web_api_key:

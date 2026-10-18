@@ -171,6 +171,7 @@ class MealIntent(Model):
     search_queries: list[str] = Field(default_factory=list, max_length=6)
     cuisine: str | None = None  # ex.: "japonesa"; usada para achar restaurantes quando os itens não aparecem
     avoid_repeats: bool = False  # "diferente", "outro", "variado": não repetir pratos já mostrados e variar os tipos
+    pesquisar_na_web: str = ""  # termo que o modelo não conhece bem: a busca pesquisa na web antes de consultar o iFood
     budget_cents: Cents | None = None
     labels: list[str] = Field(default_factory=list)
     interpretation_source: Literal["rules", "llm"] = "rules"

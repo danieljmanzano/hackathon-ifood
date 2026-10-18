@@ -8,8 +8,11 @@ from . import item_pedido
 from .comum import pedir_json
 
 INSTRUCOES = """Você verifica se uma informação nutricional encontrada na web se refere ao MESMO produto pedido.
-Responda corresponde=true somente se for o mesmo prato, do mesmo restaurante ou rede, com tamanho e adicionais
-compatíveis com o pedido. Produtos parecidos, de outro restaurante ou de outro tamanho: corresponde=false."""
+O pedido é um produto industrializado, de marca e embalado, vendido por um restaurante ou mercado do iFood. O lugar onde
+ele é vendido NÃO importa: a tabela pode ser do fabricante ou de outro mercado que vende o mesmo produto.
+Responda corresponde=true quando marca, linha, sabor/variante e tamanho da embalagem forem os mesmos (diferenças só de
+escrita, acento ou ordem das palavras não contam). Responda corresponde=false se mudar a marca, o sabor, o tamanho da
+embalagem ou o número de unidades, ou se for um produto apenas parecido."""
 
 SCHEMA = {
     "type": "object",
