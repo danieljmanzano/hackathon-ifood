@@ -2,9 +2,9 @@
 
 Uso: python -m app.run [--llm openrouter|openai] [--log off|resumo|detalhe] [--host 127.0.0.1] [--port 8000] [--reload] [--check]
 
---llm openrouter: LLM de texto pelo OpenRouter e busca na web pelo Gemini (Google Search).
---llm openai (padrão da main): LLM de texto e busca na web (web_search) pela OpenAI; exige OPENAI_API_KEY no .env.
-Em ambos os casos a web só é consultada se as bases de dados não acharem, e o Gemini continua lendo as imagens.
+--llm openrouter: LLM de texto pelo OpenRouter, sem busca na web e sem leitura das imagens.
+--llm openai (padrão): texto, imagens e busca na web (web_search) pela OpenAI; exige OPENAI_API_KEY no .env.
+A web só é consultada se as bases de dados não acharem.
 --check: só valida a configuração e mostra o resumo, sem subir o servidor.
 """
 import argparse
@@ -16,11 +16,12 @@ from app.core.config import get_settings
 
 def resumo(settings) -> str:
     texto = settings.nutrition_model if settings.nutrition_provider == "openai" else settings.openrouter_model
-    web = "OpenAI web_search" if settings.nutrition_provider == "openai" else "Gemini + Google Search"
+    openai = settings.nutrition_provider == "openai"
+    web = "OpenAI web_search" if openai else "desligada (só com openai)"
     return (f"Provedor de texto: {settings.nutrition_provider} ({texto}) · chave: {'sim' if settings.llm_api_key else 'NÃO'}\n"
             f"Busca na web: {web} · só se as bases não acharem · chave: {'sim' if settings.web_api_key else 'NÃO'}\n"
             f"Logs do pipeline: {settings.calorias_log}\n"
-            f"Imagens: Gemini ({settings.gemini_model}) · chave: {'sim' if settings.gemini_api_key else 'NÃO'}")
+            f"Imagens: {f'OpenAI ({settings.nutrition_model})' if openai else 'desligadas (só com openai)'}")
 
 
 def main(argv: list[str] | None = None) -> int:

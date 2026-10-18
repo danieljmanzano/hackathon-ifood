@@ -95,7 +95,7 @@ def test_perguntar_json_usa_o_provedor_escolhido(tmp_path):
         oa.assert_awaited_once(); orr.assert_not_called()
     with patch.object(llm_texto, "responder", AsyncMock()) as oa, \
          patch.object(llm_texto, "chat_completion", AsyncMock(return_value='{"ok": true}')) as orr:
-        asyncio.run(llm.perguntar_json(settings(tmp_path), "sys", "p", schema))
+        asyncio.run(llm.perguntar_json(settings(tmp_path, nutrition_provider="openrouter"), "sys", "p", schema))
         orr.assert_awaited_once(); oa.assert_not_called()
 
 
@@ -103,11 +103,9 @@ def test_web_usa_openai_e_aplica_a_mesma_checagem_de_fonte(tmp_path):
     from tests.test_nutricao_web import resposta_json
     resposta = resposta_json(fonte_url="https://www.site.com.br/tabela")
     with patch.object(web, "responder", AsyncMock(return_value=(json.dumps(resposta), ["https://site.com.br/outra"]))), \
-         patch.object(web, "search_web", AsyncMock()) as gemini, \
          patch.object(web, "perguntar_json", AsyncMock(return_value={"corresponde": True, "motivo": "m"})):
         info = asyncio.run(buscar_na_web(_s(tmp_path), candidato(), None))
         assert info.method == "web" and info.macros.kcal == 1800
-        gemini.assert_not_called()
     with patch.object(web, "responder", AsyncMock(return_value=(json.dumps(resposta), ["https://fora.com/x"]))), \
          patch.object(web, "perguntar_json", AsyncMock(return_value={"corresponde": True, "motivo": "m"})):
         assert asyncio.run(buscar_na_web(_s(tmp_path), candidato(), None)) is None  # fonte não consultada
@@ -134,9 +132,9 @@ def test_cliente_openai_monta_o_corpo_com_imagem_e_web(tmp_path):
 
 def test_pipeline_no_modo_openai_exige_chave_openai_para_texto_e_web(tmp_path):
     s = settings(tmp_path, nutrition_provider="openai", openai_api_key=SecretStr(""), openrouter_api_key="k",
-                 gemini_api_key="k", llm_fallback=False)
-    r, m = rodar(s, b=leitura("gemini", 800), imagem=(b"x", "image/jpeg"), casados=None)
-    assert r.state == "ready"  # Gemini estima sozinho
+                 llm_fallback=False)
+    r, m = rodar(s, b=leitura("imagem", 800), imagem=(b"x", "image/jpeg"), casados=None)
+    assert r.state == "ready"  # só a estimativa com foto (mock) responde
     m["estimar_a"].assert_not_called(); m["consultar_bases"].assert_not_called(); m["buscar_na_web"].assert_not_called()
 
     s = _s(tmp_path)
@@ -153,9 +151,16 @@ def test_cli_openai_com_chave_valida_e_resume(monkeypatch, capsys):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-teste")
     assert run.main(["--llm", "openai", "--check"]) == 0
     saida = capsys.readouterr().out
-    assert "openai" in saida and "web_search" in saida and "Gemini" in saida
+    assert "openai" in saida and "web_search" in saida and "Imagens: OpenAI" in saida and "Gemini" not in saida
 
 
 def test_cli_padrao_e_openrouter(capsys):
     assert run.main(["--check"]) == 0
     assert "openrouter" in capsys.readouterr().out
+
+
+def test_responder_limita_o_raciocinio_e_usa_low_com_web(tmp_path):
+    _, chamadas = _responder(tmp_path, [httpx.Response(200, json={"output_text": "{}"})])
+    assert json.loads(chamadas[0].content)["reasoning"] == {"effort": "minimal"}
+    _, chamadas = _responder(tmp_path, [httpx.Response(200, json={"output_text": "{}"})], web=True)
+    assert json.loads(chamadas[0].content)["reasoning"] == {"effort": "low"}  # minimal não aceita web_search

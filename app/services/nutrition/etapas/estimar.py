@@ -1,4 +1,4 @@
-"""Estimativas independentes: A (OpenRouter, só texto) e B (Gemini, texto + imagem)."""
+"""Estimativas independentes: A (OpenAI/OpenRouter, só texto) e B (OpenAI, texto + imagem)."""
 import asyncio
 import logging
 import math
@@ -6,11 +6,9 @@ import math
 from jsonschema import validate
 
 from app.core import logs
-from app.core.nutrition_budget import current_budget
-from app.skills import agente_nutricao
 from app.core.config import Settings
 from app.schemas.macro import MealCandidate
-from app.services.gemini import analyze_image
+from app.services.openai_client import responder
 from ..entrada import extrair_json, montar_prompt
 from ..modelos import Ingrediente, Leitura, Macros
 from app.skills import nutricao_estimativa, nutricao_ingredientes
@@ -34,10 +32,10 @@ def _numero(valor) -> float | None:
     return float(valor)
 
 
-def leitura_de_json(dados: dict, fonte: str) -> Leitura | None:
+def leitura_de_json(dados: dict, fonte: str, etapa: str | None = None) -> Leitura | None:
     """Converte a resposta validada em Leitura. None se o modelo disse que não há base para estimar."""
     if not dados["suficiente"]:
-        etapa = "estimar B" if fonte == "gemini" else "estimar A"
+        etapa = etapa or "estimar A"
         logs.info(etapa, f"o modelo ({fonte}) respondeu que NÃO há informação suficiente: "
                          f"{logs.curto(dados['justificativa'], 200)}")
         return None
@@ -87,16 +85,14 @@ async def estimar_a(settings: Settings, candidate: MealCandidate, opcoes: list[s
 
 async def estimar_b(settings: Settings, candidate: MealCandidate, opcoes: list[str] | None, peso_g: float | None,
                     imagem: tuple[bytes, str] | None) -> Leitura | None:
-    """Gemini com texto + imagem (a única fonte que enxerga o prato). Sem imagem ou chave, não roda."""
-    if imagem is None or not settings.gemini_api_key:
+    """OpenAI com texto + imagem (a única fonte que enxerga o prato). Sem imagem ou chave, não roda."""
+    if imagem is None or not settings.web_api_key:
         return None
     prompt = nutricao_estimativa.pedido_b(montar_prompt(candidate, opcoes, peso_g))
-    if current_budget.get():
-        prompt += "\n\n" + agente_nutricao.CONTEUDO
-    texto = await analyze_image(imagem[0], prompt, mime_type=imagem[1], json_mode=True, settings=settings)
+    texto, _ = await responder(prompt, schema=nutricao_estimativa.SCHEMA, imagem=imagem, settings=settings)
     dados = extrair_json(texto)
     validate(dados, nutricao_estimativa.SCHEMA)
-    return leitura_de_json(dados, "gemini")
+    return leitura_de_json(dados, "openai-imagem", etapa="estimar B")
 
 
 async def decompor_ingredientes(settings: Settings, candidate: MealCandidate, opcoes: list[str] | None,

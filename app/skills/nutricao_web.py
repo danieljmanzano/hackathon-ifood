@@ -1,7 +1,7 @@
 """Skill: pesquisar na web a informação nutricional do item (olhando a foto).
 
 Quem usa: etapas/web.py -> buscar_na_web. Só roda quando as bases (TACO) não acharam o item.
-Modelo:   OpenAI com web_search (NUTRITION_PROVIDER=openai) ou Gemini com Google Search (openrouter).
+Modelo:   OpenAI com web_search (só com NUTRITION_PROVIDER=openai).
 Dois resultados, conforme o "tipo_item" que o próprio modelo informa:
   industrializado -> tabela nutricional OFICIAL do produto exato (depois confirmada por `nutricao_juiz_web`);
   prato           -> uma ESTIMATIVA pesquisada a partir de pratos equivalentes, que entra no consenso.

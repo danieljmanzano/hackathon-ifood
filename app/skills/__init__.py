@@ -12,8 +12,9 @@ Pipeline de calorias (ordem em que as skills entram):
   nutricao_bases         juiz: o alimento da TACO é este prato?
   nutricao_web           pesquisa na web (tabela oficial ou estimativa pesquisada)
   nutricao_juiz_web      juiz: a tabela achada é do mesmo produto?
-  nutricao_estimativa    estimar kcal e macros (A: texto · B: Gemini + foto)
+  nutricao_estimativa    estimar kcal e macros (A: texto · B: texto + foto)
   nutricao_ingredientes  decompor em ingredientes e casar com a TACO
+  nutricao_complementos  separar opções que definem o item das que somam calorias (coberturas, adicionais)
 Busca:
   busca_intencao         entender o pedido (com a hora local) e planejar as consultas ao iFood
   busca_identificar      não sabe o que é o produto/nome pedido: pesquisar na web e gerar consultas
@@ -23,7 +24,7 @@ Agente:
   agente_pedidos         papel do agente · agente_ifood_mcp  como usar o MCP do iFood
 """
 from . import (preferencias, agente_nutricao, agente_ifood_mcp, agente_pedidos, busca_identificar, busca_intencao, busca_mcp, busca_replanejar, item_pedido, nutricao_bases, nutricao_classificar, nutricao_estimativa,
-               nutricao_ingredientes, nutricao_juiz_web, nutricao_web)
+               nutricao_ingredientes, nutricao_juiz_web, nutricao_web, nutricao_complementos)
 
 SKILLS = {
     "preferencias": preferencias,
@@ -35,6 +36,7 @@ SKILLS = {
     "nutricao_juiz_web": nutricao_juiz_web,
     "nutricao_estimativa": nutricao_estimativa,
     "nutricao_ingredientes": nutricao_ingredientes,
+    "nutricao_complementos": nutricao_complementos,
     "busca_intencao": busca_intencao,
     "busca_identificar": busca_identificar,
     "busca_replanejar": busca_replanejar,

@@ -63,3 +63,16 @@ def test_json_corrompido_vira_base_vazia_e_guarda_backup(tmp_path):
     assert (tmp_path / "p.bak").exists()
     repo.put("k", _resultado(), candidato())
     assert repo.get("k", "v1").calories == 600
+
+
+def test_resultado_da_v3_vale_para_item_sem_opcoes_mas_nao_com_opcoes(tmp_path):
+    from app.services.nutrition.pipeline import VERSOES_SEM_OPCOES
+    from app.services.nutrition.produtos import RepositorioProdutos
+    from tests.nutricao_comum import candidato
+    from app.schemas.macro import NutritionResult
+    repo = RepositorioProdutos(tmp_path / "p.json")
+    antigo = NutritionResult(state="ready", calories=500, minimum=400, maximum=600, portion_basis="1 unidade",
+                            method="estimated", pipeline_version="calorias-v3")
+    repo.put("k", antigo, candidato())
+    assert repo.get("k", VERSOES_SEM_OPCOES).calories == 500
+    assert repo.get("k", "calorias-v4") is None
