@@ -1,12 +1,19 @@
 from __future__ import annotations
 
+import time
+from collections import Counter
+from datetime import date, timedelta
+from typing import Annotated
+
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Request, Response
+from pydantic import Field
 
 from app.core.config import Settings, get_settings
 from app.core.exceptions import MacroError
+from app.core.search_logs import elapsed_ms, event, trace_search
 from app.domain import rank, select
 from app.schemas.macro import (
     Address,
@@ -28,6 +35,9 @@ from app.schemas.macro import (
     SelectionInput,
     Session,
     UserProfile,
+    ConsumptionRecord,
+    DailyFoodDiary,
+    FoodDiaryEntry,
 )
 if TYPE_CHECKING:
     from app.services.ifood_live import MCPIFood
@@ -38,6 +48,9 @@ from app.schemas.macro import now
 from app.services.review_interpretation import llm_available, schedule_interpretation, sync_taste_review
 from app.services.review_recommendations import review_context
 from app.services.llm_meal_intent import interpret_intent
+from app.services.nutrition_preferences import apply_profile_preferences, update_explanation
+from app.services.nutrition.service import cached_candidates
+from app.services.diet_context import apply_diet_context, build_diet_context, local_date
 
 router = APIRouter()
 _mock_provider = MockIFood()
@@ -218,51 +231,148 @@ def update_profile(
 async def search(
     payload: MealRequest,
     request: Request,
+    response: Response,
     session: Session = Depends(current_session),
     provider: MockIFood = Depends(get_provider),
     settings: Settings = Depends(get_settings),
 ):
-    editable(session)
-    if session.address is None:
-        raise MacroError("Selecione o endereço antes de buscar.", 422)
-    intent = await interpret_intent(payload, settings)
-    query, budget = intent.provider_query, intent.budget_cents
-    if budget is None:
-        budget = session.profile.default_budget_cents
-    candidates = await provider.search(query, session.address, budget)
-    context = review_context(request.app.state.db, session.profile.id, session.mode == "mock", session.profile)
-    recommendations = rank(candidates, payload, session.profile, budget, context, session.recent_recommendations, intent=intent)
-    recommendations = await enrich_recommendations(
-        recommendations, settings, prazo=settings.nutrition_search_budget_seconds
-    )
-
-    def update(s: Session):
-        s.budget_cents = budget
-        s.request_intent = intent
-        s.recommendations = recommendations
-        s.recent_recommendations = (
-            s.recent_recommendations
-            + [(r.candidate.merchant_id, r.candidate.item_id) for r in recommendations]
-        )[-18:]
-        s.selected = None
-        s.summary = None
-        message = (
-            ("Busquei opções considerando: " + ", ".join(intent.labels) + ". Confira os detalhes de cada sugestão."
-             if intent.labels else "Encontrei estas opções. Escolha um prato para ver os complementos.")
-            if recommendations
-            else "Não encontrei opções com esses filtros. Ajuste o orçamento ou suas preferências e busque novamente."
+    with trace_search(session.mode) as trace:
+        response.headers["X-Search-Id"] = trace.id
+        editable(session)
+        if session.address is None:
+            raise MacroError("Selecione o endereço antes de buscar.", 422)
+        trace.stage = "diet_context"
+        diet_context, meal_text = build_diet_context(
+            session.profile, request.app.state.db.food_entries(session.profile.id),
+            request.app.state.db.consumption(session.profile.id), settings.timezone, message=payload.text,
         )
-        if recommendations and intent.context_summary:
-            message = intent.context_summary + " " + message
-        s.messages = (
-            s.messages
-            + [
-                Message(role="user", text=payload.text),
-                Message(role="assistant", text=message),
-            ]
-        )[-40:]
+        has_diet_context = bool(diet_context.goal or diet_context.details or diet_context.meal_count
+                                or any(v is not None for v in diet_context.targets.model_dump().values()))
+        event("diet.ready", has_goal=diet_context.goal is not None, entry_count=diet_context.meal_count,
+              known_counts=diet_context.known_counts)
+        trace.stage = "intent"
+        started = time.perf_counter()
+        interpreted = await interpret_intent(payload.model_copy(update={"text": meal_text}), settings,
+                                            diet_context=diet_context if has_diet_context else None)
+        intent = apply_profile_preferences(apply_diet_context(interpreted, diet_context, meal_text), session.profile)
+        event("intent.ready", source=intent.interpretation_source, goals=intent.goals,
+              fallback_reason=intent.fallback_reason, duration_ms=elapsed_ms(started))
+        query, budget = intent.provider_query, intent.budget_cents
+        if budget is None:
+            budget = session.profile.default_budget_cents
+        trace.stage = "catalog"
+        started = time.perf_counter()
+        candidates = await provider.search(query, session.address, budget)
+        event("catalog.completed", provider=type(provider).__name__, candidate_count=len(candidates),
+              has_budget=budget is not None, query_terms=len(query.split()), duration_ms=elapsed_ms(started))
+        trace.stage = "reviews"
+        started = time.perf_counter()
+        context = review_context(request.app.state.db, session.profile.id, session.mode == "mock", session.profile)
+        event("reviews.ready", history_count=len(context.history), community_count=len(context.community),
+              processed_count=len(context.processed), duration_ms=elapsed_ms(started))
+        trace.stage = "ranking"
+        nutritional = intent.nutrition_preferences.active
+        nutrition_by_item = cached_candidates(candidates, settings) if nutritional else {}
+        recommendations = rank(candidates, payload, session.profile, budget, context,
+                               session.recent_recommendations, intent=intent,
+                               nutrition_by_item=nutrition_by_item, limit=12 if nutritional else 3)
+        trace.stage = "nutrition"
+        started = time.perf_counter()
+        recommendations = await enrich_recommendations(
+            recommendations, settings, prazo=settings.nutrition_search_budget_seconds
+        )
 
-    return mutate_session(request, session, update)
+        if nutritional:
+            # Estima um conjunto limitado, compara com todo o catálogo já em cache
+            # e só então escolhe os três pratos. Não envia o catálogo inteiro ao LLM.
+            nutrition_by_item.update({(r.candidate.merchant_id, r.candidate.item_id): r.nutrition
+                                      for r in recommendations})
+            event("nutrition.ranking", pool_count=len(recommendations),
+                  known_count=sum(n.state == "ready" for n in nutrition_by_item.values()),
+                  goal_count=len(intent.nutrition_preferences.goals))
+            trace.stage = "ranking"
+            recommendations = rank(candidates, payload, session.profile, budget, context,
+                                   session.recent_recommendations, intent=intent,
+                                   nutrition_by_item=nutrition_by_item)
+            trace.stage = "nutrition"
+
+        event("nutrition.prepared", states=dict(Counter(r.nutrition.state for r in recommendations)),
+              duration_ms=elapsed_ms(started))
+
+        def update(s: Session):
+            s.budget_cents = budget
+            s.request_intent = intent
+            s.recommendations = recommendations
+            s.recent_recommendations = (
+                s.recent_recommendations
+                + [(r.candidate.merchant_id, r.candidate.item_id) for r in recommendations]
+            )[-18:]
+            s.selected = None
+            s.summary = None
+            message = (
+                ("Busquei opções considerando: " + ", ".join(intent.labels) + ". Confira os detalhes de cada sugestão."
+                 if intent.labels else "Encontrei estas opções. Escolha um prato para ver os complementos.")
+                if recommendations
+                else "Não encontrei opções com esses filtros. Ajuste o orçamento ou suas preferências e busque novamente."
+            )
+            if recommendations and intent.context_summary:
+                message = intent.context_summary + " " + message
+            s.messages = (
+                s.messages
+                + [
+                    Message(role="user", text=payload.text),
+                    Message(role="assistant", text=message),
+                ]
+            )[-40:]
+
+        trace.stage = "session"
+        result = mutate_session(request, session, update)
+        trace.result_count = len(result.recommendations)
+        return result
+
+
+@router.get("/consumption", response_model=list[ConsumptionRecord])
+def consumption(request: Request, session: Session = Depends(current_session)):
+    return request.app.state.db.consumption(session.profile.id)
+
+
+@router.put("/consumption", response_model=list[ConsumptionRecord])
+def save_consumption(payload: Annotated[list[ConsumptionRecord], Field(max_length=500)],
+                     request: Request, session: Session = Depends(current_session)):
+    keys = {(e.order_id, e.item_id) for e in payload}
+    if len(keys) != len(payload):
+        raise MacroError("Há registros duplicados para o mesmo prato e pedido.", 422)
+    if any(e.consumed_at > now() + timedelta(minutes=5) for e in payload):
+        raise MacroError("O consumo precisa ter ocorrido antes de agora.", 422)
+    request.app.state.db.replace_consumption(session.profile.id, payload)
+    return payload
+
+
+@router.get("/daily-context", response_model=DailyFoodDiary)
+def daily_context(request: Request, on_date: date | None = None,
+                  session: Session = Depends(current_session), settings: Settings = Depends(get_settings)):
+    entries = request.app.state.db.food_entries(session.profile.id)
+    context, _ = build_diet_context(session.profile, entries,
+                                    request.app.state.db.consumption(session.profile.id),
+                                    settings.timezone, on_date=on_date)
+    return DailyFoodDiary(entries=sorted([e for e in entries if local_date(e.consumed_at, settings.timezone) == context.date],
+                                        key=lambda e: e.consumed_at), context=context)
+
+
+@router.post("/food-diary", response_model=FoodDiaryEntry)
+def add_food(payload: FoodDiaryEntry, request: Request, session: Session = Depends(current_session)):
+    if payload.consumed_at > now() + timedelta(minutes=5):
+        raise MacroError("Registre apenas alimentos já consumidos.", 422)
+    entries = request.app.state.db.food_entries(session.profile.id)
+    if len(entries) >= 500 and not any(e.id == payload.id for e in entries):
+        raise MacroError("O diário chegou ao limite de 500 registros. Remova registros antigos para continuar.", 422)
+    request.app.state.db.save_food_entry(session.profile.id, payload)
+    return payload
+
+
+@router.delete("/food-diary/{entry_id}", status_code=204)
+def remove_food(entry_id: str, request: Request, session: Session = Depends(current_session)):
+    request.app.state.db.delete_food_entry(session.profile.id, entry_id)
 
 
 @router.get("/reviews/me", response_model=list[Review])
@@ -347,6 +457,9 @@ def recommendations_nutrition(
     if not any(r.nutrition.state == "pending" for r in session.recommendations):
         return session
     updated = refresh_recommendations(session.recommendations, settings)
+    if session.request_intent:
+        updated = [update_explanation(before, after, session.request_intent.nutrition_preferences)
+                   for before, after in zip(session.recommendations, updated)]
     if [r.nutrition for r in updated] == [r.nutrition for r in session.recommendations]:
         return session
     ids = [(r.candidate.merchant_id, r.candidate.item_id) for r in session.recommendations]

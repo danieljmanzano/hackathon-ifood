@@ -2065,7 +2065,8 @@ select {
   line-height: 1.6;
 }
 .form-field > input,
-.form-field > select {
+.form-field > select,
+.form-field > textarea {
   width: 100%;
   background: #fcfdf9;
   border: 1px solid #dfe6d4;
@@ -2074,6 +2075,7 @@ select {
   font-size: 12px;
   min-width: 0;
 }
+.form-field > textarea { resize: vertical; font: inherit; min-height: 88px; }
 .form-field input::placeholder {
   color: #b1b8a2;
 }

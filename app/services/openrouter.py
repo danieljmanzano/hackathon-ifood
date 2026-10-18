@@ -24,6 +24,7 @@ async def chat_completion(
     temperature: float = 0.2,
     max_tokens: int | None = None,
     json_mode: bool = False,
+    log_content: bool = True,
     settings: Settings | None = None,
 ) -> str:
     """Chama o OpenRouter (API compatível com OpenAI), com fallback entre modelos. Retorna o texto."""
@@ -59,14 +60,16 @@ async def chat_completion(
             if response.status_code == 200:
                 try:
                     texto = response.json()["choices"][0]["message"]["content"] or ""
-                    logs.detalhe("openrouter", f"resposta: {logs.curto(texto, 300)}")
+                    if log_content:
+                        logs.detalhe("openrouter", f"resposta: {logs.curto(texto, 300)}")
                     return texto
                 except (KeyError, IndexError, ValueError):
                     errors.append(f"{current}: resposta inesperada")
                     logs.aviso("openrouter", f"{current}: resposta sem conteúdo → próximo modelo")
                     continue
 
-            errors.append(f"{current}: {response.status_code} {response.text[:150]}")
+            detail = response.text[:150] if log_content else "conteúdo omitido"
+            errors.append(f"{current}: {response.status_code} {detail}")
             invalid_model = False
             if response.status_code == 400:
                 try:
@@ -77,7 +80,7 @@ async def chat_completion(
                 except (ValueError, AttributeError):
                     pass
             retry = response.status_code in RETRYABLE_STATUS or invalid_model
-            logs.aviso("openrouter", f"{current}: {response.status_code} {logs.curto(response.text, 110)}"
+            logs.aviso("openrouter", f"{current}: {response.status_code} {logs.curto(detail, 110)}"
                                      f"{' → próximo modelo' if retry else ''}")
             if not retry:
                 break

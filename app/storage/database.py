@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from pathlib import Path
 import sqlite3
 
-from app.schemas.macro import Session
+from app.schemas.macro import ConsumptionRecord, FoodDiaryEntry, Session
 from app.schemas.reviews import ProcessedReview, Review, UserTastes
 
 
@@ -32,6 +32,39 @@ class Database:
                 "user_id TEXT NOT NULL, simulated INTEGER NOT NULL, payload TEXT NOT NULL, "
                 "PRIMARY KEY(user_id, simulated))"
             )
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS food_diary (user_id TEXT NOT NULL, id TEXT NOT NULL, "
+                "payload TEXT NOT NULL, PRIMARY KEY(user_id, id))"
+            )
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS consumption (user_id TEXT NOT NULL, order_id TEXT NOT NULL, "
+                "item_id TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(user_id, order_id, item_id))"
+            )
+
+    def food_entries(self, user_id: str) -> list[FoodDiaryEntry]:
+        with self.transaction() as connection:
+            rows = connection.execute("SELECT payload FROM food_diary WHERE user_id = ?", (user_id,)).fetchall()
+        return [FoodDiaryEntry.model_validate_json(row[0]) for row in rows]
+
+    def save_food_entry(self, user_id: str, entry: FoodDiaryEntry):
+        with self.transaction() as connection:
+            connection.execute("INSERT INTO food_diary VALUES (?, ?, ?) ON CONFLICT(user_id, id) "
+                               "DO UPDATE SET payload=excluded.payload", (user_id, entry.id, entry.model_dump_json()))
+
+    def delete_food_entry(self, user_id: str, entry_id: str):
+        with self.transaction() as connection:
+            connection.execute("DELETE FROM food_diary WHERE user_id = ? AND id = ?", (user_id, entry_id))
+
+    def consumption(self, user_id: str) -> list[ConsumptionRecord]:
+        with self.transaction() as connection:
+            rows = connection.execute("SELECT payload FROM consumption WHERE user_id = ?", (user_id,)).fetchall()
+        return [ConsumptionRecord.model_validate_json(row[0]) for row in rows]
+
+    def replace_consumption(self, user_id: str, entries: list[ConsumptionRecord]):
+        with self.transaction() as connection:
+            connection.execute("DELETE FROM consumption WHERE user_id = ?", (user_id,))
+            connection.executemany("INSERT INTO consumption VALUES (?, ?, ?, ?)",
+                                   [(user_id, e.order_id, e.item_id, e.model_dump_json()) for e in entries])
 
     def processed_reviews(self, simulated: bool) -> dict[str, ProcessedReview]:
         with self.transaction() as connection:

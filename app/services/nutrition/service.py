@@ -63,12 +63,21 @@ def pipeline_disponivel(settings: Settings) -> bool:
     return settings.nutrition_enabled
 
 
+def cached_candidates(candidates: list[MealCandidate], settings: Settings) -> dict[tuple[str, str], NutritionResult]:
+    """Dados já disponíveis para o ranking; nunca inicia cálculos de todo o catálogo."""
+    saved = repositorio(str(settings.calorias_base_path)).get_many(
+        [chave_produto(c) for c in candidates], PIPELINE_VERSION
+    )
+    result = {}
+    for candidate in candidates:
+        nutrition = _cache.get(_chave(candidate, None)) or saved.get(chave_produto(candidate))
+        if nutrition is not None and nutrition.state == "ready":
+            result[(candidate.merchant_id, candidate.item_id)] = nutrition
+    return result
+
+
 async def estimate_nutrition(item: MealCandidate | SelectedItem, settings: Settings) -> NutritionResult:
     """Calorias de uma unidade do item (a quantidade comprada é aplicada por quem chama)."""
-    if not pipeline_disponivel(settings):
-        return _resultado("unavailable",
-                          evidence="Pipeline nutricional não configurada (sem chave do provedor de texto nem do Gemini).")
-
     candidate, opcoes = _partes(item)
     logs.iniciar_item(candidate.name)
     chave = _chave(candidate, opcoes)
@@ -83,6 +92,9 @@ async def estimate_nutrition(item: MealCandidate | SelectedItem, settings: Setti
         logs.info("base local", f"HIT ({chave_produto(item)}) → {salvo.calories:.0f} kcal, método {salvo.method}; "
                                 "nada recalculado")
         return salvo
+    if not pipeline_disponivel(settings):
+        return _resultado("unavailable",
+                          evidence="Pipeline nutricional não configurada (sem chave do provedor de texto nem do Gemini).")
     logs.info("base local", f"MISS ({chave_produto(item)}) → calculando")
 
     try:

@@ -48,7 +48,10 @@ import {
   Stepper,
 } from "./components";
 import { effectiveReview, OrderReviewCard, ReviewEditor, ReviewHistory, TasteSummary } from "./Reviews";
-import { loadConsumption, saveConsumption } from "./storage";
+import { consumptionMigrated, loadConsumption, markConsumptionMigrated, saveConsumption } from "./storage";
+import { DietDiary } from "./DietDiary";
+import type { NutritionPreferences } from "./types";
+import type { DailyFoodDiary, DietGoal } from "./types";
 import type {
   Address,
   Candidate,
@@ -142,6 +145,7 @@ export default function App() {
   const [orderRating, setOrderRating] = useState<number | null>(null);
   const [reviewText, setReviewText] = useState("");
   const [entries, setEntries] = useState<Consumption[]>([]);
+  const [foodDiary, setFoodDiary] = useState<DailyFoodDiary | null>(null);
   const [fraction, setFraction] = useState("1");
   const [feedback, setFeedback] = useState("");
   const [recordDate, setRecordDate] = useState("");
@@ -177,7 +181,23 @@ export default function App() {
         if (!active) return;
         setSession(current);
         setHealth(status);
-        setEntries(loadConsumption(current.id));
+        const local = loadConsumption(current.id);
+        setEntries(local);
+        try {
+          let saved = await api.consumption();
+          if (!consumptionMigrated(current.id)) {
+            const merged = new Map([...local, ...saved].map(entry => [`${entry.order_id}:${entry.item_id}`, entry]));
+            if (merged.size > saved.length) saved = await api.saveConsumption([...merged.values()]);
+            markConsumptionMigrated(current.id);
+          }
+          if (!active) return;
+          setEntries(saved);
+          try { saveConsumption(current.id, saved); } catch { /* Cache opcional. */ }
+          const diary = await api.dailyContext();
+          if (active) setFoodDiary(diary);
+        } catch {
+          if (active) setError("Não foi possível sincronizar o consumo com o servidor. Os registros locais foram preservados.");
+        }
         try {
           const list = await api.addresses();
           if (!active) return;
@@ -208,6 +228,19 @@ export default function App() {
       active = false;
     };
   }, []);
+  useEffect(() => {
+    if (!session?.id) return;
+    let active = true;
+    async function refreshDay() {
+      try {
+        const diary = await api.dailyContext();
+        if (active) setFoodDiary(diary);
+      } catch { /* A próxima atualização tenta novamente; o formulário permanece disponível. */ }
+    }
+    void refreshDay();
+    const timer = window.setInterval(() => void refreshDay(), 60_000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [session?.id, session?.profile, view]);
   useEffect(() => {
     if (!session?.id) return;
     let active = true;
@@ -527,20 +560,18 @@ export default function App() {
     setRecordDate(existing?.consumed_at || new Date().toISOString());
     open("consumption");
   }
-  function persistConsumption(next: Consumption[]) {
+  async function persistConsumption(next: Consumption[]) {
     if (!session) return false;
-    try {
-      saveConsumption(session.id, next);
-      setEntries(next);
+    return (await perform(async () => {
+      const saved = await api.saveConsumption(next);
+      try { saveConsumption(session.id, saved); } catch { /* O servidor já persistiu o registro. */ }
+      setEntries(saved);
+      const diary = await api.dailyContext().catch(() => null);
+      if (diary) setFoodDiary(diary);
       return true;
-    } catch {
-      setError(
-        "O navegador não permitiu salvar o registro. Libere o armazenamento local e tente novamente.",
-      );
-      return false;
-    }
+    })) === true;
   }
-  function recordConsumption() {
+  async function recordConsumption() {
     if (
       !session?.order ||
       !session.selected ||
@@ -576,20 +607,22 @@ export default function App() {
       ),
       entry,
     ];
-    if (persistConsumption(next)) {
+    if (await persistConsumption(next)) {
       setDialog(null);
       navigate("day");
-      setToast("Consumo confirmado e salvo neste navegador.");
+      setToast("Consumo salvo no servidor. A próxima busca vai considerar essa refeição.");
     }
   }
   const today = entries.filter(
     (e) => dayKey(e.consumed_at) === dayKey(new Date()),
   );
   const knownEntries = today.filter((e) => e.nutrition?.state === "ready");
-  const knownCalories = knownEntries.reduce(
+  const currentDayContext = foodDiary?.context.date === dayKey(new Date()) ? foodDiary.context : null;
+  const knownCalories = currentDayContext?.known_intake.calories ?? knownEntries.reduce(
     (total, e) => total + e.nutrition!.calories! * e.fraction * e.quantity,
     0,
   );
+  const hasKnownCalories = currentDayContext ? currentDayContext.known_intake.calories !== null : knownEntries.length > 0;
   const goal = session?.profile.daily_calorie_goal;
   const consumed =
     session?.order &&
@@ -902,7 +935,7 @@ export default function App() {
                         maxLength={2000}
                         value={text}
                         onChange={(e) => setText(e.target.value)}
-                        placeholder="Acabei de treinar. Quero um frango grelhado até R$ 40…"
+                        placeholder="Quero frango até R$ 40, até 600 kcal e pelo menos 30 g de proteína…"
                         disabled={disabled || !!session.order}
                         onKeyDown={(e) => {
                           if (
@@ -1273,9 +1306,26 @@ export default function App() {
                       </p>
                     </div>
                   </div>
+                  <DietDiary diary={foodDiary} busy={busy}
+                    onAdd={async (description, nutrition) => {
+                      const saved = await perform(async () => {
+                        await api.addFood(description, nutrition);
+                        setFoodDiary(await api.dailyContext());
+                        return true;
+                      });
+                      if (saved) setToast("Alimentação registrada. Sua próxima busca vai considerar o que você comeu.");
+                      return saved === true;
+                    }}
+                    onRemove={async id => {
+                      await perform(async () => {
+                        await api.removeFood(id);
+                        setFoodDiary(await api.dailyContext());
+                        setToast("Alimento removido do diário.");
+                      });
+                    }} />
                   <div className="section-heading">
                     <div>
-                      <h2>Refeições de hoje</h2>
+                      <h2>Consumos confirmados dos pedidos</h2>
                       <p>
                         {new Intl.DateTimeFormat("pt-BR", {
                           dateStyle: "long",
@@ -1333,9 +1383,9 @@ export default function App() {
                           <button
                             className="icon-button danger"
                             aria-label={`Excluir consumo de ${entry.name}`}
-                            onClick={() => {
+                            onClick={async () => {
                               if (
-                                persistConsumption(
+                                await persistConsumption(
                                   entries.filter(
                                     (e) =>
                                       !(
@@ -1358,10 +1408,9 @@ export default function App() {
                       <span className="empty-icon">
                         <Utensils size={30} />
                       </span>
-                      <h2>Seu dia ainda está em branco.</h2>
+                      <h2>Nenhum consumo de pedido confirmado hoje.</h2>
                       <p>
-                        Depois do seu pedido, conte quanto comeu. Só então ele
-                        aparece por aqui.
+                        Depois do seu pedido, conte quanto comeu. Outras refeições podem ser registradas no formulário acima.
                       </p>
                       <button
                         className="primary-button"
@@ -1396,8 +1445,8 @@ export default function App() {
                   )}
                   <p className="section-footnote">
                     <Info size={14} />
-                    Registros e feedback ficam neste navegador. Sincronização
-                    com o servidor ainda pendente.
+                    Registros e feedback ficam salvos no servidor, no seu perfil atual,
+                    e são considerados nas próximas buscas.
                   </p>
                 </>
               )}
@@ -1562,14 +1611,14 @@ export default function App() {
                   className="daily-ring"
                   style={
                     {
-                      "--progress": `${goal && knownEntries.length ? Math.min(knownCalories / goal, 1) * 100 : 0}%`,
+                      "--progress": `${goal && hasKnownCalories ? Math.min(knownCalories / goal, 1) * 100 : 0}%`,
                     } as React.CSSProperties
                   }
                 >
                   <div>
                     <Flame size={24} />
                     <strong>
-                      {knownEntries.length
+                      {hasKnownCalories
                         ? Math.round(knownCalories).toLocaleString("pt-BR")
                         : "—"}
                     </strong>
@@ -1580,7 +1629,8 @@ export default function App() {
                     </span>
                   </div>
                 </div>
-                {today.some((e) => e.nutrition?.state !== "ready") && (
+                {(currentDayContext ? currentDayContext.known_counts.calories < currentDayContext.meal_count
+                  : today.some((e) => e.nutrition?.state !== "ready")) && (
                   <p className="partial-note">
                     Total parcial: há refeições sem calorias disponíveis.
                   </p>
@@ -1594,22 +1644,23 @@ export default function App() {
                 </button>
                 <div className="macro-rows">
                   {[
-                    { label: "Proteínas", color: "orange" },
-                    { label: "Carboidratos", color: "blue" },
-                    { label: "Gorduras", color: "purple" },
+                    { label: "Proteínas", color: "orange", metric: "protein_g" },
+                    { label: "Carboidratos", color: "blue", metric: "carbs_g" },
+                    { label: "Gorduras", color: "purple", metric: "fat_g" },
                   ].map((m) => (
                     <div key={m.label}>
                       <span>
                         <i className={m.color} />
                         {m.label}
                       </span>
-                      <strong>—</strong>
+                      <strong>{currentDayContext?.known_intake[m.metric as "protein_g" | "carbs_g" | "fat_g"] != null
+                        ? `${Math.round(currentDayContext.known_intake[m.metric as "protein_g" | "carbs_g" | "fat_g"]!)} g` : "—"}</strong>
                     </div>
                   ))}
                 </div>
                 <p className="nutrition-note">
                   <Info size={13} />
-                  Macros ainda indisponíveis. Só somamos consumo confirmado.
+                  Somamos apenas os valores conhecidos dos alimentos que você informou.
                 </p>
                 <button
                   className="rail-bottom-link"
@@ -1800,17 +1851,16 @@ export default function App() {
             </div>
             <h3>Transparência em cada escolha</h3>
             <p>
-              A conversa atual usa busca por termos e preferências. A
-              interpretação por IA e a estimativa nutricional ainda serão
-              conectadas.
+              A busca combina sua mensagem, preferências, avaliações e o contexto
+              da alimentação do dia. A interpretação por IA usa regras locais quando estiver indisponível.
             </p>
             <p>
               Calorias só aparecem quando disponíveis, com faixa e origem.
-              Proteína, carboidratos e gordura não são calculados nesta versão.
+              Proteína, carboidratos e gordura são exibidos quando há estimativas disponíveis.
             </p>
             <p>
-              Consumo e feedback são confirmados por você e ficam neste
-              navegador. Pedir não adiciona calorias ao seu dia.
+              Consumo e feedback são informados por você e ficam salvos no servidor,
+              vinculados ao perfil da sessão. Pedir não adiciona calorias ao seu dia.
             </p>
           </div>
         </Modal>
@@ -2364,7 +2414,7 @@ export default function App() {
             className="modal-body consumption-form"
             onSubmit={(e) => {
               e.preventDefault();
-              recordConsumption();
+              void recordConsumption();
             }}
           >
             <p>
@@ -2430,6 +2480,18 @@ export default function App() {
   );
 }
 
+const nutritionFields = [
+  { key: "max_calories", label: "Máximo de calorias por prato", unit: "kcal" },
+  { key: "min_protein_g", label: "Mínimo de proteína por prato", unit: "g" },
+  { key: "max_carbs_g", label: "Máximo de carboidratos por prato", unit: "g" },
+  { key: "max_fat_g", label: "Máximo de gordura por prato", unit: "g" },
+] as const;
+const dailyDietFields = [
+  ["daily_protein_g", "Meta diária de proteína"],
+  ["daily_carbs_g", "Meta diária de carboidratos"],
+  ["daily_fat_g", "Meta diária de gordura"],
+] as const;
+
 function ProfileForm({
   profile,
   busy,
@@ -2457,6 +2519,19 @@ function ProfileForm({
       : "",
   );
   const [localError, setLocalError] = useState("");
+  const [dietGoal, setDietGoal] = useState<DietGoal | "">(profile.diet_plan?.goal ?? "");
+  const [dietDetails, setDietDetails] = useState(profile.diet_plan?.details ?? "");
+  const [dailyTargets, setDailyTargets] = useState(() => Object.fromEntries(
+    dailyDietFields.map(([key]) => [key, profile.diet_plan?.[key]?.toString() ?? ""]),
+  ));
+  const [nutritionGoals, setNutritionGoals] = useState<NutritionPreferences["goals"]>(
+    profile.nutrition_preferences?.goals ?? [],
+  );
+  const [nutritionLimits, setNutritionLimits] = useState(() =>
+    Object.fromEntries(nutritionFields.map(({ key }) => [
+      key, profile.nutrition_preferences?.[key]?.toString() ?? "",
+    ])),
+  );
   const split = (value: string) => [
     ...new Set(
       value
@@ -2472,6 +2547,16 @@ function ProfileForm({
       ? Number(budget.replace(",", "."))
       : null;
     const goalNumber = goal.trim() ? Number(goal.replace(",", ".")) : null;
+    const nutritional = Object.fromEntries(nutritionFields.map(({ key }) => [
+      key, nutritionLimits[key].trim() ? Number(nutritionLimits[key].replace(",", ".")) : null,
+    ]));
+    const daily = Object.fromEntries(dailyDietFields.map(([key]) => [key,
+      dailyTargets[key].trim() ? Number(dailyTargets[key].replace(",", ".")) : null,
+    ]));
+    if ([...Object.values(nutritional), ...Object.values(daily)].some(value => value != null && (!Number.isFinite(value) || value < 0))) {
+      setLocalError("Informe preferências nutricionais válidas e não negativas.");
+      return;
+    }
     if (
       (budgetNumber != null &&
         (!Number.isFinite(budgetNumber) ||
@@ -2502,6 +2587,9 @@ function ProfileForm({
       default_budget_cents:
         budgetNumber == null ? null : Math.round(budgetNumber * 100),
       daily_calorie_goal: goalNumber,
+      nutrition_preferences: { goals: nutritionGoals, ...nutritional } as NutritionPreferences,
+      diet_plan: { goal: dietGoal || null, details: dietDetails,
+        daily_protein_g: daily.daily_protein_g, daily_carbs_g: daily.daily_carbs_g, daily_fat_g: daily.daily_fat_g },
     });
   }
   function togglePreference(value: string) {
@@ -2647,6 +2735,75 @@ function ProfileForm({
               <small>Cadastre a meta que você já utiliza.</small>
             </label>
           </div>
+        </section>
+        <section>
+          <div className="form-section-title">
+            <span className="purple"><Dumbbell size={20} /></span>
+            <div>
+              <h2>O que você prioriza na nutrição?</h2>
+              <p>Essas preferências ajudam a ordenar os pratos da busca.</p>
+            </div>
+          </div>
+          <div className="preference-picker">
+            {([
+              ["high_protein", "Mais proteína"], ["low_carb", "Menos carboidratos"],
+              ["low_fat", "Menos gordura"], ["low_calorie", "Menos calorias"],
+            ] as const).map(([value, label]) => (
+              <button type="button" key={value} aria-pressed={nutritionGoals.includes(value)}
+                className={nutritionGoals.includes(value) ? "selected" : ""}
+                onClick={() => setNutritionGoals(current => current.includes(value)
+                  ? current.filter(goal => goal !== value) : [...current, value])}>
+                {nutritionGoals.includes(value) ? <Check size={14} /> : <Plus size={14} />}
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="form-columns">
+            {nutritionFields.map(({ key, label, unit }) => (
+              <label className="form-field" key={key}>
+                {label}
+                <div className="input-unit suffix">
+                  <input inputMode="decimal" value={nutritionLimits[key]} placeholder="Opcional"
+                    aria-label={label} maxLength={12}
+                    onChange={e => setNutritionLimits(current => ({ ...current, [key]: e.target.value }))} />
+                  <span>{unit}</span>
+                </div>
+              </label>
+            ))}
+          </div>
+          <p>Usamos estimativas por prato, antes dos adicionais. Dados ausentes são sinalizados.
+            Você pode informar outros valores na mensagem da busca; eles valem para aquele pedido.</p>
+        </section>
+        <section>
+          <div className="form-section-title">
+            <span className="purple"><Target size={20} /></span>
+            <div><h2>Qual é seu objetivo de dieta?</h2>
+              <p>Vamos considerar seu objetivo e o que você já comeu ao sugerir a próxima refeição.</p></div>
+          </div>
+          <label className="form-field">Objetivo de dieta
+            <select value={dietGoal} onChange={event => setDietGoal(event.target.value as DietGoal | "")}>
+              <option value="">Sem objetivo definido</option>
+              <option value="gain_muscle">Ganhar massa muscular</option>
+              <option value="lose_weight">Perder peso</option>
+              <option value="maintain_weight">Manter o peso</option>
+              <option value="performance">Desempenho nos treinos</option>
+              <option value="balanced">Alimentação equilibrada</option>
+            </select>
+          </label>
+          <label className="form-field">Orientações da sua dieta
+            <textarea rows={3} maxLength={1000} value={dietDetails} onChange={event => setDietDetails(event.target.value)}
+              placeholder="Ex.: Quero refeições variadas e completas. Prefiro algo leve antes do treino." />
+          </label>
+          <div className="form-columns">
+            {dailyDietFields.map(([key, label]) => <label className="form-field" key={key}>{label}
+              <div className="input-unit suffix"><input inputMode="decimal" maxLength={12} value={dailyTargets[key]}
+                aria-label={label} placeholder="Opcional" onChange={event => setDailyTargets(current => ({ ...current, [key]: event.target.value }))} />
+                <span>g</span>
+              </div>
+            </label>)}
+          </div>
+          <p>Informe apenas metas que você já utiliza. A meta diária de calorias fica no campo acima.
+            Em Meu dia, registre o que já comeu. O aplicativo usa esse contexto para ordenar sugestões, sem criar uma prescrição de dieta.</p>
         </section>
         {localError && (
           <p className="inline-error" role="alert">

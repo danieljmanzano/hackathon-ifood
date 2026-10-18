@@ -1,8 +1,8 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Annotated, Literal
 from uuid import uuid4
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
+from pydantic import AfterValidator, AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
 NonNegative = Annotated[float, Field(ge=0, allow_inf_nan=False)]
 Cents = Annotated[int, Field(ge=0, strict=True)]
@@ -18,6 +18,55 @@ class Model(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
 
+NutritionGoal = Literal["high_protein", "low_carb", "low_fat", "low_calorie"]
+
+
+class NutritionPreferences(Model):
+    goals: list[NutritionGoal] = Field(default_factory=list, max_length=4)
+    max_calories: NonNegative | None = None
+    min_protein_g: NonNegative | None = None
+    max_carbs_g: NonNegative | None = None
+    max_fat_g: NonNegative | None = None
+
+    @property
+    def active(self) -> bool:
+        return bool(self.goals) or any(value is not None for key, value in self.model_dump().items() if key != "goals")
+
+
+DietGoal = Literal["gain_muscle", "lose_weight", "maintain_weight", "performance", "balanced"]
+
+
+class DailyNutrients(Model):
+    calories: NonNegative | None = None
+    protein_g: NonNegative | None = None
+    carbs_g: NonNegative | None = None
+    fat_g: NonNegative | None = None
+
+
+class DietPlan(Model):
+    goal: DietGoal | None = None
+    details: str = Field(default="", max_length=1000)
+    daily_protein_g: NonNegative | None = None
+    daily_carbs_g: NonNegative | None = None
+    daily_fat_g: NonNegative | None = None
+
+
+class DietContext(Model):
+    date: date
+    goal: DietGoal | None = None
+    details: str = Field(default="", max_length=1000)
+    meal_count: int = Field(default=0, ge=0)
+    foods: list[str] = Field(default_factory=list, max_length=12)
+    known_intake: DailyNutrients = Field(default_factory=DailyNutrients)
+    targets: DailyNutrients = Field(default_factory=DailyNutrients)
+    remaining: DailyNutrients = Field(default_factory=DailyNutrients)
+    known_counts: dict[str, int] = Field(default_factory=dict)
+    signals: list[Literal["fruit_only_records", "protein_target_remaining", "protein_target_reached",
+                        "calorie_target_reached"]] = Field(default_factory=list)
+    reasons: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+
+
 class UserProfile(Model):
     id: str
     preferences: list[str] = Field(default_factory=list, max_length=30)
@@ -25,12 +74,15 @@ class UserProfile(Model):
     dislikes: list[str] = Field(default_factory=list, max_length=30)
     default_budget_cents: Cents | None = None
     daily_calorie_goal: NonNegative | None = None
+    nutrition_preferences: NutritionPreferences = Field(default_factory=NutritionPreferences)
+    diet_plan: DietPlan = Field(default_factory=DietPlan)
 
 
 class MealRequest(Model):
     text: Text
     budget_cents: Cents | None = None
     restrictions: list[str] = Field(default_factory=list, max_length=30)
+    nutrition_preferences: NutritionPreferences = Field(default_factory=NutritionPreferences)
 
 
 class Address(Model):
@@ -118,6 +170,8 @@ class MealIntent(Model):
     inferences: list[str] = Field(default_factory=list, max_length=5)
     inferred_goals: list[Literal["large_portion", "small_portion", "light", "cheap", "fast", "protein", "comfort", "indulgent", "vegetarian"]] = Field(default_factory=list)
     fallback_reason: Literal["disabled", "not_configured", "timeout", "invalid_response", "unavailable"] | None = None
+    nutrition_preferences: NutritionPreferences = Field(default_factory=NutritionPreferences)
+    diet_context: DietContext | None = None
 
 
 class MealCandidate(Model):
@@ -340,6 +394,29 @@ class ConsumptionEntry(Model):
     consumed_at: datetime
     source: Literal["user_confirmation"] = "user_confirmation"
     nutrition_snapshot: NutritionResult
+
+
+class ConsumptionRecord(Model):
+    order_id: Annotated[str, Field(min_length=1, max_length=200)]
+    item_id: Annotated[str, Field(min_length=1, max_length=200)]
+    name: Text
+    quantity: Quantity = 1
+    fraction: float = Field(default=1, gt=0, le=1, allow_inf_nan=False)
+    consumed_at: AwareDatetime
+    nutrition: NutritionResult | None = None
+    feedback: str = Field(default="", max_length=1000)
+
+
+class FoodDiaryEntry(Model):
+    id: Annotated[str, Field(min_length=1, max_length=200)] = Field(default_factory=lambda: str(uuid4()))
+    description: Text
+    consumed_at: AwareDatetime = Field(default_factory=now)
+    nutrition: DailyNutrients = Field(default_factory=DailyNutrients)
+
+
+class DailyFoodDiary(Model):
+    entries: list[FoodDiaryEntry]
+    context: DietContext
 
 
 class Message(Model):

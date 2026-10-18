@@ -14,6 +14,10 @@ import type {
   ReviewInput,
   UserReview,
   UserTastes,
+  Consumption,
+  DailyFoodDiary,
+  DailyNutrients,
+  FoodDiaryEntry,
 } from "./types";
 
 async function request<T>(
@@ -58,6 +62,17 @@ export const api = {
   address: (address_id: string) =>
     request<Session>("/session/address", { address_id }, "PUT"),
   profile: (profile: Profile) => request<Session>("/profile", profile, "PUT"),
+  consumption: () => request<Consumption[]>("/consumption"),
+  saveConsumption: (entries: Consumption[]) => request<Consumption[]>("/consumption", entries, "PUT"),
+  dailyContext: () => request<DailyFoodDiary>("/daily-context"),
+  addFood: (description: string, nutrition: DailyNutrients) =>
+    request<FoodDiaryEntry>("/food-diary", { description, nutrition }),
+  removeFood: async (id: string) => {
+    const response = await fetch(`/api/food-diary/${encodeURIComponent(id)}`, {
+      method: "DELETE", credentials: "same-origin", signal: AbortSignal.timeout(30_000),
+    });
+    if (!response.ok) throw new Error("Não foi possível excluir o alimento.");
+  },
   tastes: () => request<UserTastes>("/profile/tastes"),
   myReviews: () => request<UserReview[]>("/reviews/me"),
   saveReview: (review: ReviewInput) => request<UserReview>("/reviews", review, "PUT"),

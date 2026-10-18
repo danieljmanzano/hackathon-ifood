@@ -1,3 +1,10 @@
+export interface NutritionPreferences {
+  goals: ("high_protein" | "low_carb" | "low_fat" | "low_calorie")[];
+  max_calories: number | null;
+  min_protein_g: number | null;
+  max_carbs_g: number | null;
+  max_fat_g: number | null;
+}
 export interface Profile {
   id: string;
   preferences: string[];
@@ -5,6 +12,44 @@ export interface Profile {
   dislikes: string[];
   default_budget_cents: number | null;
   daily_calorie_goal: number | null;
+  nutrition_preferences: NutritionPreferences;
+  diet_plan: DietPlan;
+}
+export type DietGoal = "gain_muscle" | "lose_weight" | "maintain_weight" | "performance" | "balanced";
+export interface DietPlan {
+  goal: DietGoal | null;
+  details: string;
+  daily_protein_g: number | null;
+  daily_carbs_g: number | null;
+  daily_fat_g: number | null;
+}
+export interface DailyNutrients {
+  calories: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+}
+export interface DietContext {
+  date: string;
+  goal: DietGoal | null;
+  meal_count: number;
+  foods: string[];
+  known_intake: DailyNutrients;
+  targets: DailyNutrients;
+  remaining: DailyNutrients;
+  known_counts: Record<string, number>;
+  reasons: string[];
+  limitations: string[];
+}
+export interface FoodDiaryEntry {
+  id: string;
+  description: string;
+  consumed_at: string;
+  nutrition: DailyNutrients;
+}
+export interface DailyFoodDiary {
+  entries: FoodDiaryEntry[];
+  context: DietContext;
 }
 export interface Address {
   id: string;
@@ -53,6 +98,8 @@ export interface MealFeatures {
   eta_max_minutes: number | null;
 }
 export interface MealIntent {
+  diet_context: DietContext | null;
+  nutrition_preferences: NutritionPreferences;
   interpretation_source: "llm" | "rules";
   context_summary: string | null;
   inferences: string[];

@@ -8,6 +8,7 @@ for chave in ("GEMINI_API_KEY", "OPENROUTER_API_KEY", "OPENAI_API_KEY"):
 os.environ["NUTRITION_PROVIDER"] = "openrouter"
 os.environ["IFOOD_MODE"] = "mock"  # os testes usam o catálogo fictício, qualquer que seja o .env
 os.environ["CALORIAS_LOG"] = "off"
+os.environ["BUSCA_LOG"] = "off"
 
 
 @pytest.fixture(autouse=True)
