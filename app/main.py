@@ -2,11 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.endpoints.macro import router as macro_router
+from app.api.endpoints.mock_reviews import router as mock_reviews_router
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logs import configurar_logs
 from app.storage.database import Database
+from app.services.review_processing import processed_reviews
+from app.services.mock_reviews import review_dataset
 
 
 def create_app() -> FastAPI:
@@ -21,6 +24,10 @@ def create_app() -> FastAPI:
     # Inicializar banco de dados SQLite da sessão
     app.state.settings = settings
     app.state.db = Database(settings.database_path)
+    initial_reviews = app.state.db.reviews(settings.ifood_mode == "mock")
+    if settings.ifood_mode == "mock":
+        initial_reviews += review_dataset().reviews
+    processed_reviews(app.state.db, initial_reviews, settings.ifood_mode == "mock")
 
     app.add_middleware(
         CORSMiddleware,
@@ -33,6 +40,7 @@ def create_app() -> FastAPI:
 
     # Rotas consumidas pelo frontend (/api/session, /api/search, etc.)
     app.include_router(macro_router, prefix="/api")
+    app.include_router(mock_reviews_router, prefix="/api")
 
     # Rotas versionadas da API (/api/v1/health, etc.)
     app.include_router(api_router, prefix=settings.api_v1_prefix)

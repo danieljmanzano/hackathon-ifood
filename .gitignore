@@ -6,7 +6,8 @@ __pycache__/
 !.env.example
 .pytest_cache/
 .ifood_tokens.json
-data/
+data/*
+!data/mocks/
 *.sqlite3
 
 # Frontend

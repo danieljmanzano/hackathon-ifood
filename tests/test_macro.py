@@ -1,8 +1,19 @@
 from fastapi.testclient import TestClient
+import pytest
 
 from app.main import app
+from app.core.config import get_settings
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def offline_intent():
+    previous = dict(app.dependency_overrides)
+    app.dependency_overrides[get_settings] = lambda: get_settings().model_copy(update={"intent_llm_enabled": False})
+    yield
+    app.dependency_overrides.clear()
+    app.dependency_overrides.update(previous)
 
 
 def test_api_health():

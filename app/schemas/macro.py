@@ -97,6 +97,29 @@ class OptionGroup(Model):
         return self
 
 
+class MealFeatures(Model):
+    portion_size: Literal["small", "regular", "large", "sharing"] | None = None
+    serves: int | None = Field(default=None, ge=1, le=20)
+    weight_grams: int | None = Field(default=None, gt=0)
+    tags: list[Literal["light", "protein", "comfort", "indulgent", "vegetarian"]] = Field(default_factory=list)
+    eta_max_minutes: int | None = Field(default=None, gt=0)
+
+
+class MealIntent(Model):
+    goals: list[Literal["large_portion", "small_portion", "light", "cheap", "fast", "protein", "comfort", "indulgent", "vegetarian"]] = Field(default_factory=list)
+    party_size: int | None = Field(default=None, ge=1, le=20)
+    max_delivery_minutes: int | None = Field(default=None, gt=0)
+    food_query: str = ""
+    provider_query: str = "refeição"
+    budget_cents: Cents | None = None
+    labels: list[str] = Field(default_factory=list)
+    interpretation_source: Literal["rules", "llm"] = "rules"
+    context_summary: str | None = Field(default=None, max_length=400)
+    inferences: list[str] = Field(default_factory=list, max_length=5)
+    inferred_goals: list[Literal["large_portion", "small_portion", "light", "cheap", "fast", "protein", "comfort", "indulgent", "vegetarian"]] = Field(default_factory=list)
+    fallback_reason: Literal["disabled", "not_configured", "timeout", "invalid_response", "unavailable"] | None = None
+
+
 class MealCandidate(Model):
     merchant_id: str
     merchant_name: str
@@ -109,6 +132,7 @@ class MealCandidate(Model):
     option_groups: list[OptionGroup] = Field(default_factory=list)
     available: bool = True
     simulated: bool = False
+    features: MealFeatures = Field(default_factory=MealFeatures)
 
 
 class SelectedOption(Model):
@@ -187,11 +211,25 @@ class MerchantSummary(Model):
     simulated: bool = False
 
 
+class ReviewSignal(Model):
+    source: Literal["personalized", "community", "unavailable"]
+    score: float
+    history_count: int = Field(ge=0)
+    review_count: int = Field(ge=0)
+    community_rating: float | None = None
+    cuisine_affinity: float = 0
+    personal_rating: int | None = None
+    text_affinity: float = 0
+    aspect_score: float = 0
+    pipeline_version: str | None = None
+
+
 class Recommendation(Model):
     candidate: MealCandidate
     nutrition: NutritionResult = Field(default_factory=NutritionResult)
     reasons: list[str]
     limitations: list[str]
+    review_signal: ReviewSignal | None = None
 
 
 class DeliveryChoice(Model):
@@ -263,6 +301,8 @@ class Session(Model):
     address: Address | None = None
     messages: list[Message] = Field(default_factory=list)
     recommendations: list[Recommendation] = Field(default_factory=list)
+    recent_recommendations: list[tuple[str, str]] = Field(default_factory=list, max_length=18)
+    request_intent: MealIntent | None = None
     selected: SelectedItem | None = None
     summary: CheckoutSummary | None = None
     order: OrderRecord | None = None

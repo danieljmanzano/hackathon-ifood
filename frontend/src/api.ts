@@ -9,12 +9,16 @@ import type {
   Profile,
   SelectedOption,
   Session,
+  ReviewInput,
+  UserReview,
+  UserTastes,
 } from "./types";
 
 async function request<T>(
   path: string,
   body?: unknown,
   method = "POST",
+  timeoutMs = 30_000,
 ): Promise<T> {
   let response: Response;
   try {
@@ -24,7 +28,7 @@ async function request<T>(
       headers:
         body === undefined ? undefined : { "Content-Type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch {
     throw new Error(
@@ -52,7 +56,10 @@ export const api = {
   address: (address_id: string) =>
     request<Session>("/session/address", { address_id }, "PUT"),
   profile: (profile: Profile) => request<Session>("/profile", profile, "PUT"),
-  search: (text: string) => request<Session>("/search", { text }),
+  tastes: () => request<UserTastes>("/profile/tastes"),
+  myReviews: () => request<UserReview[]>("/reviews/me"),
+  saveReview: (review: ReviewInput) => request<UserReview>("/reviews", review, "PUT"),
+  search: (text: string) => request<Session>("/search", { text }, "POST", 60_000),
   merchants: () => request<MerchantSummary[]>("/merchants"),
   menu: (merchantId: string) =>
     request<Candidate[]>(`/merchants/${encodeURIComponent(merchantId)}/menu`),

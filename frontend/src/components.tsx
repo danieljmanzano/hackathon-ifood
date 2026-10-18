@@ -305,11 +305,29 @@ export function MealCard({
         <span className="merchant">{item.merchant_name}</span>
         <h3>{item.name}</h3>
         <p className="meal-description">{item.description}</p>
+        {item.features?.portion_size && (
+          <p className="meal-feature-summary">
+            {{ small: "Porção pequena", regular: "Porção regular", large: "Porção grande", sharing: "Para compartilhar" }[item.features.portion_size]}
+            {item.features.weight_grams && ` · ${item.features.weight_grams} g`}
+            {item.features.serves && ` · serve ${item.features.serves}`}
+          </p>
+        )}
         <NutritionBadge nutrition={nutrition} />
-        <p className="reason">
-          <Check size={14} />
-          {reasons[0]}
-        </p>
+        {recommendation.review_signal && recommendation.review_signal.source !== "unavailable" && (
+          <p className="review-summary">
+            <Star size={14} aria-hidden="true" />
+            {recommendation.review_signal.source === "personalized" ? "Com base nas suas avaliações" : "Avaliações da comunidade"}
+            {recommendation.review_signal.community_rating != null && ` · ${recommendation.review_signal.community_rating.toFixed(1)}/5`}
+          </p>
+        )}
+        <div className="match-explanation">
+          <strong>Por que este prato?</strong>
+          <ul>
+            {reasons.slice(0, 3).map((reason) => (
+              <li key={reason}><Check size={14} aria-hidden="true" /><span>{reason}</span></li>
+            ))}
+          </ul>
+        </div>
         <div className="meal-card-footer">
           <div>
             <strong>{money(item.price_cents)}</strong>

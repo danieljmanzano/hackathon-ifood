@@ -32,6 +32,8 @@ class Settings(BaseSettings):
         "openrouter/free",
     ]
     openrouter_timeout: float = 60.0
+    intent_llm_enabled: bool = True
+    intent_llm_timeout_seconds: float = Field(default=18, gt=0, le=20)
 
     # OpenAI (usada quando NUTRITION_PROVIDER=openai; a chave e o modelo ficam na seção de nutrição abaixo)
     openai_base_url: str = "https://api.openai.com/v1"
@@ -121,6 +123,7 @@ class Settings(BaseSettings):
             "simulated": self.ifood_mode == "mock",
             "live_orders_enabled": False,
             "nutrition": "enabled" if self.nutrition_enabled else "unavailable",
+            "intent_interpretation": "llm_configured" if self.intent_llm_enabled and self.openrouter_api_key else "rules",
             "timezone": self.timezone,
             "issues": (
                 ["Demonstração com catálogo, endereço, preços e pedidos fictícios."]

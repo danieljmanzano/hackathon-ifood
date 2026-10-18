@@ -5,11 +5,14 @@ from app.core.exceptions import MacroError
 from app.schemas.macro import (
     MealCandidate,
     MealRequest,
+    MealIntent,
     Recommendation,
     SelectedItem,
     SelectionInput,
     UserProfile,
 )
+from app.services.review_recommendations import ReviewContext, review_signal
+from app.services.meal_intent import assess_intent, parse_intent
 
 
 def normalized(value: str) -> str:
@@ -21,21 +24,8 @@ def normalized(value: str) -> str:
 
 
 def search_terms(request: MealRequest) -> tuple[str, int | None]:
-    """Extração determinística de termos de busca e orçamento a partir do texto do pedido."""
-    text = normalized(request.text)
-    budget = request.budget_cents
-    match = re.search(r"(?:ate\s*(?:r\$\s*)?|r\$\s*)(\d+)(?:[,.](\d{1,2}))?", text)
-    if match:
-        if budget is None:
-            budget = int(match[1]) * 100 + int((match[2] or "0").ljust(2, "0"))
-        text = text[: match.start()] + " " + text[match.end() :]
-    text = re.sub(
-        r"\b(quero|pedir|uma?|prato|refeicao|para|pos|treino|hoje|barato|barata|rapido|rapida|perto de mim|reais)\b",
-        " ",
-        text,
-    )
-    query = " ".join(text.split()).strip(" ,.;")
-    return query or "refeição", budget
+    intent = parse_intent(request)
+    return intent.provider_query, intent.budget_cents
 
 
 def rank(
@@ -43,14 +33,28 @@ def rank(
     request: MealRequest,
     profile: UserProfile,
     budget: int | None,
+    review_context: ReviewContext | None = None,
+    recently_shown: list[tuple[str, str]] | None = None,
+    intent: MealIntent | None = None,
 ) -> list[Recommendation]:
-    query, _ = search_terms(request)
-    words = [w for w in normalized(query).split() if len(w) > 2]
+    intent = intent or parse_intent(request)
+    query = intent.food_query
+    generic = {"almoco", "jantar", "comida", "comer", "algo", "opcao", "opcoes", "refeicao", "com", "por", "favor", "uma", "que", "tem"}
+    words = [w for w in normalized(query).split() if len(w) > 2 and w not in generic]
+    recently_shown = recently_shown or []
     ranked = []
+    has_search_matches = False
     for candidate in candidates:
+        text = normalized(candidate.name + " " + candidate.description)
+        search_text = text + " " + normalized(" ".join(
+            review_context.cuisines.get(candidate.merchant_id, []) if review_context else []
+        ))
+        relevance = sum(bool(re.search(r"\b" + re.escape(w) + r"s?\b", search_text)) for w in set(words))
+        has_search_matches = has_search_matches or relevance > 0
         if not candidate.available:
             continue
-        text = normalized(candidate.name + " " + candidate.description)
+        if "vegetarian" in intent.goals and candidate.simulated and "vegetarian" not in candidate.features.tags:
+            continue
         if any(normalized(d) in text for d in profile.dislikes if d.strip()):
             continue
         restrictions = profile.restrictions + request.restrictions
@@ -61,9 +65,9 @@ def rank(
             p for p in profile.preferences if p.strip() and normalized(p) in text
         ]
         if matches:
-            reasons.append("Combina com suas preferências: " + ", ".join(matches))
+            reasons.append("Este prato inclui algo que você gosta: " + ", ".join(matches) + ".")
             score += len(matches) * 3
-        if any(w in text for w in words):
+        if relevance:
             reasons.append("Combina com os termos da sua busca.")
             score += 2
         if budget is not None and candidate.price_cents <= budget:
@@ -82,17 +86,47 @@ def rank(
                 + ", ".join(restrictions)
                 + ". Confirme com o restaurante."
             )
+        signal = None
+        if review_context is not None:
+            signal, review_reasons = review_signal(candidate, review_context)
+            score += signal.score
+            preference_reasons = reasons[:1] if matches else []
+            reasons = preference_reasons + review_reasons + reasons[len(preference_reasons):]
+            if review_context.simulated:
+                limitations.append("Personalização de demonstração baseada em avaliações fictícias.")
+        fit = assess_intent(candidate, intent)
+        reasons = fit.reasons + reasons
+        limitations += fit.limitations
+        exposure = recently_shown.count((candidate.merchant_id, candidate.item_id))
+        merchant_exposure = sum(mid == candidate.merchant_id for mid, _ in recently_shown)
+        score -= 2 * exposure + 0.5 * merchant_exposure
         ranked.append(
             (
+                relevance,
+                fit.score,
                 score,
                 Recommendation(
                     candidate=candidate,
                     reasons=reasons or ["Opção disponível no catálogo consultado."],
                     limitations=limitations,
+                    review_signal=signal,
                 ),
             )
         )
-    return [r for _, r in sorted(ranked, key=lambda pair: -pair[0])[:3]]
+    if words and has_search_matches:
+        ranked = [entry for entry in ranked if entry[0] > 0]
+    ordered = [r for _, _, _, r in sorted(ranked, key=lambda entry: (
+        -entry[0], -entry[1], -entry[2], entry[3].candidate.merchant_id, entry[3].candidate.item_id
+    ))]
+    # Mostra alternativas de restaurantes diferentes antes de repetir uma cozinha.
+    chosen, merchants = [], set()
+    for recommendation in ordered:
+        if recommendation.candidate.merchant_id not in merchants:
+            chosen.append(recommendation)
+            merchants.add(recommendation.candidate.merchant_id)
+        if len(chosen) == 3:
+            return chosen
+    return (chosen + [r for r in ordered if r not in chosen])[:3]
 
 
 def select(candidate: MealCandidate, selection: SelectionInput) -> SelectedItem:

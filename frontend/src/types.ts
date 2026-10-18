@@ -45,7 +45,27 @@ export interface OptionGroup {
   max_selections: number;
   options: Option[];
 }
+export interface MealFeatures {
+  portion_size: "small" | "regular" | "large" | "sharing" | null;
+  serves: number | null;
+  weight_grams: number | null;
+  tags: string[];
+  eta_max_minutes: number | null;
+}
+export interface MealIntent {
+  interpretation_source: "llm" | "rules";
+  context_summary: string | null;
+  inferences: string[];
+  inferred_goals: string[];
+  fallback_reason: string | null;
+  goals: string[];
+  labels: string[];
+  party_size: number | null;
+  max_delivery_minutes: number | null;
+  food_query: string;
+}
 export interface Candidate {
+  features?: MealFeatures;
   merchant_id: string;
   merchant_name: string;
   item_id: string;
@@ -79,7 +99,17 @@ export interface Nutrition {
   pipeline_version: string;
   obtained_at: string | null;
 }
+export interface ReviewSignal {
+  source: "personalized" | "community" | "unavailable";
+  score: number;
+  history_count: number;
+  review_count: number;
+  community_rating: number | null;
+  cuisine_affinity: number;
+  personal_rating: number | null;
+}
 export interface Recommendation {
+  review_signal?: ReviewSignal | null;
   candidate: Candidate;
   nutrition: Nutrition;
   reasons: string[];
@@ -145,6 +175,7 @@ export interface Order {
   created_at: string;
 }
 export interface Session {
+  request_intent?: MealIntent | null;
   id: string;
   mode: "mock" | "live";
   profile: Profile;
@@ -181,3 +212,38 @@ export type View =
   | "day"
   | "orders"
   | "profile";
+
+export interface ReviewAspects {
+  taste: number;
+  delivery: number;
+  value_for_money: number;
+  portion_size: number;
+}
+export interface ReviewInput {
+  merchant_id: string;
+  item_id: string;
+  rating: number;
+  comment: string;
+  aspects: ReviewAspects;
+}
+export interface UserReview extends ReviewInput {
+  id: string;
+  user_id: string;
+  merchant_name: string | null;
+  item_name: string | null;
+  created_at: string;
+  simulated: boolean;
+}
+
+export interface UserTastes {
+  user_id: string;
+  simulated: boolean;
+  preferences: string[];
+  dislikes: string[];
+  restrictions: string[];
+  cuisine_affinities: Record<string, number>;
+  trait_interests: Record<string, number>;
+  aspect_importance: Record<string, number>;
+  history_count: number;
+  updated_at: string;
+}

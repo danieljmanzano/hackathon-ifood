@@ -47,6 +47,7 @@ import {
   Spinner,
   Stepper,
 } from "./components";
+import { ReviewEditor, ReviewHistory, TasteSummary } from "./Reviews";
 import { loadConsumption, saveConsumption } from "./storage";
 import type {
   Address,
@@ -62,6 +63,8 @@ import type {
   SelectedOption,
   Session,
   View,
+  UserReview,
+  UserTastes,
 } from "./types";
 
 const nav = [
@@ -103,6 +106,8 @@ type Dialog = "address" | "item" | "checkout" | "consumption" | "about" | null;
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
+  const [tastes, setTastes] = useState<UserTastes | null>(null);
+  const [reviews, setReviews] = useState<UserReview[]>([]);
   const [health, setHealth] = useState<Health | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [view, setView] = useState<View>("home");
@@ -200,6 +205,26 @@ export default function App() {
       active = false;
     };
   }, []);
+  useEffect(() => {
+    if (!session?.id) return;
+    let active = true;
+    void api.myReviews().then((items) => {
+      if (active) setReviews(items);
+    }).catch((reason: unknown) => {
+      if (active) setError(reason instanceof Error ? reason.message : "Não foi possível carregar avaliações.");
+    });
+    return () => { active = false; };
+  }, [session?.id]);
+  useEffect(() => {
+    if (!session?.id) return;
+    let active = true;
+    void api.tastes().then((value) => {
+      if (active) setTastes(value);
+    }).catch((reason: unknown) => {
+      if (active) setError(reason instanceof Error ? reason.message : "Não foi possível carregar seus gostos.");
+    });
+    return () => { active = false; };
+  }, [session?.profile, reviews]);
   useEffect(() => {
     if (toast) {
       const timer = window.setTimeout(() => setToast(""), 4500);
@@ -937,6 +962,15 @@ export default function App() {
                           {session.recommendations.length} opções
                         </span>
                       </div>
+                      {!!session.request_intent?.labels.length && (
+                        <div className="intent-summary">
+                          {session.request_intent.context_summary && <p>{session.request_intent.context_summary}</p>}
+                          <p>Entendi seu pedido: {session.request_intent.labels.join(", ")}.</p>
+                          {session.request_intent.inferences?.length > 0 && (
+                            <p className="small">Inferências para esta busca: {session.request_intent.inferences.join(" ")}</p>
+                          )}
+                        </div>
+                      )}
                       <div className="meal-grid">
                         {session.recommendations.map((r, index) => (
                           <MealCard
@@ -1105,7 +1139,16 @@ export default function App() {
                           Escolha um prato e as opções: o Macro calcula as
                           calorias do prato montado ao adicionar ao pedido.
                         </p>
-                        <div className="meal-grid">
+                        {!!session.request_intent?.labels.length && (
+                        <div className="intent-summary">
+                          {session.request_intent.context_summary && <p>{session.request_intent.context_summary}</p>}
+                          <p>Entendi seu pedido: {session.request_intent.labels.join(", ")}.</p>
+                          {session.request_intent.inferences?.length > 0 && (
+                            <p className="small">Inferências para esta busca: {session.request_intent.inferences.join(" ")}</p>
+                          )}
+                        </div>
+                      )}
+                      <div className="meal-grid">
                           {menu.map((item) => (
                             <MenuItemCard
                               key={item.item_id}
@@ -1147,6 +1190,7 @@ export default function App() {
               )}
 
               {view === "profile" && (
+                <>
                 <ProfileForm
                   profile={session.profile}
                   busy={busy}
@@ -1160,6 +1204,9 @@ export default function App() {
                     }
                   }}
                 />
+                {tastes && <TasteSummary tastes={tastes} />}
+                <ReviewHistory reviews={reviews} simulated={session.mode === "mock"} />
+                </>
               )}
 
               {view === "day" && (
@@ -1979,6 +2026,19 @@ export default function App() {
               </p>
             </div>
           )}
+          <ReviewEditor
+            key={`${detail.merchant_id}-${detail.item_id}`}
+            item={detail}
+            previous={reviews.find((r) => r.merchant_id === detail.merchant_id && r.item_id === detail.item_id)}
+            busy={busy}
+            onSave={async (input) => {
+              const saved = await perform(() => api.saveReview(input));
+              if (!saved) return false;
+              setReviews((current) => [saved, ...current.filter((r) => r.merchant_id !== saved.merchant_id || r.item_id !== saved.item_id)]);
+              setToast("Avaliação salva. A próxima busca já vai usar sua nota.");
+              return true;
+            }}
+          />
           <div className="modal-action-bar">
             <Stepper
               value={quantity}

@@ -1,0 +1,6293 @@
+{
+  "simulated": true,
+  "default_user_id": "demo-user",
+  "establishments": [
+    {
+      "merchant_id": "demo-cozinha",
+      "name": "Cozinha do treino (demo)",
+      "cuisines": [
+        "saudável",
+        "brasileira"
+      ],
+      "average_price_cents": 3223,
+      "delivery_fee_cents": 590,
+      "eta_min": 15,
+      "eta_max": 25,
+      "item_ids": [
+        "demo-frango",
+        "demo-vegetal",
+        "demo-carne",
+        "demo-tilapia",
+        "demo-cozinha-opcao-1",
+        "demo-cozinha-opcao-2"
+      ],
+      "rating": 3.92,
+      "rating_count": 12,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-verde",
+      "name": "Verde no Prato (demo)",
+      "cuisines": [
+        "vegana",
+        "saudável"
+      ],
+      "average_price_cents": 2970,
+      "delivery_fee_cents": 690,
+      "eta_min": 20,
+      "eta_max": 30,
+      "item_ids": [
+        "demo-bowl",
+        "demo-falafel",
+        "demo-escondidinho",
+        "demo-verde-opcao-1",
+        "demo-verde-opcao-2"
+      ],
+      "rating": 4.0,
+      "rating_count": 12,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-burger",
+      "name": "Burger da Praça (demo)",
+      "cuisines": [
+        "hambúrguer",
+        "americana"
+      ],
+      "average_price_cents": 3170,
+      "delivery_fee_cents": 790,
+      "eta_min": 25,
+      "eta_max": 35,
+      "item_ids": [
+        "demo-burger-classico",
+        "demo-burger-veggie",
+        "demo-burger-frango",
+        "demo-burger-opcao-1",
+        "demo-burger-opcao-2"
+      ],
+      "rating": 3.58,
+      "rating_count": 12,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-japa",
+      "name": "Sakura Delivery (demo)",
+      "cuisines": [
+        "japonesa"
+      ],
+      "average_price_cents": 3590,
+      "delivery_fee_cents": 890,
+      "eta_min": 30,
+      "eta_max": 40,
+      "item_ids": [
+        "demo-poke",
+        "demo-sushi",
+        "demo-yakisoba",
+        "demo-japa-opcao-1",
+        "demo-japa-opcao-2"
+      ],
+      "rating": 3.92,
+      "rating_count": 12,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-pizza",
+      "name": "Forno da Vila (demo)",
+      "cuisines": [
+        "pizza",
+        "italiana"
+      ],
+      "average_price_cents": 5150,
+      "delivery_fee_cents": 990,
+      "eta_min": 35,
+      "eta_max": 45,
+      "item_ids": [
+        "demo-margherita",
+        "demo-calabresa",
+        "demo-pizza-cogumelos",
+        "demo-pizza-opcao-1",
+        "demo-pizza-opcao-2"
+      ],
+      "rating": 3.75,
+      "rating_count": 12,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-caseira",
+      "name": "Tempero de Casa (demo)",
+      "cuisines": [
+        "brasileira",
+        "caseira"
+      ],
+      "average_price_cents": 2610,
+      "delivery_fee_cents": 1090,
+      "eta_min": 15,
+      "eta_max": 25,
+      "item_ids": [
+        "demo-feijoada",
+        "demo-marmita",
+        "demo-omelete",
+        "demo-caseira-opcao-1",
+        "demo-caseira-opcao-2"
+      ],
+      "rating": 3.75,
+      "rating_count": 12,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-horta",
+      "name": "Horta Urbana (demo)",
+      "cuisines": [
+        "vegana",
+        "saudável"
+      ],
+      "average_price_cents": 2830,
+      "delivery_fee_cents": 590,
+      "eta_min": 20,
+      "eta_max": 30,
+      "item_ids": [
+        "demo-horta-bowl",
+        "demo-horta-curry",
+        "demo-horta-salada",
+        "demo-horta-opcao-1",
+        "demo-horta-opcao-2"
+      ],
+      "rating": 3.88,
+      "rating_count": 8,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-quintal",
+      "name": "Quintal da Vó (demo)",
+      "cuisines": [
+        "brasileira",
+        "caseira"
+      ],
+      "average_price_cents": 2990,
+      "delivery_fee_cents": 590,
+      "eta_min": 25,
+      "eta_max": 35,
+      "item_ids": [
+        "demo-quintal-frango",
+        "demo-quintal-picadinho",
+        "demo-quintal-abobora",
+        "demo-quintal-opcao-1",
+        "demo-quintal-opcao-2"
+      ],
+      "rating": 3.88,
+      "rating_count": 8,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-nori",
+      "name": "Nori Bowl (demo)",
+      "cuisines": [
+        "japonesa",
+        "saudável"
+      ],
+      "average_price_cents": 3170,
+      "delivery_fee_cents": 590,
+      "eta_min": 30,
+      "eta_max": 40,
+      "item_ids": [
+        "demo-nori-atum",
+        "demo-nori-tofu",
+        "demo-nori-temaki",
+        "demo-nori-opcao-1",
+        "demo-nori-opcao-2"
+      ],
+      "rating": 3.88,
+      "rating_count": 8,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-massa",
+      "name": "Pasta do Bairro (demo)",
+      "cuisines": [
+        "italiana"
+      ],
+      "average_price_cents": 3550,
+      "delivery_fee_cents": 590,
+      "eta_min": 35,
+      "eta_max": 45,
+      "item_ids": [
+        "demo-massa-nhoque",
+        "demo-massa-penne",
+        "demo-massa-risoto",
+        "demo-massa-opcao-1",
+        "demo-massa-opcao-2"
+      ],
+      "rating": 3.88,
+      "rating_count": 8,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-brasa",
+      "name": "Brasa & Companhia (demo)",
+      "cuisines": [
+        "churrasco",
+        "brasileira"
+      ],
+      "average_price_cents": 3370,
+      "delivery_fee_cents": 590,
+      "eta_min": 15,
+      "eta_max": 25,
+      "item_ids": [
+        "demo-brasa-alcatra",
+        "demo-brasa-frango",
+        "demo-brasa-legumes",
+        "demo-brasa-opcao-1",
+        "demo-brasa-opcao-2"
+      ],
+      "rating": 3.88,
+      "rating_count": 8,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-curry",
+      "name": "Casa do Curry (demo)",
+      "cuisines": [
+        "indiana",
+        "vegetariana"
+      ],
+      "average_price_cents": 3090,
+      "delivery_fee_cents": 590,
+      "eta_min": 20,
+      "eta_max": 30,
+      "item_ids": [
+        "demo-curry-dal",
+        "demo-curry-paneer",
+        "demo-curry-frango",
+        "demo-curry-opcao-1",
+        "demo-curry-opcao-2"
+      ],
+      "rating": 3.88,
+      "rating_count": 8,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-mex",
+      "name": "Pimenta Mexicana (demo)",
+      "cuisines": [
+        "mexicana"
+      ],
+      "average_price_cents": 2810,
+      "delivery_fee_cents": 590,
+      "eta_min": 25,
+      "eta_max": 35,
+      "item_ids": [
+        "demo-mex-opcao-1",
+        "demo-mex-opcao-2",
+        "demo-mex-opcao-3",
+        "demo-mex-opcao-4",
+        "demo-mex-opcao-5"
+      ],
+      "rating": 4.0,
+      "rating_count": 20,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-arabe",
+      "name": "Cedro Árabe (demo)",
+      "cuisines": [
+        "árabe",
+        "vegetariana"
+      ],
+      "average_price_cents": 2710,
+      "delivery_fee_cents": 590,
+      "eta_min": 30,
+      "eta_max": 40,
+      "item_ids": [
+        "demo-arabe-opcao-1",
+        "demo-arabe-opcao-2",
+        "demo-arabe-opcao-3",
+        "demo-arabe-opcao-4",
+        "demo-arabe-opcao-5"
+      ],
+      "rating": 4.0,
+      "rating_count": 20,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-thai",
+      "name": "Bangkok Express (demo)",
+      "cuisines": [
+        "tailandesa"
+      ],
+      "average_price_cents": 3410,
+      "delivery_fee_cents": 590,
+      "eta_min": 35,
+      "eta_max": 45,
+      "item_ids": [
+        "demo-thai-opcao-1",
+        "demo-thai-opcao-2",
+        "demo-thai-opcao-3",
+        "demo-thai-opcao-4",
+        "demo-thai-opcao-5"
+      ],
+      "rating": 4.0,
+      "rating_count": 20,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-mar",
+      "name": "Sabor do Mar (demo)",
+      "cuisines": [
+        "peixes",
+        "brasileira"
+      ],
+      "average_price_cents": 3970,
+      "delivery_fee_cents": 590,
+      "eta_min": 15,
+      "eta_max": 25,
+      "item_ids": [
+        "demo-mar-opcao-1",
+        "demo-mar-opcao-2",
+        "demo-mar-opcao-3",
+        "demo-mar-opcao-4",
+        "demo-mar-opcao-5"
+      ],
+      "rating": 4.0,
+      "rating_count": 20,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-sertao",
+      "name": "Sertão na Mesa (demo)",
+      "cuisines": [
+        "nordestina",
+        "brasileira"
+      ],
+      "average_price_cents": 2870,
+      "delivery_fee_cents": 590,
+      "eta_min": 20,
+      "eta_max": 30,
+      "item_ids": [
+        "demo-sertao-opcao-1",
+        "demo-sertao-opcao-2",
+        "demo-sertao-opcao-3",
+        "demo-sertao-opcao-4",
+        "demo-sertao-opcao-5"
+      ],
+      "rating": 4.0,
+      "rating_count": 20,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-sopas",
+      "name": "Panela Quente (demo)",
+      "cuisines": [
+        "sopas",
+        "caseira"
+      ],
+      "average_price_cents": 2190,
+      "delivery_fee_cents": 590,
+      "eta_min": 25,
+      "eta_max": 35,
+      "item_ids": [
+        "demo-sopas-opcao-1",
+        "demo-sopas-opcao-2",
+        "demo-sopas-opcao-3",
+        "demo-sopas-opcao-4",
+        "demo-sopas-opcao-5"
+      ],
+      "rating": 4.0,
+      "rating_count": 20,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-salada",
+      "name": "Folha & Grão (demo)",
+      "cuisines": [
+        "saudável",
+        "vegana"
+      ],
+      "average_price_cents": 2670,
+      "delivery_fee_cents": 590,
+      "eta_min": 30,
+      "eta_max": 40,
+      "item_ids": [
+        "demo-salada-opcao-1",
+        "demo-salada-opcao-2",
+        "demo-salada-opcao-3",
+        "demo-salada-opcao-4",
+        "demo-salada-opcao-5"
+      ],
+      "rating": 4.0,
+      "rating_count": 20,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-grelha",
+      "name": "Grelha Leve (demo)",
+      "cuisines": [
+        "saudável",
+        "brasileira"
+      ],
+      "average_price_cents": 2910,
+      "delivery_fee_cents": 590,
+      "eta_min": 35,
+      "eta_max": 45,
+      "item_ids": [
+        "demo-grelha-opcao-1",
+        "demo-grelha-opcao-2",
+        "demo-grelha-opcao-3",
+        "demo-grelha-opcao-4",
+        "demo-grelha-opcao-5"
+      ],
+      "rating": 4.0,
+      "rating_count": 20,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-forneria",
+      "name": "Forneria Central (demo)",
+      "cuisines": [
+        "pizza",
+        "italiana"
+      ],
+      "average_price_cents": 4590,
+      "delivery_fee_cents": 590,
+      "eta_min": 15,
+      "eta_max": 25,
+      "item_ids": [
+        "demo-forneria-opcao-1",
+        "demo-forneria-opcao-2",
+        "demo-forneria-opcao-3",
+        "demo-forneria-opcao-4",
+        "demo-forneria-opcao-5"
+      ],
+      "rating": 4.0,
+      "rating_count": 20,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-sushi",
+      "name": "Sushi Jardim (demo)",
+      "cuisines": [
+        "japonesa"
+      ],
+      "average_price_cents": 3270,
+      "delivery_fee_cents": 590,
+      "eta_min": 20,
+      "eta_max": 30,
+      "item_ids": [
+        "demo-sushi-opcao-1",
+        "demo-sushi-opcao-2",
+        "demo-sushi-opcao-3",
+        "demo-sushi-opcao-4",
+        "demo-sushi-opcao-5"
+      ],
+      "rating": 4.0,
+      "rating_count": 20,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-sanduiche",
+      "name": "Pão da Esquina (demo)",
+      "cuisines": [
+        "sanduíches",
+        "lanches"
+      ],
+      "average_price_cents": 2210,
+      "delivery_fee_cents": 590,
+      "eta_min": 25,
+      "eta_max": 35,
+      "item_ids": [
+        "demo-sanduiche-opcao-1",
+        "demo-sanduiche-opcao-2",
+        "demo-sanduiche-opcao-3",
+        "demo-sanduiche-opcao-4",
+        "demo-sanduiche-opcao-5"
+      ],
+      "rating": 4.0,
+      "rating_count": 20,
+      "simulated": true
+    },
+    {
+      "merchant_id": "demo-mineira",
+      "name": "Fogão Mineiro (demo)",
+      "cuisines": [
+        "mineira",
+        "caseira",
+        "brasileira"
+      ],
+      "average_price_cents": 3030,
+      "delivery_fee_cents": 590,
+      "eta_min": 30,
+      "eta_max": 40,
+      "item_ids": [
+        "demo-mineira-opcao-1",
+        "demo-mineira-opcao-2",
+        "demo-mineira-opcao-3",
+        "demo-mineira-opcao-4",
+        "demo-mineira-opcao-5"
+      ],
+      "rating": 4.0,
+      "rating_count": 20,
+      "simulated": true
+    }
+  ],
+  "reviews": [
+    {
+      "id": "demo-review-1-1",
+      "merchant_id": "demo-cozinha",
+      "item_id": "demo-frango",
+      "user_id": "demo-user-1-1",
+      "rating": 5,
+      "comment": "Frango suculento, pouco óleo e salada fresca. Ótima porção para o almoço.",
+      "created_at": "2026-10-04T12:00:00Z",
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-1-2",
+      "merchant_id": "demo-cozinha",
+      "item_id": "demo-vegetal",
+      "user_id": "demo-user",
+      "rating": 4,
+      "comment": "Comida bem temperada e bom custo-benefício. A entrega atrasou um pouco.",
+      "created_at": "2026-10-05T12:00:00Z",
+      "aspects": {
+        "taste": 4,
+        "delivery": 3,
+        "value_for_money": 4,
+        "portion_size": 4
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-1-3",
+      "merchant_id": "demo-cozinha",
+      "item_id": "demo-carne",
+      "user_id": "demo-user-1-3",
+      "rating": 2,
+      "comment": "Carne salgada e legumes frios. A embalagem veio aberta.",
+      "created_at": "2026-10-06T12:00:00Z",
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-1-4",
+      "merchant_id": "demo-cozinha",
+      "item_id": "demo-frango",
+      "user_id": "demo-user-1-4",
+      "rating": 5,
+      "comment": "Grão-de-bico delicioso e porção generosa. Pedirei novamente.",
+      "created_at": "2026-10-07T12:00:00Z",
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-2-1",
+      "merchant_id": "demo-verde",
+      "item_id": "demo-bowl",
+      "user_id": "demo-user-2-1",
+      "rating": 5,
+      "comment": "Bowl fresco, vegetais crocantes e molho separado. Adorei a opção vegana.",
+      "created_at": "2026-10-05T12:00:00Z",
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-2-2",
+      "merchant_id": "demo-verde",
+      "item_id": "demo-falafel",
+      "user_id": "demo-user",
+      "rating": 4,
+      "comment": "Falafel saboroso e nada oleoso, mas a porção poderia ser maior.",
+      "created_at": "2026-10-06T12:00:00Z",
+      "aspects": {
+        "taste": 4,
+        "delivery": 3,
+        "value_for_money": 3,
+        "portion_size": 3
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-2-3",
+      "merchant_id": "demo-verde",
+      "item_id": "demo-bowl",
+      "user_id": "demo-user-2-3",
+      "rating": 3,
+      "comment": "Ingredientes frescos, porém achei caro pela quantidade.",
+      "created_at": "2026-10-07T12:00:00Z",
+      "aspects": {
+        "taste": 3,
+        "delivery": 3,
+        "value_for_money": 2,
+        "portion_size": 2
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-2-4",
+      "merchant_id": "demo-verde",
+      "item_id": "demo-falafel",
+      "user_id": "demo-user-2-4",
+      "rating": 5,
+      "comment": "Ótima comida vegana, bem temperada e entrega no prazo.",
+      "created_at": "2026-10-08T12:00:00Z",
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-3-1",
+      "merchant_id": "demo-burger",
+      "item_id": "demo-burger-classico",
+      "user_id": "demo-user-3-1",
+      "rating": 5,
+      "comment": "Hambúrguer suculento, queijo derretido e batata crocante.",
+      "created_at": "2026-10-06T12:00:00Z",
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-3-2",
+      "merchant_id": "demo-burger",
+      "item_id": "demo-burger-veggie",
+      "user_id": "demo-user",
+      "rating": 2,
+      "comment": "Muito gorduroso e salgado para meu gosto. Batata chegou murcha.",
+      "created_at": "2026-10-07T12:00:00Z",
+      "aspects": {
+        "taste": 2,
+        "delivery": 1,
+        "value_for_money": 2,
+        "portion_size": 2
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-3-3",
+      "merchant_id": "demo-burger",
+      "item_id": "demo-burger-classico",
+      "user_id": "demo-user-3-3",
+      "rating": 4,
+      "comment": "Bom lanche pelo preço, entrega rápida e embalagem bem fechada.",
+      "created_at": "2026-10-08T12:00:00Z",
+      "aspects": {
+        "taste": 4,
+        "delivery": 4,
+        "value_for_money": 4,
+        "portion_size": 4
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-3-4",
+      "merchant_id": "demo-burger",
+      "item_id": "demo-burger-veggie",
+      "user_id": "demo-user-3-4",
+      "rating": 1,
+      "comment": "Pedi sem cebola e veio com cebola. Lanche chegou frio.",
+      "created_at": "2026-10-09T12:00:00Z",
+      "aspects": {
+        "taste": 1,
+        "delivery": 1,
+        "value_for_money": 1,
+        "portion_size": 1
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-4-1",
+      "merchant_id": "demo-japa",
+      "item_id": "demo-poke",
+      "user_id": "demo-user-4-1",
+      "rating": 5,
+      "comment": "Peixe fresco, arroz no ponto e apresentação caprichada.",
+      "created_at": "2026-10-07T12:00:00Z",
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 5
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-4-2",
+      "merchant_id": "demo-japa",
+      "item_id": "demo-sushi",
+      "user_id": "demo-user",
+      "rating": 4,
+      "comment": "Poke leve e saboroso, mas o preço é alto.",
+      "created_at": "2026-10-08T12:00:00Z",
+      "aspects": {
+        "taste": 4,
+        "delivery": 3,
+        "value_for_money": 3,
+        "portion_size": 4
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-4-3",
+      "merchant_id": "demo-japa",
+      "item_id": "demo-poke",
+      "user_id": "demo-user-4-3",
+      "rating": 2,
+      "comment": "Demorou bastante e o arroz chegou ressecado.",
+      "created_at": "2026-10-09T12:00:00Z",
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 1,
+        "portion_size": 2
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-4-4",
+      "merchant_id": "demo-japa",
+      "item_id": "demo-sushi",
+      "user_id": "demo-user-4-4",
+      "rating": 5,
+      "comment": "Ingredientes frescos, boa porção de peixe e molho separado.",
+      "created_at": "2026-10-10T12:00:00Z",
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 5
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-5-1",
+      "merchant_id": "demo-pizza",
+      "item_id": "demo-margherita",
+      "user_id": "demo-user-5-1",
+      "rating": 5,
+      "comment": "Massa fina, molho saboroso e recheio generoso.",
+      "created_at": "2026-10-08T12:00:00Z",
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-5-2",
+      "merchant_id": "demo-pizza",
+      "item_id": "demo-calabresa",
+      "user_id": "demo-user",
+      "rating": 3,
+      "comment": "Pizza boa, mas chegou morna e com atraso.",
+      "created_at": "2026-10-09T12:00:00Z",
+      "aspects": {
+        "taste": 3,
+        "delivery": 2,
+        "value_for_money": 3,
+        "portion_size": 3
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-5-3",
+      "merchant_id": "demo-pizza",
+      "item_id": "demo-margherita",
+      "user_id": "demo-user-5-3",
+      "rating": 2,
+      "comment": "Muito queijo e óleo, achei pesada e salgada.",
+      "created_at": "2026-10-10T12:00:00Z",
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-5-4",
+      "merchant_id": "demo-pizza",
+      "item_id": "demo-calabresa",
+      "user_id": "demo-user-5-4",
+      "rating": 4,
+      "comment": "Bom custo-benefício para dividir e massa bem assada.",
+      "created_at": "2026-10-11T12:00:00Z",
+      "aspects": {
+        "taste": 4,
+        "delivery": 4,
+        "value_for_money": 4,
+        "portion_size": 4
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-6-1",
+      "merchant_id": "demo-caseira",
+      "item_id": "demo-feijoada",
+      "user_id": "demo-user-6-1",
+      "rating": 5,
+      "comment": "Comida caseira bem temperada, feijão delicioso e porção generosa.",
+      "created_at": "2026-10-09T12:00:00Z",
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-6-2",
+      "merchant_id": "demo-caseira",
+      "item_id": "demo-marmita",
+      "user_id": "demo-user",
+      "rating": 4,
+      "comment": "Bom preço e entrega rápida. Arroz soltinho e carne macia.",
+      "created_at": "2026-10-10T12:00:00Z",
+      "aspects": {
+        "taste": 4,
+        "delivery": 3,
+        "value_for_money": 4,
+        "portion_size": 4
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-6-3",
+      "merchant_id": "demo-caseira",
+      "item_id": "demo-feijoada",
+      "user_id": "demo-user-6-3",
+      "rating": 2,
+      "comment": "Feijoada salgada e gordurosa. Não combinou comigo.",
+      "created_at": "2026-10-11T12:00:00Z",
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      },
+      "simulated": true
+    },
+    {
+      "id": "demo-review-6-4",
+      "merchant_id": "demo-caseira",
+      "item_id": "demo-marmita",
+      "user_id": "demo-user-6-4",
+      "rating": 3,
+      "comment": "Comida gostosa, mas faltou salada e a embalagem vazou.",
+      "created_at": "2026-10-12T12:00:00Z",
+      "aspects": {
+        "taste": 3,
+        "delivery": 3,
+        "value_for_money": 3,
+        "portion_size": 3
+      },
+      "simulated": true
+    },
+    {
+      "id": "extra-demo-cozinha-1",
+      "merchant_id": "demo-cozinha",
+      "item_id": "demo-frango",
+      "user_id": "community-1",
+      "rating": 5,
+      "comment": "Ingredientes frescos e comida com pouco óleo. Entrega no prazo.",
+      "created_at": "2026-10-10T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-cozinha-2",
+      "merchant_id": "demo-cozinha",
+      "item_id": "demo-vegetal",
+      "user_id": "community-2",
+      "rating": 4,
+      "comment": "Boa porção e preço justo. Pedi de novo e gostei do sabor.",
+      "created_at": "2026-10-11T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-cozinha-3",
+      "merchant_id": "demo-cozinha",
+      "item_id": "demo-carne",
+      "user_id": "community-3",
+      "rating": 5,
+      "comment": "Porção generosa, entrega rápida e embalagem bem fechada.",
+      "created_at": "2026-10-12T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-cozinha-4",
+      "merchant_id": "demo-cozinha",
+      "item_id": "demo-tilapia",
+      "user_id": "community-4",
+      "rating": 3,
+      "comment": "Comida saborosa, mas a porção pequena deixou a desejar.",
+      "created_at": "2026-10-13T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-cozinha-5",
+      "merchant_id": "demo-cozinha",
+      "item_id": "demo-frango",
+      "user_id": "community-5",
+      "rating": 2,
+      "comment": "Demorou e chegou ressecado. Achei caro pela quantidade.",
+      "created_at": "2026-10-14T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-cozinha-6",
+      "merchant_id": "demo-cozinha",
+      "item_id": "demo-vegetal",
+      "user_id": "community-6",
+      "rating": 4,
+      "comment": "Tudo fresco, bom custo-benefício e molho separado.",
+      "created_at": "2026-10-15T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-cozinha-7",
+      "merchant_id": "demo-cozinha",
+      "item_id": "demo-carne",
+      "user_id": "community-7",
+      "rating": 5,
+      "comment": "Nada oleoso e muito bem preparado. Boa porção.",
+      "created_at": "2026-10-16T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-cozinha-8",
+      "merchant_id": "demo-cozinha",
+      "item_id": "demo-tilapia",
+      "user_id": "community-8",
+      "rating": 3,
+      "comment": "O sabor estava bom, mas houve atraso na entrega.",
+      "created_at": "2026-10-17T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 2,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "extra-demo-verde-1",
+      "merchant_id": "demo-verde",
+      "item_id": "demo-bowl",
+      "user_id": "community-1",
+      "rating": 5,
+      "comment": "Ingredientes frescos e comida com pouco óleo. Entrega no prazo.",
+      "created_at": "2026-10-10T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-verde-2",
+      "merchant_id": "demo-verde",
+      "item_id": "demo-falafel",
+      "user_id": "community-2",
+      "rating": 4,
+      "comment": "Boa porção e preço justo. Pedi de novo e gostei do sabor.",
+      "created_at": "2026-10-11T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-verde-3",
+      "merchant_id": "demo-verde",
+      "item_id": "demo-escondidinho",
+      "user_id": "community-3",
+      "rating": 5,
+      "comment": "Porção generosa, entrega rápida e embalagem bem fechada.",
+      "created_at": "2026-10-12T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-verde-4",
+      "merchant_id": "demo-verde",
+      "item_id": "demo-bowl",
+      "user_id": "community-4",
+      "rating": 3,
+      "comment": "Comida saborosa, mas a porção pequena deixou a desejar.",
+      "created_at": "2026-10-13T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-verde-5",
+      "merchant_id": "demo-verde",
+      "item_id": "demo-falafel",
+      "user_id": "community-5",
+      "rating": 2,
+      "comment": "Demorou e chegou ressecado. Achei caro pela quantidade.",
+      "created_at": "2026-10-14T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-verde-6",
+      "merchant_id": "demo-verde",
+      "item_id": "demo-escondidinho",
+      "user_id": "community-6",
+      "rating": 4,
+      "comment": "Tudo fresco, bom custo-benefício e molho separado.",
+      "created_at": "2026-10-15T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-verde-7",
+      "merchant_id": "demo-verde",
+      "item_id": "demo-bowl",
+      "user_id": "community-7",
+      "rating": 5,
+      "comment": "Nada oleoso e muito bem preparado. Boa porção.",
+      "created_at": "2026-10-16T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-verde-8",
+      "merchant_id": "demo-verde",
+      "item_id": "demo-falafel",
+      "user_id": "community-8",
+      "rating": 3,
+      "comment": "O sabor estava bom, mas houve atraso na entrega.",
+      "created_at": "2026-10-17T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 2,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "extra-demo-burger-1",
+      "merchant_id": "demo-burger",
+      "item_id": "demo-burger-classico",
+      "user_id": "community-1",
+      "rating": 5,
+      "comment": "Ingredientes frescos e comida com pouco óleo. Entrega no prazo.",
+      "created_at": "2026-10-10T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-burger-2",
+      "merchant_id": "demo-burger",
+      "item_id": "demo-burger-veggie",
+      "user_id": "community-2",
+      "rating": 4,
+      "comment": "Boa porção e preço justo. Pedi de novo e gostei do sabor.",
+      "created_at": "2026-10-11T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-burger-3",
+      "merchant_id": "demo-burger",
+      "item_id": "demo-burger-frango",
+      "user_id": "community-3",
+      "rating": 5,
+      "comment": "Porção generosa, entrega rápida e embalagem bem fechada.",
+      "created_at": "2026-10-12T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-burger-4",
+      "merchant_id": "demo-burger",
+      "item_id": "demo-burger-classico",
+      "user_id": "community-4",
+      "rating": 3,
+      "comment": "Comida saborosa, mas a porção pequena deixou a desejar.",
+      "created_at": "2026-10-13T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-burger-5",
+      "merchant_id": "demo-burger",
+      "item_id": "demo-burger-veggie",
+      "user_id": "community-5",
+      "rating": 2,
+      "comment": "Demorou e chegou ressecado. Achei caro pela quantidade.",
+      "created_at": "2026-10-14T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-burger-6",
+      "merchant_id": "demo-burger",
+      "item_id": "demo-burger-frango",
+      "user_id": "community-6",
+      "rating": 4,
+      "comment": "Tudo fresco, bom custo-benefício e molho separado.",
+      "created_at": "2026-10-15T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-burger-7",
+      "merchant_id": "demo-burger",
+      "item_id": "demo-burger-classico",
+      "user_id": "community-7",
+      "rating": 5,
+      "comment": "Nada oleoso e muito bem preparado. Boa porção.",
+      "created_at": "2026-10-16T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-burger-8",
+      "merchant_id": "demo-burger",
+      "item_id": "demo-burger-veggie",
+      "user_id": "community-8",
+      "rating": 3,
+      "comment": "O sabor estava bom, mas houve atraso na entrega.",
+      "created_at": "2026-10-17T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 2,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "extra-demo-japa-1",
+      "merchant_id": "demo-japa",
+      "item_id": "demo-poke",
+      "user_id": "community-1",
+      "rating": 5,
+      "comment": "Ingredientes frescos e comida com pouco óleo. Entrega no prazo.",
+      "created_at": "2026-10-10T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-japa-2",
+      "merchant_id": "demo-japa",
+      "item_id": "demo-sushi",
+      "user_id": "community-2",
+      "rating": 4,
+      "comment": "Boa porção e preço justo. Pedi de novo e gostei do sabor.",
+      "created_at": "2026-10-11T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-japa-3",
+      "merchant_id": "demo-japa",
+      "item_id": "demo-yakisoba",
+      "user_id": "community-3",
+      "rating": 5,
+      "comment": "Porção generosa, entrega rápida e embalagem bem fechada.",
+      "created_at": "2026-10-12T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-japa-4",
+      "merchant_id": "demo-japa",
+      "item_id": "demo-poke",
+      "user_id": "community-4",
+      "rating": 3,
+      "comment": "Comida saborosa, mas a porção pequena deixou a desejar.",
+      "created_at": "2026-10-13T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-japa-5",
+      "merchant_id": "demo-japa",
+      "item_id": "demo-sushi",
+      "user_id": "community-5",
+      "rating": 2,
+      "comment": "Demorou e chegou ressecado. Achei caro pela quantidade.",
+      "created_at": "2026-10-14T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-japa-6",
+      "merchant_id": "demo-japa",
+      "item_id": "demo-yakisoba",
+      "user_id": "community-6",
+      "rating": 4,
+      "comment": "Tudo fresco, bom custo-benefício e molho separado.",
+      "created_at": "2026-10-15T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-japa-7",
+      "merchant_id": "demo-japa",
+      "item_id": "demo-poke",
+      "user_id": "community-7",
+      "rating": 5,
+      "comment": "Nada oleoso e muito bem preparado. Boa porção.",
+      "created_at": "2026-10-16T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-japa-8",
+      "merchant_id": "demo-japa",
+      "item_id": "demo-sushi",
+      "user_id": "community-8",
+      "rating": 3,
+      "comment": "O sabor estava bom, mas houve atraso na entrega.",
+      "created_at": "2026-10-17T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 2,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "extra-demo-pizza-1",
+      "merchant_id": "demo-pizza",
+      "item_id": "demo-margherita",
+      "user_id": "community-1",
+      "rating": 5,
+      "comment": "Ingredientes frescos e comida com pouco óleo. Entrega no prazo.",
+      "created_at": "2026-10-10T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-pizza-2",
+      "merchant_id": "demo-pizza",
+      "item_id": "demo-calabresa",
+      "user_id": "community-2",
+      "rating": 4,
+      "comment": "Boa porção e preço justo. Pedi de novo e gostei do sabor.",
+      "created_at": "2026-10-11T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-pizza-3",
+      "merchant_id": "demo-pizza",
+      "item_id": "demo-pizza-cogumelos",
+      "user_id": "community-3",
+      "rating": 5,
+      "comment": "Porção generosa, entrega rápida e embalagem bem fechada.",
+      "created_at": "2026-10-12T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-pizza-4",
+      "merchant_id": "demo-pizza",
+      "item_id": "demo-margherita",
+      "user_id": "community-4",
+      "rating": 3,
+      "comment": "Comida saborosa, mas a porção pequena deixou a desejar.",
+      "created_at": "2026-10-13T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-pizza-5",
+      "merchant_id": "demo-pizza",
+      "item_id": "demo-calabresa",
+      "user_id": "community-5",
+      "rating": 2,
+      "comment": "Demorou e chegou ressecado. Achei caro pela quantidade.",
+      "created_at": "2026-10-14T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-pizza-6",
+      "merchant_id": "demo-pizza",
+      "item_id": "demo-pizza-cogumelos",
+      "user_id": "community-6",
+      "rating": 4,
+      "comment": "Tudo fresco, bom custo-benefício e molho separado.",
+      "created_at": "2026-10-15T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-pizza-7",
+      "merchant_id": "demo-pizza",
+      "item_id": "demo-margherita",
+      "user_id": "community-7",
+      "rating": 5,
+      "comment": "Nada oleoso e muito bem preparado. Boa porção.",
+      "created_at": "2026-10-16T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-pizza-8",
+      "merchant_id": "demo-pizza",
+      "item_id": "demo-calabresa",
+      "user_id": "community-8",
+      "rating": 3,
+      "comment": "O sabor estava bom, mas houve atraso na entrega.",
+      "created_at": "2026-10-17T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 2,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "extra-demo-caseira-1",
+      "merchant_id": "demo-caseira",
+      "item_id": "demo-feijoada",
+      "user_id": "community-1",
+      "rating": 5,
+      "comment": "Ingredientes frescos e comida com pouco óleo. Entrega no prazo.",
+      "created_at": "2026-10-10T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-caseira-2",
+      "merchant_id": "demo-caseira",
+      "item_id": "demo-marmita",
+      "user_id": "community-2",
+      "rating": 4,
+      "comment": "Boa porção e preço justo. Pedi de novo e gostei do sabor.",
+      "created_at": "2026-10-11T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-caseira-3",
+      "merchant_id": "demo-caseira",
+      "item_id": "demo-omelete",
+      "user_id": "community-3",
+      "rating": 5,
+      "comment": "Porção generosa, entrega rápida e embalagem bem fechada.",
+      "created_at": "2026-10-12T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-caseira-4",
+      "merchant_id": "demo-caseira",
+      "item_id": "demo-feijoada",
+      "user_id": "community-4",
+      "rating": 3,
+      "comment": "Comida saborosa, mas a porção pequena deixou a desejar.",
+      "created_at": "2026-10-13T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-caseira-5",
+      "merchant_id": "demo-caseira",
+      "item_id": "demo-marmita",
+      "user_id": "community-5",
+      "rating": 2,
+      "comment": "Demorou e chegou ressecado. Achei caro pela quantidade.",
+      "created_at": "2026-10-14T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-caseira-6",
+      "merchant_id": "demo-caseira",
+      "item_id": "demo-omelete",
+      "user_id": "community-6",
+      "rating": 4,
+      "comment": "Tudo fresco, bom custo-benefício e molho separado.",
+      "created_at": "2026-10-15T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-caseira-7",
+      "merchant_id": "demo-caseira",
+      "item_id": "demo-feijoada",
+      "user_id": "community-7",
+      "rating": 5,
+      "comment": "Nada oleoso e muito bem preparado. Boa porção.",
+      "created_at": "2026-10-16T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-caseira-8",
+      "merchant_id": "demo-caseira",
+      "item_id": "demo-marmita",
+      "user_id": "community-8",
+      "rating": 3,
+      "comment": "O sabor estava bom, mas houve atraso na entrega.",
+      "created_at": "2026-10-17T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 2,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "extra-demo-horta-1",
+      "merchant_id": "demo-horta",
+      "item_id": "demo-horta-bowl",
+      "user_id": "community-1",
+      "rating": 5,
+      "comment": "Ingredientes frescos e comida com pouco óleo. Entrega no prazo.",
+      "created_at": "2026-10-10T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-horta-2",
+      "merchant_id": "demo-horta",
+      "item_id": "demo-horta-curry",
+      "user_id": "community-2",
+      "rating": 4,
+      "comment": "Boa porção e preço justo. Pedi de novo e gostei do sabor.",
+      "created_at": "2026-10-11T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-horta-3",
+      "merchant_id": "demo-horta",
+      "item_id": "demo-horta-salada",
+      "user_id": "community-3",
+      "rating": 5,
+      "comment": "Porção generosa, entrega rápida e embalagem bem fechada.",
+      "created_at": "2026-10-12T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-horta-4",
+      "merchant_id": "demo-horta",
+      "item_id": "demo-horta-bowl",
+      "user_id": "community-4",
+      "rating": 3,
+      "comment": "Comida saborosa, mas a porção pequena deixou a desejar.",
+      "created_at": "2026-10-13T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-horta-5",
+      "merchant_id": "demo-horta",
+      "item_id": "demo-horta-curry",
+      "user_id": "community-5",
+      "rating": 2,
+      "comment": "Demorou e chegou ressecado. Achei caro pela quantidade.",
+      "created_at": "2026-10-14T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-horta-6",
+      "merchant_id": "demo-horta",
+      "item_id": "demo-horta-salada",
+      "user_id": "community-6",
+      "rating": 4,
+      "comment": "Tudo fresco, bom custo-benefício e molho separado.",
+      "created_at": "2026-10-15T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-horta-7",
+      "merchant_id": "demo-horta",
+      "item_id": "demo-horta-bowl",
+      "user_id": "community-7",
+      "rating": 5,
+      "comment": "Nada oleoso e muito bem preparado. Boa porção.",
+      "created_at": "2026-10-16T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-horta-8",
+      "merchant_id": "demo-horta",
+      "item_id": "demo-horta-curry",
+      "user_id": "community-8",
+      "rating": 3,
+      "comment": "O sabor estava bom, mas houve atraso na entrega.",
+      "created_at": "2026-10-17T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 2,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "extra-demo-quintal-1",
+      "merchant_id": "demo-quintal",
+      "item_id": "demo-quintal-frango",
+      "user_id": "community-1",
+      "rating": 5,
+      "comment": "Ingredientes frescos e comida com pouco óleo. Entrega no prazo.",
+      "created_at": "2026-10-10T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-quintal-2",
+      "merchant_id": "demo-quintal",
+      "item_id": "demo-quintal-picadinho",
+      "user_id": "community-2",
+      "rating": 4,
+      "comment": "Boa porção e preço justo. Pedi de novo e gostei do sabor.",
+      "created_at": "2026-10-11T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-quintal-3",
+      "merchant_id": "demo-quintal",
+      "item_id": "demo-quintal-abobora",
+      "user_id": "community-3",
+      "rating": 5,
+      "comment": "Porção generosa, entrega rápida e embalagem bem fechada.",
+      "created_at": "2026-10-12T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-quintal-4",
+      "merchant_id": "demo-quintal",
+      "item_id": "demo-quintal-frango",
+      "user_id": "community-4",
+      "rating": 3,
+      "comment": "Comida saborosa, mas a porção pequena deixou a desejar.",
+      "created_at": "2026-10-13T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-quintal-5",
+      "merchant_id": "demo-quintal",
+      "item_id": "demo-quintal-picadinho",
+      "user_id": "community-5",
+      "rating": 2,
+      "comment": "Demorou e chegou ressecado. Achei caro pela quantidade.",
+      "created_at": "2026-10-14T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-quintal-6",
+      "merchant_id": "demo-quintal",
+      "item_id": "demo-quintal-abobora",
+      "user_id": "community-6",
+      "rating": 4,
+      "comment": "Tudo fresco, bom custo-benefício e molho separado.",
+      "created_at": "2026-10-15T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-quintal-7",
+      "merchant_id": "demo-quintal",
+      "item_id": "demo-quintal-frango",
+      "user_id": "community-7",
+      "rating": 5,
+      "comment": "Nada oleoso e muito bem preparado. Boa porção.",
+      "created_at": "2026-10-16T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-quintal-8",
+      "merchant_id": "demo-quintal",
+      "item_id": "demo-quintal-picadinho",
+      "user_id": "community-8",
+      "rating": 3,
+      "comment": "O sabor estava bom, mas houve atraso na entrega.",
+      "created_at": "2026-10-17T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 2,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "extra-demo-nori-1",
+      "merchant_id": "demo-nori",
+      "item_id": "demo-nori-atum",
+      "user_id": "community-1",
+      "rating": 5,
+      "comment": "Ingredientes frescos e comida com pouco óleo. Entrega no prazo.",
+      "created_at": "2026-10-10T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-nori-2",
+      "merchant_id": "demo-nori",
+      "item_id": "demo-nori-tofu",
+      "user_id": "community-2",
+      "rating": 4,
+      "comment": "Boa porção e preço justo. Pedi de novo e gostei do sabor.",
+      "created_at": "2026-10-11T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-nori-3",
+      "merchant_id": "demo-nori",
+      "item_id": "demo-nori-temaki",
+      "user_id": "community-3",
+      "rating": 5,
+      "comment": "Porção generosa, entrega rápida e embalagem bem fechada.",
+      "created_at": "2026-10-12T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-nori-4",
+      "merchant_id": "demo-nori",
+      "item_id": "demo-nori-atum",
+      "user_id": "community-4",
+      "rating": 3,
+      "comment": "Comida saborosa, mas a porção pequena deixou a desejar.",
+      "created_at": "2026-10-13T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-nori-5",
+      "merchant_id": "demo-nori",
+      "item_id": "demo-nori-tofu",
+      "user_id": "community-5",
+      "rating": 2,
+      "comment": "Demorou e chegou ressecado. Achei caro pela quantidade.",
+      "created_at": "2026-10-14T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-nori-6",
+      "merchant_id": "demo-nori",
+      "item_id": "demo-nori-temaki",
+      "user_id": "community-6",
+      "rating": 4,
+      "comment": "Tudo fresco, bom custo-benefício e molho separado.",
+      "created_at": "2026-10-15T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-nori-7",
+      "merchant_id": "demo-nori",
+      "item_id": "demo-nori-atum",
+      "user_id": "community-7",
+      "rating": 5,
+      "comment": "Nada oleoso e muito bem preparado. Boa porção.",
+      "created_at": "2026-10-16T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-nori-8",
+      "merchant_id": "demo-nori",
+      "item_id": "demo-nori-tofu",
+      "user_id": "community-8",
+      "rating": 3,
+      "comment": "O sabor estava bom, mas houve atraso na entrega.",
+      "created_at": "2026-10-17T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 2,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "extra-demo-massa-1",
+      "merchant_id": "demo-massa",
+      "item_id": "demo-massa-nhoque",
+      "user_id": "community-1",
+      "rating": 5,
+      "comment": "Ingredientes frescos e comida com pouco óleo. Entrega no prazo.",
+      "created_at": "2026-10-10T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-massa-2",
+      "merchant_id": "demo-massa",
+      "item_id": "demo-massa-penne",
+      "user_id": "community-2",
+      "rating": 4,
+      "comment": "Boa porção e preço justo. Pedi de novo e gostei do sabor.",
+      "created_at": "2026-10-11T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-massa-3",
+      "merchant_id": "demo-massa",
+      "item_id": "demo-massa-risoto",
+      "user_id": "community-3",
+      "rating": 5,
+      "comment": "Porção generosa, entrega rápida e embalagem bem fechada.",
+      "created_at": "2026-10-12T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-massa-4",
+      "merchant_id": "demo-massa",
+      "item_id": "demo-massa-nhoque",
+      "user_id": "community-4",
+      "rating": 3,
+      "comment": "Comida saborosa, mas a porção pequena deixou a desejar.",
+      "created_at": "2026-10-13T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-massa-5",
+      "merchant_id": "demo-massa",
+      "item_id": "demo-massa-penne",
+      "user_id": "community-5",
+      "rating": 2,
+      "comment": "Demorou e chegou ressecado. Achei caro pela quantidade.",
+      "created_at": "2026-10-14T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-massa-6",
+      "merchant_id": "demo-massa",
+      "item_id": "demo-massa-risoto",
+      "user_id": "community-6",
+      "rating": 4,
+      "comment": "Tudo fresco, bom custo-benefício e molho separado.",
+      "created_at": "2026-10-15T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-massa-7",
+      "merchant_id": "demo-massa",
+      "item_id": "demo-massa-nhoque",
+      "user_id": "community-7",
+      "rating": 5,
+      "comment": "Nada oleoso e muito bem preparado. Boa porção.",
+      "created_at": "2026-10-16T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-massa-8",
+      "merchant_id": "demo-massa",
+      "item_id": "demo-massa-penne",
+      "user_id": "community-8",
+      "rating": 3,
+      "comment": "O sabor estava bom, mas houve atraso na entrega.",
+      "created_at": "2026-10-17T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 2,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "extra-demo-brasa-1",
+      "merchant_id": "demo-brasa",
+      "item_id": "demo-brasa-alcatra",
+      "user_id": "community-1",
+      "rating": 5,
+      "comment": "Ingredientes frescos e comida com pouco óleo. Entrega no prazo.",
+      "created_at": "2026-10-10T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-brasa-2",
+      "merchant_id": "demo-brasa",
+      "item_id": "demo-brasa-frango",
+      "user_id": "community-2",
+      "rating": 4,
+      "comment": "Boa porção e preço justo. Pedi de novo e gostei do sabor.",
+      "created_at": "2026-10-11T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-brasa-3",
+      "merchant_id": "demo-brasa",
+      "item_id": "demo-brasa-legumes",
+      "user_id": "community-3",
+      "rating": 5,
+      "comment": "Porção generosa, entrega rápida e embalagem bem fechada.",
+      "created_at": "2026-10-12T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-brasa-4",
+      "merchant_id": "demo-brasa",
+      "item_id": "demo-brasa-alcatra",
+      "user_id": "community-4",
+      "rating": 3,
+      "comment": "Comida saborosa, mas a porção pequena deixou a desejar.",
+      "created_at": "2026-10-13T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-brasa-5",
+      "merchant_id": "demo-brasa",
+      "item_id": "demo-brasa-frango",
+      "user_id": "community-5",
+      "rating": 2,
+      "comment": "Demorou e chegou ressecado. Achei caro pela quantidade.",
+      "created_at": "2026-10-14T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-brasa-6",
+      "merchant_id": "demo-brasa",
+      "item_id": "demo-brasa-legumes",
+      "user_id": "community-6",
+      "rating": 4,
+      "comment": "Tudo fresco, bom custo-benefício e molho separado.",
+      "created_at": "2026-10-15T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-brasa-7",
+      "merchant_id": "demo-brasa",
+      "item_id": "demo-brasa-alcatra",
+      "user_id": "community-7",
+      "rating": 5,
+      "comment": "Nada oleoso e muito bem preparado. Boa porção.",
+      "created_at": "2026-10-16T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-brasa-8",
+      "merchant_id": "demo-brasa",
+      "item_id": "demo-brasa-frango",
+      "user_id": "community-8",
+      "rating": 3,
+      "comment": "O sabor estava bom, mas houve atraso na entrega.",
+      "created_at": "2026-10-17T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 2,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "extra-demo-curry-1",
+      "merchant_id": "demo-curry",
+      "item_id": "demo-curry-dal",
+      "user_id": "community-1",
+      "rating": 5,
+      "comment": "Ingredientes frescos e comida com pouco óleo. Entrega no prazo.",
+      "created_at": "2026-10-10T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-curry-2",
+      "merchant_id": "demo-curry",
+      "item_id": "demo-curry-paneer",
+      "user_id": "community-2",
+      "rating": 4,
+      "comment": "Boa porção e preço justo. Pedi de novo e gostei do sabor.",
+      "created_at": "2026-10-11T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-curry-3",
+      "merchant_id": "demo-curry",
+      "item_id": "demo-curry-frango",
+      "user_id": "community-3",
+      "rating": 5,
+      "comment": "Porção generosa, entrega rápida e embalagem bem fechada.",
+      "created_at": "2026-10-12T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-curry-4",
+      "merchant_id": "demo-curry",
+      "item_id": "demo-curry-dal",
+      "user_id": "community-4",
+      "rating": 3,
+      "comment": "Comida saborosa, mas a porção pequena deixou a desejar.",
+      "created_at": "2026-10-13T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-curry-5",
+      "merchant_id": "demo-curry",
+      "item_id": "demo-curry-paneer",
+      "user_id": "community-5",
+      "rating": 2,
+      "comment": "Demorou e chegou ressecado. Achei caro pela quantidade.",
+      "created_at": "2026-10-14T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "extra-demo-curry-6",
+      "merchant_id": "demo-curry",
+      "item_id": "demo-curry-frango",
+      "user_id": "community-6",
+      "rating": 4,
+      "comment": "Tudo fresco, bom custo-benefício e molho separado.",
+      "created_at": "2026-10-15T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "extra-demo-curry-7",
+      "merchant_id": "demo-curry",
+      "item_id": "demo-curry-dal",
+      "user_id": "community-7",
+      "rating": 5,
+      "comment": "Nada oleoso e muito bem preparado. Boa porção.",
+      "created_at": "2026-10-16T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "extra-demo-curry-8",
+      "merchant_id": "demo-curry",
+      "item_id": "demo-curry-paneer",
+      "user_id": "community-8",
+      "rating": 3,
+      "comment": "O sabor estava bom, mas houve atraso na entrega.",
+      "created_at": "2026-10-17T12:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 2,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-mex-1",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-1",
+      "user_id": "community-expanded-1",
+      "rating": 5,
+      "comment": "Burrito de frango: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mex-2",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-2",
+      "user_id": "community-expanded-2",
+      "rating": 4,
+      "comment": "Tacos de carne: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mex-3",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-3",
+      "user_id": "community-expanded-3",
+      "rating": 5,
+      "comment": "Burrito de feijão: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mex-4",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-4",
+      "user_id": "community-expanded-4",
+      "rating": 3,
+      "comment": "Quesadilla de queijo: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-04T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-mex-5",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-5",
+      "user_id": "community-expanded-5",
+      "rating": 2,
+      "comment": "Nachos completos: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-05T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-mex-6",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-1",
+      "user_id": "community-expanded-6",
+      "rating": 4,
+      "comment": "Burrito de frango: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-06T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mex-7",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-2",
+      "user_id": "community-expanded-7",
+      "rating": 5,
+      "comment": "Tacos de carne: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-07T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mex-8",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-3",
+      "user_id": "community-expanded-8",
+      "rating": 3,
+      "comment": "Burrito de feijão: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-08T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-mex-9",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-4",
+      "user_id": "community-expanded-9",
+      "rating": 4,
+      "comment": "Quesadilla de queijo: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-09T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mex-10",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-5",
+      "user_id": "community-expanded-10",
+      "rating": 5,
+      "comment": "Nachos completos: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-10T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mex-11",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-1",
+      "user_id": "community-expanded-11",
+      "rating": 5,
+      "comment": "Burrito de frango: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-11T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mex-12",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-2",
+      "user_id": "community-expanded-12",
+      "rating": 4,
+      "comment": "Tacos de carne: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-12T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mex-13",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-3",
+      "user_id": "community-expanded-13",
+      "rating": 5,
+      "comment": "Burrito de feijão: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-13T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mex-14",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-4",
+      "user_id": "community-expanded-14",
+      "rating": 3,
+      "comment": "Quesadilla de queijo: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-14T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-mex-15",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-5",
+      "user_id": "community-expanded-15",
+      "rating": 2,
+      "comment": "Nachos completos: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-15T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-mex-16",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-1",
+      "user_id": "community-expanded-16",
+      "rating": 4,
+      "comment": "Burrito de frango: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-16T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mex-17",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-2",
+      "user_id": "community-expanded-17",
+      "rating": 5,
+      "comment": "Tacos de carne: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-17T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mex-18",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-3",
+      "user_id": "community-expanded-18",
+      "rating": 3,
+      "comment": "Burrito de feijão: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-mex-19",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-4",
+      "user_id": "community-expanded-19",
+      "rating": 4,
+      "comment": "Quesadilla de queijo: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mex-20",
+      "merchant_id": "demo-mex",
+      "item_id": "demo-mex-opcao-5",
+      "user_id": "community-expanded-20",
+      "rating": 5,
+      "comment": "Nachos completos: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-1",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-1",
+      "user_id": "community-expanded-1",
+      "rating": 5,
+      "comment": "Shawarma de frango: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-2",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-2",
+      "user_id": "community-expanded-2",
+      "rating": 4,
+      "comment": "Kafta com arroz: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-3",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-3",
+      "user_id": "community-expanded-3",
+      "rating": 5,
+      "comment": "Falafel no pão: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-4",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-4",
+      "user_id": "community-expanded-4",
+      "rating": 3,
+      "comment": "Quibe assado: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-04T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-5",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-5",
+      "user_id": "community-expanded-5",
+      "rating": 2,
+      "comment": "Prato de homus: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-05T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-6",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-1",
+      "user_id": "community-expanded-6",
+      "rating": 4,
+      "comment": "Shawarma de frango: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-06T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-7",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-2",
+      "user_id": "community-expanded-7",
+      "rating": 5,
+      "comment": "Kafta com arroz: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-07T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-8",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-3",
+      "user_id": "community-expanded-8",
+      "rating": 3,
+      "comment": "Falafel no pão: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-08T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-9",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-4",
+      "user_id": "community-expanded-9",
+      "rating": 4,
+      "comment": "Quibe assado: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-09T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-10",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-5",
+      "user_id": "community-expanded-10",
+      "rating": 5,
+      "comment": "Prato de homus: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-10T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-11",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-1",
+      "user_id": "community-expanded-11",
+      "rating": 5,
+      "comment": "Shawarma de frango: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-11T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-12",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-2",
+      "user_id": "community-expanded-12",
+      "rating": 4,
+      "comment": "Kafta com arroz: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-12T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-13",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-3",
+      "user_id": "community-expanded-13",
+      "rating": 5,
+      "comment": "Falafel no pão: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-13T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-14",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-4",
+      "user_id": "community-expanded-14",
+      "rating": 3,
+      "comment": "Quibe assado: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-14T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-15",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-5",
+      "user_id": "community-expanded-15",
+      "rating": 2,
+      "comment": "Prato de homus: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-15T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-16",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-1",
+      "user_id": "community-expanded-16",
+      "rating": 4,
+      "comment": "Shawarma de frango: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-16T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-17",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-2",
+      "user_id": "community-expanded-17",
+      "rating": 5,
+      "comment": "Kafta com arroz: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-17T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-18",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-3",
+      "user_id": "community-expanded-18",
+      "rating": 3,
+      "comment": "Falafel no pão: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-19",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-4",
+      "user_id": "community-expanded-19",
+      "rating": 4,
+      "comment": "Quibe assado: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-arabe-20",
+      "merchant_id": "demo-arabe",
+      "item_id": "demo-arabe-opcao-5",
+      "user_id": "community-expanded-20",
+      "rating": 5,
+      "comment": "Prato de homus: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-thai-1",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-1",
+      "user_id": "community-expanded-1",
+      "rating": 5,
+      "comment": "Pad thai de frango: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-thai-2",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-2",
+      "user_id": "community-expanded-2",
+      "rating": 4,
+      "comment": "Curry verde de tofu: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-thai-3",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-3",
+      "user_id": "community-expanded-3",
+      "rating": 5,
+      "comment": "Arroz com camarão: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-thai-4",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-4",
+      "user_id": "community-expanded-4",
+      "rating": 3,
+      "comment": "Frango com manjericão: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-04T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-thai-5",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-5",
+      "user_id": "community-expanded-5",
+      "rating": 2,
+      "comment": "Legumes ao curry: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-05T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-thai-6",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-1",
+      "user_id": "community-expanded-6",
+      "rating": 4,
+      "comment": "Pad thai de frango: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-06T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-thai-7",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-2",
+      "user_id": "community-expanded-7",
+      "rating": 5,
+      "comment": "Curry verde de tofu: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-07T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-thai-8",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-3",
+      "user_id": "community-expanded-8",
+      "rating": 3,
+      "comment": "Arroz com camarão: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-08T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-thai-9",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-4",
+      "user_id": "community-expanded-9",
+      "rating": 4,
+      "comment": "Frango com manjericão: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-09T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-thai-10",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-5",
+      "user_id": "community-expanded-10",
+      "rating": 5,
+      "comment": "Legumes ao curry: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-10T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-thai-11",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-1",
+      "user_id": "community-expanded-11",
+      "rating": 5,
+      "comment": "Pad thai de frango: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-11T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-thai-12",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-2",
+      "user_id": "community-expanded-12",
+      "rating": 4,
+      "comment": "Curry verde de tofu: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-12T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-thai-13",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-3",
+      "user_id": "community-expanded-13",
+      "rating": 5,
+      "comment": "Arroz com camarão: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-13T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-thai-14",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-4",
+      "user_id": "community-expanded-14",
+      "rating": 3,
+      "comment": "Frango com manjericão: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-14T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-thai-15",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-5",
+      "user_id": "community-expanded-15",
+      "rating": 2,
+      "comment": "Legumes ao curry: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-15T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-thai-16",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-1",
+      "user_id": "community-expanded-16",
+      "rating": 4,
+      "comment": "Pad thai de frango: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-16T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-thai-17",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-2",
+      "user_id": "community-expanded-17",
+      "rating": 5,
+      "comment": "Curry verde de tofu: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-17T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-thai-18",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-3",
+      "user_id": "community-expanded-18",
+      "rating": 3,
+      "comment": "Arroz com camarão: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-thai-19",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-4",
+      "user_id": "community-expanded-19",
+      "rating": 4,
+      "comment": "Frango com manjericão: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-thai-20",
+      "merchant_id": "demo-thai",
+      "item_id": "demo-thai-opcao-5",
+      "user_id": "community-expanded-20",
+      "rating": 5,
+      "comment": "Legumes ao curry: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mar-1",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-1",
+      "user_id": "community-expanded-1",
+      "rating": 5,
+      "comment": "Tilápia com purê: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mar-2",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-2",
+      "user_id": "community-expanded-2",
+      "rating": 4,
+      "comment": "Moqueca de peixe: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mar-3",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-3",
+      "user_id": "community-expanded-3",
+      "rating": 5,
+      "comment": "Camarão com arroz: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mar-4",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-4",
+      "user_id": "community-expanded-4",
+      "rating": 3,
+      "comment": "Peixe empanado: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-04T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-mar-5",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-5",
+      "user_id": "community-expanded-5",
+      "rating": 2,
+      "comment": "Salmão com quinoa: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-05T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-mar-6",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-1",
+      "user_id": "community-expanded-6",
+      "rating": 4,
+      "comment": "Tilápia com purê: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-06T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mar-7",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-2",
+      "user_id": "community-expanded-7",
+      "rating": 5,
+      "comment": "Moqueca de peixe: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-07T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mar-8",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-3",
+      "user_id": "community-expanded-8",
+      "rating": 3,
+      "comment": "Camarão com arroz: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-08T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-mar-9",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-4",
+      "user_id": "community-expanded-9",
+      "rating": 4,
+      "comment": "Peixe empanado: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-09T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mar-10",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-5",
+      "user_id": "community-expanded-10",
+      "rating": 5,
+      "comment": "Salmão com quinoa: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-10T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mar-11",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-1",
+      "user_id": "community-expanded-11",
+      "rating": 5,
+      "comment": "Tilápia com purê: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-11T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mar-12",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-2",
+      "user_id": "community-expanded-12",
+      "rating": 4,
+      "comment": "Moqueca de peixe: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-12T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mar-13",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-3",
+      "user_id": "community-expanded-13",
+      "rating": 5,
+      "comment": "Camarão com arroz: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-13T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mar-14",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-4",
+      "user_id": "community-expanded-14",
+      "rating": 3,
+      "comment": "Peixe empanado: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-14T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-mar-15",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-5",
+      "user_id": "community-expanded-15",
+      "rating": 2,
+      "comment": "Salmão com quinoa: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-15T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-mar-16",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-1",
+      "user_id": "community-expanded-16",
+      "rating": 4,
+      "comment": "Tilápia com purê: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-16T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mar-17",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-2",
+      "user_id": "community-expanded-17",
+      "rating": 5,
+      "comment": "Moqueca de peixe: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-17T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mar-18",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-3",
+      "user_id": "community-expanded-18",
+      "rating": 3,
+      "comment": "Camarão com arroz: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-mar-19",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-4",
+      "user_id": "community-expanded-19",
+      "rating": 4,
+      "comment": "Peixe empanado: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mar-20",
+      "merchant_id": "demo-mar",
+      "item_id": "demo-mar-opcao-5",
+      "user_id": "community-expanded-20",
+      "rating": 5,
+      "comment": "Salmão com quinoa: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-1",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-1",
+      "user_id": "community-expanded-1",
+      "rating": 5,
+      "comment": "Baião de dois: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-2",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-2",
+      "user_id": "community-expanded-2",
+      "rating": 4,
+      "comment": "Escondidinho de carne-seca: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-3",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-3",
+      "user_id": "community-expanded-3",
+      "rating": 5,
+      "comment": "Cuscuz com ovo: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-4",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-4",
+      "user_id": "community-expanded-4",
+      "rating": 3,
+      "comment": "Carne de sol: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-04T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-5",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-5",
+      "user_id": "community-expanded-5",
+      "rating": 2,
+      "comment": "Tapioca de frango: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-05T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-6",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-1",
+      "user_id": "community-expanded-6",
+      "rating": 4,
+      "comment": "Baião de dois: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-06T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-7",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-2",
+      "user_id": "community-expanded-7",
+      "rating": 5,
+      "comment": "Escondidinho de carne-seca: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-07T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-8",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-3",
+      "user_id": "community-expanded-8",
+      "rating": 3,
+      "comment": "Cuscuz com ovo: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-08T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-9",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-4",
+      "user_id": "community-expanded-9",
+      "rating": 4,
+      "comment": "Carne de sol: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-09T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-10",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-5",
+      "user_id": "community-expanded-10",
+      "rating": 5,
+      "comment": "Tapioca de frango: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-10T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-11",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-1",
+      "user_id": "community-expanded-11",
+      "rating": 5,
+      "comment": "Baião de dois: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-11T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-12",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-2",
+      "user_id": "community-expanded-12",
+      "rating": 4,
+      "comment": "Escondidinho de carne-seca: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-12T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-13",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-3",
+      "user_id": "community-expanded-13",
+      "rating": 5,
+      "comment": "Cuscuz com ovo: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-13T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-14",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-4",
+      "user_id": "community-expanded-14",
+      "rating": 3,
+      "comment": "Carne de sol: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-14T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-15",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-5",
+      "user_id": "community-expanded-15",
+      "rating": 2,
+      "comment": "Tapioca de frango: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-15T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-16",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-1",
+      "user_id": "community-expanded-16",
+      "rating": 4,
+      "comment": "Baião de dois: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-16T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-17",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-2",
+      "user_id": "community-expanded-17",
+      "rating": 5,
+      "comment": "Escondidinho de carne-seca: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-17T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-18",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-3",
+      "user_id": "community-expanded-18",
+      "rating": 3,
+      "comment": "Cuscuz com ovo: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-19",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-4",
+      "user_id": "community-expanded-19",
+      "rating": 4,
+      "comment": "Carne de sol: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sertao-20",
+      "merchant_id": "demo-sertao",
+      "item_id": "demo-sertao-opcao-5",
+      "user_id": "community-expanded-20",
+      "rating": 5,
+      "comment": "Tapioca de frango: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-1",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-1",
+      "user_id": "community-expanded-1",
+      "rating": 5,
+      "comment": "Sopa de legumes: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-2",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-2",
+      "user_id": "community-expanded-2",
+      "rating": 4,
+      "comment": "Canja de frango: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-3",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-3",
+      "user_id": "community-expanded-3",
+      "rating": 5,
+      "comment": "Creme de abóbora: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-4",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-4",
+      "user_id": "community-expanded-4",
+      "rating": 3,
+      "comment": "Caldo de feijão: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-04T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-5",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-5",
+      "user_id": "community-expanded-5",
+      "rating": 2,
+      "comment": "Sopa de lentilhas: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-05T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-6",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-1",
+      "user_id": "community-expanded-6",
+      "rating": 4,
+      "comment": "Sopa de legumes: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-06T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-7",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-2",
+      "user_id": "community-expanded-7",
+      "rating": 5,
+      "comment": "Canja de frango: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-07T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-8",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-3",
+      "user_id": "community-expanded-8",
+      "rating": 3,
+      "comment": "Creme de abóbora: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-08T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-9",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-4",
+      "user_id": "community-expanded-9",
+      "rating": 4,
+      "comment": "Caldo de feijão: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-09T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-10",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-5",
+      "user_id": "community-expanded-10",
+      "rating": 5,
+      "comment": "Sopa de lentilhas: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-10T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-11",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-1",
+      "user_id": "community-expanded-11",
+      "rating": 5,
+      "comment": "Sopa de legumes: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-11T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-12",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-2",
+      "user_id": "community-expanded-12",
+      "rating": 4,
+      "comment": "Canja de frango: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-12T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-13",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-3",
+      "user_id": "community-expanded-13",
+      "rating": 5,
+      "comment": "Creme de abóbora: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-13T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-14",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-4",
+      "user_id": "community-expanded-14",
+      "rating": 3,
+      "comment": "Caldo de feijão: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-14T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-15",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-5",
+      "user_id": "community-expanded-15",
+      "rating": 2,
+      "comment": "Sopa de lentilhas: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-15T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-16",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-1",
+      "user_id": "community-expanded-16",
+      "rating": 4,
+      "comment": "Sopa de legumes: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-16T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-17",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-2",
+      "user_id": "community-expanded-17",
+      "rating": 5,
+      "comment": "Canja de frango: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-17T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-18",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-3",
+      "user_id": "community-expanded-18",
+      "rating": 3,
+      "comment": "Creme de abóbora: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-19",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-4",
+      "user_id": "community-expanded-19",
+      "rating": 4,
+      "comment": "Caldo de feijão: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sopas-20",
+      "merchant_id": "demo-sopas",
+      "item_id": "demo-sopas-opcao-5",
+      "user_id": "community-expanded-20",
+      "rating": 5,
+      "comment": "Sopa de lentilhas: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-salada-1",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-1",
+      "user_id": "community-expanded-1",
+      "rating": 5,
+      "comment": "Bowl de falafel: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-salada-2",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-2",
+      "user_id": "community-expanded-2",
+      "rating": 4,
+      "comment": "Salada de quinoa: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-salada-3",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-3",
+      "user_id": "community-expanded-3",
+      "rating": 5,
+      "comment": "Bowl de batata-doce: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-salada-4",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-4",
+      "user_id": "community-expanded-4",
+      "rating": 3,
+      "comment": "Wrap de vegetais: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-04T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-salada-5",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-5",
+      "user_id": "community-expanded-5",
+      "rating": 2,
+      "comment": "Arroz com cogumelos: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-05T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-salada-6",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-1",
+      "user_id": "community-expanded-6",
+      "rating": 4,
+      "comment": "Bowl de falafel: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-06T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-salada-7",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-2",
+      "user_id": "community-expanded-7",
+      "rating": 5,
+      "comment": "Salada de quinoa: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-07T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-salada-8",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-3",
+      "user_id": "community-expanded-8",
+      "rating": 3,
+      "comment": "Bowl de batata-doce: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-08T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-salada-9",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-4",
+      "user_id": "community-expanded-9",
+      "rating": 4,
+      "comment": "Wrap de vegetais: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-09T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-salada-10",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-5",
+      "user_id": "community-expanded-10",
+      "rating": 5,
+      "comment": "Arroz com cogumelos: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-10T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-salada-11",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-1",
+      "user_id": "community-expanded-11",
+      "rating": 5,
+      "comment": "Bowl de falafel: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-11T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-salada-12",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-2",
+      "user_id": "community-expanded-12",
+      "rating": 4,
+      "comment": "Salada de quinoa: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-12T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-salada-13",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-3",
+      "user_id": "community-expanded-13",
+      "rating": 5,
+      "comment": "Bowl de batata-doce: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-13T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-salada-14",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-4",
+      "user_id": "community-expanded-14",
+      "rating": 3,
+      "comment": "Wrap de vegetais: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-14T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-salada-15",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-5",
+      "user_id": "community-expanded-15",
+      "rating": 2,
+      "comment": "Arroz com cogumelos: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-15T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-salada-16",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-1",
+      "user_id": "community-expanded-16",
+      "rating": 4,
+      "comment": "Bowl de falafel: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-16T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-salada-17",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-2",
+      "user_id": "community-expanded-17",
+      "rating": 5,
+      "comment": "Salada de quinoa: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-17T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-salada-18",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-3",
+      "user_id": "community-expanded-18",
+      "rating": 3,
+      "comment": "Bowl de batata-doce: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-salada-19",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-4",
+      "user_id": "community-expanded-19",
+      "rating": 4,
+      "comment": "Wrap de vegetais: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-salada-20",
+      "merchant_id": "demo-salada",
+      "item_id": "demo-salada-opcao-5",
+      "user_id": "community-expanded-20",
+      "rating": 5,
+      "comment": "Arroz com cogumelos: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-1",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-1",
+      "user_id": "community-expanded-1",
+      "rating": 5,
+      "comment": "Frango com quinoa: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-2",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-2",
+      "user_id": "community-expanded-2",
+      "rating": 4,
+      "comment": "Frango com batata-doce: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-3",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-3",
+      "user_id": "community-expanded-3",
+      "rating": 5,
+      "comment": "Patinho com arroz: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-4",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-4",
+      "user_id": "community-expanded-4",
+      "rating": 3,
+      "comment": "Tilápia com legumes: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-04T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-5",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-5",
+      "user_id": "community-expanded-5",
+      "rating": 2,
+      "comment": "Omelete de espinafre: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-05T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-6",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-1",
+      "user_id": "community-expanded-6",
+      "rating": 4,
+      "comment": "Frango com quinoa: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-06T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-7",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-2",
+      "user_id": "community-expanded-7",
+      "rating": 5,
+      "comment": "Frango com batata-doce: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-07T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-8",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-3",
+      "user_id": "community-expanded-8",
+      "rating": 3,
+      "comment": "Patinho com arroz: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-08T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-9",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-4",
+      "user_id": "community-expanded-9",
+      "rating": 4,
+      "comment": "Tilápia com legumes: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-09T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-10",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-5",
+      "user_id": "community-expanded-10",
+      "rating": 5,
+      "comment": "Omelete de espinafre: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-10T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-11",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-1",
+      "user_id": "community-expanded-11",
+      "rating": 5,
+      "comment": "Frango com quinoa: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-11T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-12",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-2",
+      "user_id": "community-expanded-12",
+      "rating": 4,
+      "comment": "Frango com batata-doce: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-12T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-13",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-3",
+      "user_id": "community-expanded-13",
+      "rating": 5,
+      "comment": "Patinho com arroz: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-13T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-14",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-4",
+      "user_id": "community-expanded-14",
+      "rating": 3,
+      "comment": "Tilápia com legumes: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-14T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-15",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-5",
+      "user_id": "community-expanded-15",
+      "rating": 2,
+      "comment": "Omelete de espinafre: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-15T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-16",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-1",
+      "user_id": "community-expanded-16",
+      "rating": 4,
+      "comment": "Frango com quinoa: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-16T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-17",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-2",
+      "user_id": "community-expanded-17",
+      "rating": 5,
+      "comment": "Frango com batata-doce: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-17T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-18",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-3",
+      "user_id": "community-expanded-18",
+      "rating": 3,
+      "comment": "Patinho com arroz: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-19",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-4",
+      "user_id": "community-expanded-19",
+      "rating": 4,
+      "comment": "Tilápia com legumes: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-grelha-20",
+      "merchant_id": "demo-grelha",
+      "item_id": "demo-grelha-opcao-5",
+      "user_id": "community-expanded-20",
+      "rating": 5,
+      "comment": "Omelete de espinafre: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-1",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-1",
+      "user_id": "community-expanded-1",
+      "rating": 5,
+      "comment": "Pizza de rúcula: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-2",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-2",
+      "user_id": "community-expanded-2",
+      "rating": 4,
+      "comment": "Pizza de frango: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-3",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-3",
+      "user_id": "community-expanded-3",
+      "rating": 5,
+      "comment": "Pizza napolitana: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-4",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-4",
+      "user_id": "community-expanded-4",
+      "rating": 3,
+      "comment": "Calzone de queijo: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-04T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-5",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-5",
+      "user_id": "community-expanded-5",
+      "rating": 2,
+      "comment": "Pizza de abobrinha: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-05T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-6",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-1",
+      "user_id": "community-expanded-6",
+      "rating": 4,
+      "comment": "Pizza de rúcula: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-06T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-7",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-2",
+      "user_id": "community-expanded-7",
+      "rating": 5,
+      "comment": "Pizza de frango: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-07T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-8",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-3",
+      "user_id": "community-expanded-8",
+      "rating": 3,
+      "comment": "Pizza napolitana: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-08T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-9",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-4",
+      "user_id": "community-expanded-9",
+      "rating": 4,
+      "comment": "Calzone de queijo: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-09T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-10",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-5",
+      "user_id": "community-expanded-10",
+      "rating": 5,
+      "comment": "Pizza de abobrinha: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-10T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-11",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-1",
+      "user_id": "community-expanded-11",
+      "rating": 5,
+      "comment": "Pizza de rúcula: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-11T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-12",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-2",
+      "user_id": "community-expanded-12",
+      "rating": 4,
+      "comment": "Pizza de frango: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-12T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-13",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-3",
+      "user_id": "community-expanded-13",
+      "rating": 5,
+      "comment": "Pizza napolitana: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-13T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-14",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-4",
+      "user_id": "community-expanded-14",
+      "rating": 3,
+      "comment": "Calzone de queijo: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-14T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-15",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-5",
+      "user_id": "community-expanded-15",
+      "rating": 2,
+      "comment": "Pizza de abobrinha: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-15T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-16",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-1",
+      "user_id": "community-expanded-16",
+      "rating": 4,
+      "comment": "Pizza de rúcula: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-16T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-17",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-2",
+      "user_id": "community-expanded-17",
+      "rating": 5,
+      "comment": "Pizza de frango: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-17T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-18",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-3",
+      "user_id": "community-expanded-18",
+      "rating": 3,
+      "comment": "Pizza napolitana: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-19",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-4",
+      "user_id": "community-expanded-19",
+      "rating": 4,
+      "comment": "Calzone de queijo: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-forneria-20",
+      "merchant_id": "demo-forneria",
+      "item_id": "demo-forneria-opcao-5",
+      "user_id": "community-expanded-20",
+      "rating": 5,
+      "comment": "Pizza de abobrinha: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-1",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-1",
+      "user_id": "community-expanded-1",
+      "rating": 5,
+      "comment": "Sashimi de salmão: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-2",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-2",
+      "user_id": "community-expanded-2",
+      "rating": 4,
+      "comment": "Poke tropical: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-3",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-3",
+      "user_id": "community-expanded-3",
+      "rating": 5,
+      "comment": "Uramaki de pepino: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-4",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-4",
+      "user_id": "community-expanded-4",
+      "rating": 3,
+      "comment": "Temaki de atum: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-04T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-5",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-5",
+      "user_id": "community-expanded-5",
+      "rating": 2,
+      "comment": "Yakisoba de frango: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-05T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-6",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-1",
+      "user_id": "community-expanded-6",
+      "rating": 4,
+      "comment": "Sashimi de salmão: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-06T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-7",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-2",
+      "user_id": "community-expanded-7",
+      "rating": 5,
+      "comment": "Poke tropical: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-07T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-8",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-3",
+      "user_id": "community-expanded-8",
+      "rating": 3,
+      "comment": "Uramaki de pepino: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-08T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-9",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-4",
+      "user_id": "community-expanded-9",
+      "rating": 4,
+      "comment": "Temaki de atum: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-09T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-10",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-5",
+      "user_id": "community-expanded-10",
+      "rating": 5,
+      "comment": "Yakisoba de frango: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-10T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-11",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-1",
+      "user_id": "community-expanded-11",
+      "rating": 5,
+      "comment": "Sashimi de salmão: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-11T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-12",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-2",
+      "user_id": "community-expanded-12",
+      "rating": 4,
+      "comment": "Poke tropical: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-12T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-13",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-3",
+      "user_id": "community-expanded-13",
+      "rating": 5,
+      "comment": "Uramaki de pepino: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-13T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-14",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-4",
+      "user_id": "community-expanded-14",
+      "rating": 3,
+      "comment": "Temaki de atum: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-14T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-15",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-5",
+      "user_id": "community-expanded-15",
+      "rating": 2,
+      "comment": "Yakisoba de frango: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-15T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-16",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-1",
+      "user_id": "community-expanded-16",
+      "rating": 4,
+      "comment": "Sashimi de salmão: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-16T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-17",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-2",
+      "user_id": "community-expanded-17",
+      "rating": 5,
+      "comment": "Poke tropical: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-17T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-18",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-3",
+      "user_id": "community-expanded-18",
+      "rating": 3,
+      "comment": "Uramaki de pepino: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-19",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-4",
+      "user_id": "community-expanded-19",
+      "rating": 4,
+      "comment": "Temaki de atum: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sushi-20",
+      "merchant_id": "demo-sushi",
+      "item_id": "demo-sushi-opcao-5",
+      "user_id": "community-expanded-20",
+      "rating": 5,
+      "comment": "Yakisoba de frango: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-1",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-1",
+      "user_id": "community-expanded-1",
+      "rating": 5,
+      "comment": "Sanduíche de frango: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-2",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-2",
+      "user_id": "community-expanded-2",
+      "rating": 4,
+      "comment": "Sanduíche de atum: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-3",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-3",
+      "user_id": "community-expanded-3",
+      "rating": 5,
+      "comment": "Wrap de queijo: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-4",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-4",
+      "user_id": "community-expanded-4",
+      "rating": 3,
+      "comment": "Sanduíche de carne: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-04T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-5",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-5",
+      "user_id": "community-expanded-5",
+      "rating": 2,
+      "comment": "Torrada de abacate: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-05T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-6",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-1",
+      "user_id": "community-expanded-6",
+      "rating": 4,
+      "comment": "Sanduíche de frango: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-06T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-7",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-2",
+      "user_id": "community-expanded-7",
+      "rating": 5,
+      "comment": "Sanduíche de atum: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-07T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-8",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-3",
+      "user_id": "community-expanded-8",
+      "rating": 3,
+      "comment": "Wrap de queijo: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-08T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-9",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-4",
+      "user_id": "community-expanded-9",
+      "rating": 4,
+      "comment": "Sanduíche de carne: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-09T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-10",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-5",
+      "user_id": "community-expanded-10",
+      "rating": 5,
+      "comment": "Torrada de abacate: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-10T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-11",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-1",
+      "user_id": "community-expanded-11",
+      "rating": 5,
+      "comment": "Sanduíche de frango: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-11T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-12",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-2",
+      "user_id": "community-expanded-12",
+      "rating": 4,
+      "comment": "Sanduíche de atum: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-12T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-13",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-3",
+      "user_id": "community-expanded-13",
+      "rating": 5,
+      "comment": "Wrap de queijo: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-13T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-14",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-4",
+      "user_id": "community-expanded-14",
+      "rating": 3,
+      "comment": "Sanduíche de carne: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-14T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-15",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-5",
+      "user_id": "community-expanded-15",
+      "rating": 2,
+      "comment": "Torrada de abacate: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-15T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-16",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-1",
+      "user_id": "community-expanded-16",
+      "rating": 4,
+      "comment": "Sanduíche de frango: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-16T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-17",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-2",
+      "user_id": "community-expanded-17",
+      "rating": 5,
+      "comment": "Sanduíche de atum: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-17T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-18",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-3",
+      "user_id": "community-expanded-18",
+      "rating": 3,
+      "comment": "Wrap de queijo: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-19",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-4",
+      "user_id": "community-expanded-19",
+      "rating": 4,
+      "comment": "Sanduíche de carne: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-sanduiche-20",
+      "merchant_id": "demo-sanduiche",
+      "item_id": "demo-sanduiche-opcao-5",
+      "user_id": "community-expanded-20",
+      "rating": 5,
+      "comment": "Torrada de abacate: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-1",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-1",
+      "user_id": "community-expanded-1",
+      "rating": 5,
+      "comment": "Frango com angu: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-2",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-2",
+      "user_id": "community-expanded-2",
+      "rating": 4,
+      "comment": "Tutu com bisteca: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-3",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-3",
+      "user_id": "community-expanded-3",
+      "rating": 5,
+      "comment": "Vaca atolada: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-4",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-4",
+      "user_id": "community-expanded-4",
+      "rating": 3,
+      "comment": "Arroz com pequi: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-04T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-5",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-5",
+      "user_id": "community-expanded-5",
+      "rating": 2,
+      "comment": "Tropeiro da casa: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-05T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-6",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-1",
+      "user_id": "community-expanded-6",
+      "rating": 4,
+      "comment": "Frango com angu: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-06T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-7",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-2",
+      "user_id": "community-expanded-7",
+      "rating": 5,
+      "comment": "Tutu com bisteca: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-07T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-8",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-3",
+      "user_id": "community-expanded-8",
+      "rating": 3,
+      "comment": "Vaca atolada: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-08T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-9",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-4",
+      "user_id": "community-expanded-9",
+      "rating": 4,
+      "comment": "Arroz com pequi: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-09T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-10",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-5",
+      "user_id": "community-expanded-10",
+      "rating": 5,
+      "comment": "Tropeiro da casa: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-10T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-11",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-1",
+      "user_id": "community-expanded-11",
+      "rating": 5,
+      "comment": "Frango com angu: Ingredientes frescos, boa porção e entrega no prazo.",
+      "created_at": "2026-10-11T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-12",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-2",
+      "user_id": "community-expanded-12",
+      "rating": 4,
+      "comment": "Tutu com bisteca: Bom custo-benefício e comida nada oleosa.",
+      "created_at": "2026-10-12T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-13",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-3",
+      "user_id": "community-expanded-13",
+      "rating": 5,
+      "comment": "Vaca atolada: Porção generosa e entrega rápida. Gostei bastante.",
+      "created_at": "2026-10-13T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-14",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-4",
+      "user_id": "community-expanded-14",
+      "rating": 3,
+      "comment": "Arroz com pequi: Achei caro pela quantidade, mas estava fresco.",
+      "created_at": "2026-10-14T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 3
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-15",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-5",
+      "user_id": "community-expanded-15",
+      "rating": 2,
+      "comment": "Tropeiro da casa: Chegou ressecado e houve atraso.",
+      "created_at": "2026-10-15T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 2,
+        "delivery": 2,
+        "value_for_money": 2,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-16",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-1",
+      "user_id": "community-expanded-16",
+      "rating": 4,
+      "comment": "Frango com angu: Preço justo, sabor agradável e embalagem bem fechada.",
+      "created_at": "2026-10-16T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-17",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-2",
+      "user_id": "community-expanded-17",
+      "rating": 5,
+      "comment": "Tutu com bisteca: Tudo fresco e com pouco óleo.",
+      "created_at": "2026-10-17T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-18",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-3",
+      "user_id": "community-expanded-18",
+      "rating": 3,
+      "comment": "Vaca atolada: A porção pequena deixou a desejar.",
+      "created_at": "2026-10-01T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 3,
+        "delivery": 4,
+        "value_for_money": 3,
+        "portion_size": 2
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-19",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-4",
+      "user_id": "community-expanded-19",
+      "rating": 4,
+      "comment": "Arroz com pequi: Boa porção e entrega no prazo.",
+      "created_at": "2026-10-02T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 4,
+        "delivery": 5,
+        "value_for_money": 4,
+        "portion_size": 4
+      }
+    },
+    {
+      "id": "expanded-demo-mineira-20",
+      "merchant_id": "demo-mineira",
+      "item_id": "demo-mineira-opcao-5",
+      "user_id": "community-expanded-20",
+      "rating": 5,
+      "comment": "Tropeiro da casa: Bom preço e ingredientes frescos.",
+      "created_at": "2026-10-03T13:00:00Z",
+      "simulated": true,
+      "aspects": {
+        "taste": 5,
+        "delivery": 5,
+        "value_for_money": 5,
+        "portion_size": 5
+      }
+    }
+  ]
+}
