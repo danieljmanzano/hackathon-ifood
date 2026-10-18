@@ -3,6 +3,7 @@ from typing import Any
 import httpx
 
 from app.core import logs
+from app.core.nutrition_budget import reserve_call, output_limit, check_input
 from app.core.config import Settings, get_settings
 from app.core.exceptions import AppError
 
@@ -32,6 +33,8 @@ async def chat_completion(
     if not settings.openrouter_api_key:
         raise OpenRouterError("OPENROUTER_API_KEY não configurada", status_code=500)
 
+    check_input(messages)
+    max_tokens = output_limit(max_tokens)
     models = [model or settings.openrouter_model, *settings.openrouter_fallback_models]
     errors: list[str] = []
 
@@ -44,6 +47,7 @@ async def chat_completion(
                 payload["response_format"] = {"type": "json_object"}
             with logs.Cronometro() as t:
                 try:
+                    reserve_call("openrouter")
                     response = await client.post(
                         "/chat/completions",
                         json=payload,

@@ -20,10 +20,11 @@ Busca:
 Agente:
   agente_pedidos         papel do agente · agente_ifood_mcp  como usar o MCP do iFood
 """
-from . import (agente_ifood_mcp, agente_pedidos, busca_intencao, busca_mcp, busca_replanejar, item_pedido, nutricao_bases, nutricao_estimativa,
+from . import (agente_nutricao, agente_ifood_mcp, agente_pedidos, busca_intencao, busca_mcp, busca_replanejar, item_pedido, nutricao_bases, nutricao_estimativa,
                nutricao_ingredientes, nutricao_juiz_web, nutricao_web)
 
 SKILLS = {
+    "agente_nutricao": agente_nutricao,
     "item_pedido": item_pedido,
     "nutricao_bases": nutricao_bases,
     "nutricao_web": nutricao_web,
@@ -38,4 +39,4 @@ SKILLS = {
 }
 
 # Skills que o agente pode ativar pelo nome (ask_llm(..., skills=["ifood_mcp"])).
-AGENTE = {agente_ifood_mcp.NOME: agente_ifood_mcp}
+AGENTE = {agente_ifood_mcp.NOME: agente_ifood_mcp, agente_nutricao.NOME: agente_nutricao}

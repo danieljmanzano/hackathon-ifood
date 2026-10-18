@@ -274,6 +274,7 @@ class MerchantSummary(Model):
 
 
 class ReviewSignal(Model):
+    simulated: bool = False
     source: Literal["personalized", "community", "unavailable"]
     score: float
     history_count: int = Field(ge=0)
@@ -437,7 +438,17 @@ class AddressCreated(Model):
     addresses: list[Address]
 
 
+class NutritionSearchProgress(Model):
+    id: str
+    state: Literal["pending", "complete"] = "pending"
+    tested: int = Field(default=0, ge=0, le=15)
+    accepted: int = Field(default=0, ge=0, le=3)
+    batches: int = Field(default=0, ge=0, le=5)
+    reason: str | None = None
+
+
 class Session(Model):
+    nutrition_search: NutritionSearchProgress | None = None
     id: str = Field(default_factory=lambda: str(uuid4()))
     mode: Literal["mock", "live"]
     profile: UserProfile

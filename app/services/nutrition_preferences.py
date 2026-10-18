@@ -153,3 +153,24 @@ def update_explanation(before: Recommendation, after: Recommendation,
         "reasons": current.reasons + [r for r in after.reasons if r not in previous.reasons],
         "limitations": [l for l in after.limitations if l not in previous.limitations] + current.limitations,
     })
+
+
+def meets_explicit_limits(nutrition: NutritionResult, preferences: NutritionPreferences) -> bool | None:
+    """False: violação conhecida; None: não verificável; True: valores conhecidos atendem.
+
+    Os valores podem ser estimados; True não transforma uma estimativa em garantia.
+    """
+    unknown = False
+    for field, metric, minimum in (
+        ('max_calories', 'calories', False), ('min_protein_g', 'protein_g', True),
+        ('max_carbs_g', 'carbs_g', False), ('max_fat_g', 'fat_g', False),
+    ):
+        target = getattr(preferences, field)
+        if target is None:
+            continue
+        value = getattr(nutrition, metric) if nutrition.state == 'ready' else None
+        if value is None:
+            unknown = True
+        elif (value < target if minimum else value > target):
+            return False
+    return None if unknown else True

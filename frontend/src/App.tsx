@@ -91,18 +91,23 @@ export default function App() {
     else bottom.current?.scrollIntoView({ behavior: "auto", block: "end" });
   }, [messages.length, phase, busy]);
 
-  const pendingNutrition = session?.recommendations.some(r => r.nutrition.state === "pending");
+  const pendingNutrition = session?.nutrition_search?.state === "pending" || session?.recommendations.some(r => r.nutrition.state === "pending");
   useEffect(() => {
     if (!pendingNutrition) return;
     let cancelled = false, tries = 0;
+    const adaptive = session?.nutrition_search?.state === "pending";
     const timer = window.setInterval(async () => {
-      if (actionLock.current || ++tries > 40) { if (tries > 40) clearInterval(timer); return; }
+      if (actionLock.current) return;
+      if (!adaptive && ++tries > 40) { clearInterval(timer); return; }
       const version = epoch.current;
       try {
         const next = await api.recommendationsNutrition();
         if (cancelled || version !== epoch.current) return;
         setSession(next);
-        setMessages(current => current.map(m => m.id === activeSearch ? { ...m, recommendations: next.recommendations } : m));
+        setMessages(current => current.map(m => m.id === activeSearch ? {
+          ...m, recommendations: next.recommendations,
+          text: next.nutrition_search || next.recommendations.length === 0 ? (next.messages.at(-1)?.text ?? m.text) : m.text,
+        } : m));
       } catch { /* A busca continua disponível mesmo sem estimativa. */ }
     }, 3000);
     return () => { cancelled = true; clearInterval(timer); };
@@ -127,8 +132,10 @@ export default function App() {
   useEffect(() => {
     if (!selectedNutritionPending) return;
     let cancelled = false, tries = 0;
+    const adaptive = session?.nutrition_search?.state === "pending";
     const timer = window.setInterval(async () => {
-      if (actionLock.current || ++tries > 40) { if (tries > 40) clearInterval(timer); return; }
+      if (actionLock.current) return;
+      if (!adaptive && ++tries > 40) { clearInterval(timer); return; }
       const version = epoch.current;
       try { const next = await api.selectionNutrition(); if (!cancelled && version === epoch.current) setSession(next); }
       catch { /* O pedido não depende da estimativa. */ }

@@ -6,6 +6,8 @@ import math
 from jsonschema import validate
 
 from app.core import logs
+from app.core.nutrition_budget import current_budget
+from app.skills import agente_nutricao
 from app.core.config import Settings
 from app.schemas.macro import MealCandidate
 from app.services.gemini import analyze_image
@@ -89,6 +91,8 @@ async def estimar_b(settings: Settings, candidate: MealCandidate, opcoes: list[s
     if imagem is None or not settings.gemini_api_key:
         return None
     prompt = nutricao_estimativa.pedido_b(montar_prompt(candidate, opcoes, peso_g))
+    if current_budget.get():
+        prompt += "\n\n" + agente_nutricao.CONTEUDO
     texto = await analyze_image(imagem[0], prompt, mime_type=imagem[1], json_mode=True, settings=settings)
     dados = extrair_json(texto)
     validate(dados, nutricao_estimativa.SCHEMA)

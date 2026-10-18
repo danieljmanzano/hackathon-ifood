@@ -297,7 +297,7 @@ export function MealCard({
         {recommendation.review_signal && recommendation.review_signal.source !== "unavailable" && (
           <p className="review-summary">
             <Star size={14} aria-hidden="true" />
-            {recommendation.review_signal.source === "personalized" ? "Com base nas suas avaliações" : "Avaliações da comunidade"}
+            {recommendation.review_signal.simulated ? "Avaliações simuladas · demonstração" : recommendation.review_signal.source === "personalized" ? "Com base nas suas avaliações" : "Avaliações da comunidade"}
             {recommendation.review_signal.community_rating != null && ` · ${recommendation.review_signal.community_rating.toFixed(1)}/5`}
           </p>
         )}
