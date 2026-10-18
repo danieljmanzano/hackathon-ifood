@@ -40,7 +40,7 @@ _sdk_oauth2.validate_metadata_issuer = _validate_issuer
 
 def client_metadata(settings: Settings) -> OAuthClientMetadata:
     metadata = OAuthClientMetadata(
-        client_name="hackaton-ifood",
+        client_name="hackathon-ifood",
         redirect_uris=[settings.ifood_redirect_uri],
         grant_types=["authorization_code", "refresh_token"],
         response_types=["code"],

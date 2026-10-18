@@ -14,8 +14,10 @@ e aos números de linha abaixo registram a versão analisada antes da separaçã
 - Seção 03 → [Racional da Experiência](../entregaveis/03-racional-da-experiencia.md).
 - Seção 05 → [Documento Técnico Resumido](../entregaveis/05-documento-tecnico-resumido.md).
 
-O link do repositório foi corrigido no novo índice. A separação não resolve por
-si só as demais pendências de conteúdo identificadas nesta revisão.
+O link do repositório foi atualizado no novo índice. Após a revisão, o GitHub
+confirmou a renomeação para `danieljmanzano/hackathon-ifood`; o remoto `origin` e
+as referências do projeto foram alinhados ao nome atual. A separação não resolve
+por si só as demais pendências de conteúdo identificadas nesta revisão.
 
 ## Parecer
 
@@ -41,13 +43,14 @@ mais a algumas configurações e fluxos implementados.
 
 ## Correções prioritárias
 
-### 1. Corrigir o endereço do código
+### 1. Endereço do código — atualizado após a renomeação
 
-`entregaveis/macro.md:16` aponta para `danieljmanzano/hackathon-ifood`.
-O remoto Git configurado neste projeto é
-`https://github.com/danieljmanzano/hackaton-ifood` — sem o segundo `h` em
-`hackaton`. O documento deve apontar para o repositório efetivamente usado.
-A acessibilidade pública do repositório não foi testada nesta revisão.
+O repositório atual, confirmado pela API do GitHub, é
+[danieljmanzano/hackathon-ifood](https://github.com/danieljmanzano/hackathon-ifood).
+O índice dos entregáveis, o plano de implementação e o remoto `origin` usam esse
+nome. A divergência apontada na revisão inicial considerava o endereço antigo;
+ela foi superada pela renomeação do repositório. A conta conectada possui permissão
+de push. Acesso anônimo ao repositório não foi verificado nesta revisão.
 
 ### 2. Finalizar as cinco anotações de rascunho
 

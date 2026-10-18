@@ -10,7 +10,7 @@ Fluxo principal: pedido em linguagem natural → busca real → recomendações 
 
 ## Referência e situação inicial
 
-- Repositório: https://github.com/danieljmanzano/hackaton-ifood
+- Repositório: https://github.com/danieljmanzano/hackathon-ifood
 - Pipeline examinada: branch `prever_calorias`, commit `0ce57f0dd424f11d1b9e06ea8cab8819e8fd1d5a`.
 - Referência de implementação: `estimativa_calorias.ipynb`.
 - A pipeline atual busca informação nutricional online quando conhece o restaurante. Sem resultado aceito, estima calorias a partir de descrição, opções e imagem.

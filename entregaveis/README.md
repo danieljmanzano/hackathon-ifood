@@ -21,7 +21,7 @@ na mesma ordem e com os mesmos nomes da [especificação do evento](../index-v2.
 - `diagramas/`: fluxos e arquitetura, com imagens PNG e fontes editáveis Mermaid.
 - `telas/`: capturas da interface usadas no entregável 04.
 - [Código e instruções de execução](../README.md).
-- [Repositório do Macro](https://github.com/danieljmanzano/hackaton-ifood).
+- [Repositório do Macro](https://github.com/danieljmanzano/hackathon-ifood).
 - [Revisão de conteúdo e pendências identificadas](../outputs/revisao-entregaveis.md).
 
 Mantenha as pastas `diagramas/` e `telas/` junto aos documentos para que as imagens
