@@ -257,3 +257,6 @@ summary { cursor: pointer; font-weight: 600; font-size: 12px; }
   .review-form-footer { flex-wrap: wrap; }
   .chat-error { margin-left: 0; }
 }
+
+.match-warning { display: flex; align-items: flex-start; gap: 6px; padding: 8px 10px; border-radius: 8px; background: #fff7e6; color: #795100; font-size: 0.82rem; font-weight: 600; }
+.match-warning svg { flex-shrink: 0; margin-top: 2px; }

@@ -261,3 +261,116 @@ Escreva **“meu objetivo é ganhar massa muscular, só comi frutas hoje, quero 
 O LLM interpreta o contexto quando está disponível; regras locais preservam os principais comportamentos sem ele. O cache da interpretação inclui a data, o objetivo e os registros/totais do dia. Mudanças nesses dados geram uma nova interpretação. `request_intent.diet_context` guarda o contexto usado e os cards explicam como ele influenciou as sugestões. Logs `diet.ready` contêm somente presença de objetivo e contagens, sem descrições dos alimentos ou orientações da dieta.
 
 Endpoints locais: `GET /api/daily-context`, `POST /api/food-diary`, `DELETE /api/food-diary/{id}` e `GET/PUT /api/consumption`. Os dados são isolados pelo perfil da sessão e sobrevivem a reinícios do servidor, mas continuam vinculados ao cookie, sem conta autenticada. Nenhuma ferramenta MCP foi alterada.
+
+### Catálogo real com reviews de demonstração e nutrição incremental
+
+Configure `IFOOD_MODE=live`, as credenciais MCP e faça o login pelo comando
+`python -m app.services.ifood_mcp`. O catálogo usa os produtos devolvidos pelo MCP
+para o endereço atual. Não há importação global nem fallback silencioso para
+restaurantes fictícios. O checkout real continua bloqueado.
+
+`LIVE_MOCK_REVIEWS=true` permite reviews **simuladas**, estáveis e persistidas,
+ligadas aos IDs reais observados. O card identifica a demonstração, e as reviews
+não servem como fonte de macros. `false` remove esse overlay da recomendação,
+preservando as reviews reais e seu aprendizado. A origem do produto continua real.
+
+Com `CATALOG_ENRICHMENT_ENABLED=true`, a busca responde com o que há no cache e
+coloca até `CATALOG_PRODUCTS_PER_SEARCH=3` produtos novos na fila, priorizados pelo
+ranking (até dez candidatos para buscas nutricionais). O worker do ciclo de vida
+da API usa o agente nutricional existente em modo econômico, uma amostra e até três
+estimativas simultâneas por processo. Seleções personalizadas compartilham a mesma
+faixa de execução e o mesmo orçamento. Use um processo da API para esse limite de
+concorrência global no protótipo.
+
+Produtos observados, fila, leases, tentativas, reviews simuladas e reservas de uso
+ficam no SQLite de `DATABASE_PATH`. A nutrição pronta continua em
+`CALORIAS_BASE_PATH`. Reinícios retomam tarefas; falhas têm intervalo
+`CATALOG_RETRY_SECONDS=900` e no máximo `CATALOG_MAX_ATTEMPTS=2` tentativas.
+A cota diária esgotada adia tarefas até o próximo dia UTC, sem gastar tentativas.
+
+Limites padrão do agente nutricional real:
+
+- `CATALOG_PRODUCTS_PER_DAY=20`: produtos/variantes distintos que iniciaram chamadas no dia.
+- `CATALOG_CALLS_PER_DAY=60`: requisições de IA, contando erros, retries e fallback.
+- `CATALOG_CALLS_PER_PRODUCT=8`: requisições por produto/variante no dia.
+- `CATALOG_MAX_OUTPUT_TOKENS=1800`: limite de saída enviado a cada provedor.
+- `CATALOG_MAX_INPUT_CHARS=24000`: entradas textuais maiores não são enviadas.
+
+Essas cotas são reservadas atomicamente **antes** do HTTP. Elas limitam volume,
+não representam um teto exato em reais: preços por modelo, imagens e ferramentas
+internas de busca têm cobrança própria. Intenção do chat e interpretação de
+reviews ficam fora desse orçamento nutricional. A busca web respeita
+`CALORIAS_BUSCA_WEB`; desligue para evitar seu custo adicional.
+
+O cache é identificado por composição, porção, opções e quantidades de adicionais,
+além do produto/restaurante e versão do pipeline. Preço, disponibilidade e URL
+temporária da foto não invalidam a nutrição. Alterações de composição geram uma
+nova chave; registros antigos não são apresentados como atuais.
+
+A skill [nutrition-enrichment](app/skills/nutrition-enrichment/SKILL.md) é injetada
+nas etapas de estimativa quando o agente precisa enriquecer dados sem cache e pode
+ser carregada por `load_skill("nutrition_enrichment")`. Ela orienta fontes,
+porções, incerteza e insuficiência; cache, orçamento e fila são controles do backend.
+
+Limites numéricos explícitos excluem pratos cujos valores conhecidos os violam.
+Dados ausentes aparecem como não verificados; preferências qualitativas afetam a
+ordenação. Ao chegar uma estimativa incompatível, o polling remove a opção e
+explica quando não sobra nenhuma. Estimativas não são garantias nutricionais.
+
+Inspecione contagens e limites (sem dados pessoais) em
+`GET /api/catalog/enrichment/status`.
+
+
+### Busca nutricional em lotes de três
+
+No modo real, buscas com preferências nutricionais usam um fluxo específico:
+
+1. `searchOffers` retorna páginas de **3 itens**, com os filtros de localização,
+   preço, disponibilidade e outros critérios mantidos. A continuação usa somente
+   `nextPageToken` devolvido pelo MCP; tokens repetidos encerram a paginação.
+2. Os candidatos são priorizados pelos demais critérios (intenção, reviews,
+   gostos, preço), sem pontuação nutricional nessa seleção inicial.
+3. Os detalhes atuais de cada produto são lidos e até **3 estimativas rodam em
+   paralelo**, respeitando `NUTRITION_CONCURRENCY` (limitado a três nesse fluxo).
+   Resultados prontos em cache não geram novas chamadas de IA.
+4. Só entram nas recomendações resultados suficientes que atendam às restrições.
+   Com menos de três aprovados, o motor passa ao próximo lote. Para em **3
+   aprovados ou 15 candidatos avaliados**, ou antes por esgotamento do catálogo,
+   indisponibilidade do estimador ou limite diário de uso. Pode retornar menos de
+   três opções aprovadas. Sem nenhum aprovado, pode oferecer alternativas
+   aproximadas com aviso de baixa certeza, preservando limites numéricos.
+
+Preferências qualitativas usam as referências de comparação já adotadas no motor:
+mais proteína: >=20 g (referência central 30 g); menos carboidratos: <=65 g
+(central 40 g); menos gordura: <=30 g (central 20 g); menos calorias: <=700 kcal
+(central 500 kcal), sempre por prato. São critérios internos de seleção, não
+metas de dieta atribuídas ao usuário. Limites numéricos explícitos também precisam
+ser atendidos. Cada card mantém fonte, confiança e limitações da estimativa.
+
+O fluxo roda em segundo plano para não exceder o timeout HTTP. O chat consulta
+`/api/recommendations/nutrition`, recebe `nutrition_search` com contagens/estado e
+mostra os aprovados e o progresso. O snapshot do lote fica no SQLite; um reinício
+retoma a busca, e uma nova busca impede a anterior de sobrescrever seus resultados.
+
+`CATALOG_PRODUCTS_PER_SEARCH` segue controlando o enriquecimento oportunista de
+buscas **sem preferência nutricional**. Nas buscas nutricionais, o limite é de 15
+candidatos, em lotes fixos de três. Cotas diárias de produtos e chamadas continuam
+valendo e podem interromper a avaliação antes desse máximo. O modo mock mantém o
+fluxo de demonstração anterior.
+
+
+### Preferências subjetivas e alternativas aproximadas
+
+"Bastante" e "pouco" usam as faixas amplas acima, sem converter essas referências
+em metas prescritas. Se nenhum candidato for aprovado ao encerrar a busca, são
+oferecidas até três alternativas próximas dentre os candidatos já avaliados.
+A proximidade usa os nutrientes conhecidos e preserva os demais critérios nos
+empates; não é uma probabilidade calibrada. Dados conhecidos têm prioridade sobre
+inferências sem macros disponíveis. Não há chamadas extras de IA para esse fallback.
+
+Cards aproximados têm `approximate_match=true` e `match_confidence=low`, aviso
+visível e explicação das lacunas; a confiança nutricional original é preservada.
+O progresso separa `accepted` (aprovados) de `approximate` (alternativas).
+Orçamento, disponibilidade, restrições e limites numéricos continuam sendo
+aplicados. Se um limite numérico não puder ser verificado, essa opção não entra
+nas alternativas. Com um ou dois aprovados, retornam apenas os aprovados.

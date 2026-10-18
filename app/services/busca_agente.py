@@ -186,7 +186,8 @@ def _mensagem_valida(texto: str | None) -> str | None:
 
 async def buscar(payload: MealRequest, session: Session, provider, settings: Settings, intent: MealIntent,
                  context, inicio: float, *, texto_pedido: str | None = None, conversa: dict | None = None, trace=None,
-                 rank_extra: Callable[[list[MealCandidate]], dict] | None = None) -> ResultadoBusca:
+                 rank_extra: Callable[[list[MealCandidate]], dict] | None = None,
+                 catalog_search=None) -> ResultadoBusca:
     """`inicio`: time.monotonic() de quando a requisição começou (para respeitar o prazo total).
 
     `context`: contexto de avaliações, ou uma função que o calcula (chamada depois da busca no catálogo).
@@ -231,8 +232,8 @@ async def buscar(payload: MealRequest, session: Session, provider, settings: Set
         _conteudo(settings, f"rodada {rodada + 1}: consultas ao iFood {queries}"
                             + (f" · culinária: {cuisine}" if cuisine else "")
                             + (f" · refinamentos: {refinamentos}" if refinamentos else ""))
-        encontrados = [] if pular_catalogo else await _consultar_catalogo(provider, queries, session.address, budget,
-                                                                          cuisine, refinamentos)
+        encontrados = [] if pular_catalogo else await (catalog_search(queries, session.address, budget, cuisine, refinamentos)
+                                                     if catalog_search else _consultar_catalogo(provider, queries, session.address, budget, cuisine, refinamentos))
         candidates = _mesclar(encontrados, achados_mcp)
         conhecidos["restaurantes"] |= {c.merchant_id for c in candidates}
         event("catalog.completed", provider=type(provider).__name__, candidate_count=len(candidates),

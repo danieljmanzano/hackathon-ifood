@@ -23,7 +23,7 @@ from app.core.config import Settings
 from app.core.exceptions import MacroError
 from app.schemas.macro import (Address, AddressCandidate, CreateAddressInput, GeocodeResult, MealCandidate,
                                MerchantSummary, Option, OptionGroup)
-from app.services.ifood_mcp import FileTokenStorage
+from app.services.ifood_mcp import FileTokenStorage, client_metadata
 
 READ_TOOLS = {"listAddresses", "searchOffers", "browseOffers", "getItem", "getMerchant", "listItemTaxonomy"}
 MAX_CONSULTAS = 4  # consultas por busca (cada uma é uma chamada ao iFood)
@@ -98,11 +98,7 @@ async def live_session(settings: Settings):
     """Sessão MCP autenticada com os tokens salvos, sem fluxo interativo de login."""
     auth = OAuthClientProvider(
         server_url=settings.ifood_mcp_url,
-        client_metadata=OAuthClientMetadata(
-            client_name="hackaton-ifood", redirect_uris=[settings.ifood_redirect_uri],
-            grant_types=["authorization_code", "refresh_token"], response_types=["code"],
-            scope=settings.ifood_scopes,
-            token_endpoint_auth_method="client_secret_post" if settings.ifood_client_secret else "none"),
+        client_metadata=client_metadata(settings),
         storage=FileTokenStorage(settings),
         redirect_handler=_no_browser,
         callback_handler=_no_browser,
@@ -342,6 +338,31 @@ class MCPIFood:
         itens = [c for p in paginas if not isinstance(p, BaseException) for c in p]
         logs.info("ifood", f"{len(itens)} itens lidos dos cardápios desses restaurantes")
         return itens
+
+    async def search_page(self, queries, address, budget_cents, cuisine=None, refinamentos=None, cursor=None):
+        """Página de três ofertas, usando somente tokens devolvidos pelo MCP."""
+        queries = list(dict.fromkeys(q for q in queries if q.strip()))[:MAX_CONSULTAS] or ["refeição"]
+        index = (cursor or {}).get("query_index", 0)
+        token = (cursor or {}).get("next_page_token")
+        seen = (cursor or {}).get("seen_tokens", [])
+        if index >= len(queries):
+            return {"candidates": [], "cursor": None}
+        refinements = {"onlyOpen": True, **(refinamentos or {})}
+        if budget_cents is not None:
+            refinements["maxItemPrice"] = budget_cents / 100
+        args = {"query": queries[index], "resultKind": "ITEM", "merchantType": "RESTAURANT",
+                "pageSize": 3, "userLocation": {"latitude": address.latitude, "longitude": address.longitude},
+                "refinements": refinements}
+        if token:
+            args["nextPageToken"] = token
+        async with self.connection() as session:
+            data = await self._call_in(session, await self.tools(session), "searchOffers", args)
+        next_token = data.get("nextPageToken") if data.get("hasMore", bool(data.get("nextPageToken"))) else None
+        if next_token and next_token not in [token, *seen]:
+            continuation = {"query_index": index, "next_page_token": next_token, "seen_tokens": [*seen, next_token]}
+        else:
+            continuation = {"query_index": index + 1} if index + 1 < len(queries) else None
+        return {"candidates": self._itens(data), "cursor": continuation}
 
     async def search_many(self, queries: list[str], address: Address, budget_cents: int | None,
                           cuisine: str | None = None, refinamentos: dict | None = None) -> list[MealCandidate]:

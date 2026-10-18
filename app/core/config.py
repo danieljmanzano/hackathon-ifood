@@ -107,6 +107,17 @@ class Settings(BaseSettings):
     # Um prazo curto ainda entrega na hora o que já está em cache ou é muito rápido.
     nutrition_search_budget_seconds: float = Field(default=1, ge=0, le=28)
     nutrition_concurrency: int = Field(default=3, ge=1, le=10)
+    # Catálogo real: enriquecimento incremental e orçamento persistido (independente da busca).
+    catalog_enrichment_enabled: bool = True
+    catalog_products_per_search: int = Field(default=3, ge=0, le=10)
+    catalog_products_per_day: int = Field(default=20, ge=0)
+    catalog_calls_per_product: int = Field(default=8, ge=0, le=30)
+    catalog_calls_per_day: int = Field(default=60, ge=0)
+    catalog_max_output_tokens: int = Field(default=1800, ge=256, le=8000)
+    catalog_max_input_chars: int = Field(default=24000, ge=1000, le=100000)
+    catalog_retry_seconds: int = Field(default=900, ge=1)
+    catalog_max_attempts: int = Field(default=2, ge=1, le=5)
+    live_mock_reviews: bool = True
 
     # Cascata de calorias (ver pipeline_calorias_v2.dot).
     calorias_estimar_sempre: bool = True  # False: só estima se bases e web não acharem (poupa cota)
@@ -150,6 +161,7 @@ class Settings(BaseSettings):
             "mode": self.ifood_mode,
             "simulated": self.ifood_mode == "mock",
             "live_orders_enabled": False,
+            "reviews_simulated": self.ifood_mode == "mock" or self.live_mock_reviews,
             "nutrition": "enabled" if self.nutrition_enabled else "unavailable",
             "intent_interpretation": "llm_configured" if self.intent_llm_enabled and self.openrouter_api_key else "rules",
             "timezone": self.timezone,

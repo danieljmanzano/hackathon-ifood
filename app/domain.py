@@ -20,7 +20,7 @@ from app.schemas.macro import (
 )
 from app.services.review_recommendations import ReviewContext, review_signal
 from app.services.meal_intent import assess_intent, parse_intent
-from app.services.nutrition_preferences import apply_profile_preferences, assess_nutrition
+from app.services.nutrition_preferences import apply_profile_preferences, assess_nutrition, meets_explicit_limits
 
 
 def normalized(value: str) -> str:
@@ -126,6 +126,8 @@ def rank(
     nutrition_by_item: dict[tuple[str, str], NutritionResult] | None = None,
     limit: int = 3,
     diagnostico: dict | None = None,
+    strict_nutrition: bool = False,
+    ignore_nutrition: bool = False,
 ) -> list[Recommendation]:
     """`diagnostico` (opcional) recebe quantos candidatos cada filtro descartou, em português, para o planejador."""
     started = time.perf_counter()
@@ -143,6 +145,9 @@ def rank(
               item_id=candidate.item_id, reason=reason)
 
     intent = apply_profile_preferences(intent or parse_intent(request), profile)
+    if ignore_nutrition:
+        from app.schemas.macro import NutritionPreferences
+        intent = intent.model_copy(update={"nutrition_preferences": NutritionPreferences()})
     nutrition_by_item = nutrition_by_item or {}
     query = " ".join([intent.food_query, *intent.search_queries])  # o modelo pode ter proposto vários termos
     generic = {"almoco", "jantar", "comida", "comer", "algo", "opcao", "opcoes", "refeicao", "com", "por", "favor", "uma", "que", "tem"}
@@ -197,6 +202,9 @@ def rank(
             reject(candidate, "budget")
             continue
         nutrition = nutrition_by_item.get((candidate.merchant_id, candidate.item_id), NutritionResult())
+        if strict_nutrition and meets_explicit_limits(nutrition, intent.nutrition_preferences) is False:
+            reject(candidate, "fora dos limites nutricionais informados")
+            continue
         limitations = ([] if nutrition.state == "ready" else [
             "Informação nutricional indisponível. Calorias e macros não foram calculados."
         ])
@@ -212,7 +220,7 @@ def rank(
             score += signal.score
             preference_reasons = reasons[:1] if matches else []
             reasons = preference_reasons + review_reasons + reasons[len(preference_reasons):]
-            if review_context.simulated:
+            if review_context.simulated or review_context.synthetic_catalog:
                 limitations.append("Personalização de demonstração baseada em avaliações fictícias.")
         fit = assess_intent(candidate, intent)
         nutrition_fit = assess_nutrition(nutrition, intent.nutrition_preferences)
@@ -262,7 +270,9 @@ def rank(
         diagnostico.update(_motivos_em_portugues(excluded, budget))
     _logar_filtro(candidates, words, achou, veredito, ranked, mostrar_termos)
     ordered = [r for _, _, _, r in sorted(ranked, key=lambda entry: (
-        -entry[0], -entry[1], -entry[2], entry[3].candidate.merchant_id, entry[3].candidate.item_id
+        -entry[0],
+        -(int(meets_explicit_limits(entry[3].nutrition, intent.nutrition_preferences) is True) if strict_nutrition else 0),
+        -entry[1], -entry[2], entry[3].candidate.merchant_id, entry[3].candidate.item_id
     ))]
     if intent.avoid_repeats:
         # Pediu variedade: um prato de cada tipo ("cenoura", "chocolate"...), de restaurantes diferentes quando der.

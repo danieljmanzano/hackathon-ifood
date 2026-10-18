@@ -8,6 +8,7 @@ import httpx
 
 from app.core.config import Settings, get_settings
 from app.core import logs
+from app.core.nutrition_budget import reserve_call, output_limit, check_input
 from app.core.exceptions import AppError
 
 RETRYABLE_STATUS = {429, 500, 502, 503, 504}
@@ -86,6 +87,7 @@ async def responder(
     if not settings.openai_api_key.get_secret_value():
         raise OpenAIError("OPENAI_API_KEY não configurada", status_code=500)
 
+    check_input([entrada, instrucoes])
     modelo = model or settings.nutrition_model
     if imagem is not None:
         url = f"data:{imagem[1]};base64,{base64.b64encode(imagem[0]).decode()}"
@@ -105,11 +107,14 @@ async def responder(
         payload["tools"] = [{"type": "web_search"}]
         payload["include"] = ["web_search_call.action.sources"]
 
+    if output_limit():
+        payload["max_output_tokens"] = output_limit()
     erro = ""
     async with httpx.AsyncClient(base_url=settings.openai_base_url, timeout=settings.openai_timeout) as client:
         for tentativa in range(TENTATIVAS):
             with logs.Cronometro() as t:
                 try:
+                    reserve_call("openai")
                     resposta = await client.post("/responses", json=payload,
                                                  headers={"Authorization": f"Bearer {settings.openai_api_key.get_secret_value()}"})
                 except httpx.HTTPError as exc:

@@ -22,8 +22,15 @@ def chave_produto(item: MealCandidate | SelectedItem) -> str:
         opcoes = sorted(o.option_id for o in item.options) or sorted(item.option_labels)
     else:
         candidate, opcoes = item, None
-    base = [candidate.merchant_id, candidate.item_id or candidate.name, candidate.simulated, opcoes]
-    return hashlib.sha1(json.dumps(base, ensure_ascii=False).encode()).hexdigest()[:12]
+    # Preço/disponibilidade/imagem com URL temporária não alteram a composição.
+    # Nomes de adicionais e quantidades fazem parte da receita, inclusive para um ID já conhecido.
+    grupos = [(g.id, [(o.id, o.name) for o in g.options]) for g in candidate.option_groups]
+    quantidades = sorted((o.option_id, o.quantity) for o in item.options) if isinstance(item, SelectedItem) else None
+    base = [candidate.merchant_id, candidate.item_id or candidate.name, candidate.simulated,
+            candidate.name, candidate.description,
+            [candidate.features.portion_size, candidate.features.serves, candidate.features.weight_grams],
+            grupos, opcoes, quantidades]
+    return hashlib.sha256(json.dumps(base, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:24]
 
 
 class RepositorioProdutos:
