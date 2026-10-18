@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import time
 from collections import Counter
+from datetime import date, timedelta
+from typing import Annotated
 
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Request, Response
+from pydantic import Field
 
 from app.core.config import Settings, get_settings
 from app.core.exceptions import MacroError
@@ -30,6 +33,9 @@ from app.schemas.macro import (
     SelectionInput,
     Session,
     UserProfile,
+    ConsumptionRecord,
+    DailyFoodDiary,
+    FoodDiaryEntry,
 )
 if TYPE_CHECKING:
     from app.services.ifood_live import MCPIFood
@@ -41,6 +47,7 @@ from app.services.review_recommendations import review_context
 from app.services.llm_meal_intent import interpret_intent
 from app.services.nutrition_preferences import apply_profile_preferences, update_explanation
 from app.services.nutrition.service import cached_candidates
+from app.services.diet_context import apply_diet_context, build_diet_context, local_date
 
 router = APIRouter()
 _mock_provider = MockIFood()
@@ -231,9 +238,20 @@ async def search(
         editable(session)
         if session.address is None:
             raise MacroError("Selecione o endereço antes de buscar.", 422)
+        trace.stage = "diet_context"
+        diet_context, meal_text = build_diet_context(
+            session.profile, request.app.state.db.food_entries(session.profile.id),
+            request.app.state.db.consumption(session.profile.id), settings.timezone, message=payload.text,
+        )
+        has_diet_context = bool(diet_context.goal or diet_context.details or diet_context.meal_count
+                                or any(v is not None for v in diet_context.targets.model_dump().values()))
+        event("diet.ready", has_goal=diet_context.goal is not None, entry_count=diet_context.meal_count,
+              known_counts=diet_context.known_counts)
         trace.stage = "intent"
         started = time.perf_counter()
-        intent = apply_profile_preferences(await interpret_intent(payload, settings), session.profile)
+        interpreted = await interpret_intent(payload.model_copy(update={"text": meal_text}), settings,
+                                            diet_context=diet_context if has_diet_context else None)
+        intent = apply_profile_preferences(apply_diet_context(interpreted, diet_context, meal_text), session.profile)
         event("intent.ready", source=intent.interpretation_source, goals=intent.goals,
               fallback_reason=intent.fallback_reason, duration_ms=elapsed_ms(started))
         query, budget = intent.provider_query, intent.budget_cents
@@ -308,6 +326,50 @@ async def search(
         result = mutate_session(request, session, update)
         trace.result_count = len(result.recommendations)
         return result
+
+
+@router.get("/consumption", response_model=list[ConsumptionRecord])
+def consumption(request: Request, session: Session = Depends(current_session)):
+    return request.app.state.db.consumption(session.profile.id)
+
+
+@router.put("/consumption", response_model=list[ConsumptionRecord])
+def save_consumption(payload: Annotated[list[ConsumptionRecord], Field(max_length=500)],
+                     request: Request, session: Session = Depends(current_session)):
+    keys = {(e.order_id, e.item_id) for e in payload}
+    if len(keys) != len(payload):
+        raise MacroError("Há registros duplicados para o mesmo prato e pedido.", 422)
+    if any(e.consumed_at > now() + timedelta(minutes=5) for e in payload):
+        raise MacroError("O consumo precisa ter ocorrido antes de agora.", 422)
+    request.app.state.db.replace_consumption(session.profile.id, payload)
+    return payload
+
+
+@router.get("/daily-context", response_model=DailyFoodDiary)
+def daily_context(request: Request, on_date: date | None = None,
+                  session: Session = Depends(current_session), settings: Settings = Depends(get_settings)):
+    entries = request.app.state.db.food_entries(session.profile.id)
+    context, _ = build_diet_context(session.profile, entries,
+                                    request.app.state.db.consumption(session.profile.id),
+                                    settings.timezone, on_date=on_date)
+    return DailyFoodDiary(entries=sorted([e for e in entries if local_date(e.consumed_at, settings.timezone) == context.date],
+                                        key=lambda e: e.consumed_at), context=context)
+
+
+@router.post("/food-diary", response_model=FoodDiaryEntry)
+def add_food(payload: FoodDiaryEntry, request: Request, session: Session = Depends(current_session)):
+    if payload.consumed_at > now() + timedelta(minutes=5):
+        raise MacroError("Registre apenas alimentos já consumidos.", 422)
+    entries = request.app.state.db.food_entries(session.profile.id)
+    if len(entries) >= 500 and not any(e.id == payload.id for e in entries):
+        raise MacroError("O diário chegou ao limite de 500 registros. Remova registros antigos para continuar.", 422)
+    request.app.state.db.save_food_entry(session.profile.id, payload)
+    return payload
+
+
+@router.delete("/food-diary/{entry_id}", status_code=204)
+def remove_food(entry_id: str, request: Request, session: Session = Depends(current_session)):
+    request.app.state.db.delete_food_entry(session.profile.id, entry_id)
 
 
 @router.get("/reviews/me", response_model=list[Review])

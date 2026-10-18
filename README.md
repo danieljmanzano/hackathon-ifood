@@ -172,7 +172,7 @@ Os mocks incluem `features` com porção, peso, pessoas atendidas, estilo e praz
 
 ### Contexto interpretado por LLM
 
-`app/services/llm_meal_intent.py` chama o cliente OpenRouter existente antes da busca. O modelo recebe apenas a mensagem atual e o contrato de saída, sem envio automático de endereço, identidade, reviews ou perfil persistido. Retorna objetivos do catálogo, termos de comida, resumo e inferências em JSON validado pelo Pydantic. Ele não recebe ferramentas para comprar, alterar perfil ou executar ações MCP.
+`app/services/llm_meal_intent.py` chama o cliente OpenRouter existente antes da busca. O modelo recebe a mensagem atual e o contrato de saída. Quando existem objetivos de dieta ou registros do dia, recebe também esse contexto: objetivo, orientações informadas, até 12 descrições resumidas de alimentos, metas diárias e totais conhecidos. Não recebe endereço, identidade, cookie ou reviews. Retorna objetivos do catálogo, termos de comida, resumo e inferências em JSON validado pelo Pydantic. Ele não recebe ferramentas para comprar, alterar perfil ou executar ações MCP.
 
 Exemplos: “treinei musculação hoje” pode favorecer uma refeição mais substanciosa com fontes de proteína; “vou treinar em breve” pode favorecer algo leve e menor. O usuário pode corrigir o contexto com preferências explícitas, como “treinei, mas estou com pouca fome”. Essas inferências são hipóteses de preferência para a busca, sem concluir necessidades médicas, calorias ou macros. Não viram gostos permanentes. Sem alimento explícito, palavras de situação não são usadas como nome de prato.
 
@@ -226,3 +226,25 @@ A busca consulta os resultados nutricionais já calculados em memória e na base
 A adequação nutricional gera um sinal entre 0 e 3, multiplicado por 4 e somado aos pontos de gostos, orçamento, reviews e rotação. Limites numéricos recebem pontuação proporcional à proximidade com o valor pedido, limitada ao atendimento completo. Objetivos qualitativos usam comparações graduais dos valores disponíveis. A relevância do alimento e o atendimento às intenções de porção/estilo continuam sendo critérios anteriores à pontuação; alternativas de restaurantes diferentes continuam sendo priorizadas.
 
 Valores ausentes não contam como zero calorias/macros nem como atendimento da preferência. A resposta explica quais valores estão disponíveis, quais preferências não foram atendidas ou não puderam ser verificadas. São estimativas por prato antes dos adicionais, usadas como preferência de ordenação; não são um filtro rígido nem garantia dos limites. Os logs incluem `nutrition_score`, `nutrition_points` e `nutrition_state` por candidato e `nutrition.ranking` com o tamanho do conjunto comparado. O contrato das ferramentas MCP permanece igual.
+
+## Objetivos de dieta e alimentação do dia
+
+Em **Preferências → Qual é seu objetivo de dieta?**, cadastre ganhar massa muscular, perder peso, manter o peso, desempenho nos treinos ou alimentação equilibrada. É possível acrescentar orientações em texto e metas diárias de proteína, carboidratos e gordura que você já utiliza. A meta diária de calorias continua no campo existente. O perfil é persistido em `diet_plan`; nenhuma meta numérica é criada automaticamente a partir do objetivo.
+
+Em **Meu dia → O que você já comeu hoje?**, registre refeições de casa ou de outros lugares. Calorias e macros são opcionais, relativos à quantidade efetivamente consumida. Descrever “banana e maçã” não gera números nutricionais. Os consumos confirmados dos pedidos são sincronizados com o backend, incluindo quantidade e fração consumida, e os registros antigos do navegador são migrados na primeira abertura da versão atualizada. Evite registrar a mesma refeição nos dois lugares.
+
+O backend considera apenas o dia no fuso `TIMEZONE` (padrão `America/Sao_Paulo`). Registros de ontem continuam salvos, mas não influenciam o contexto de hoje. A soma aplica quantidade e fração dos pedidos; campos ausentes permanecem desconhecidos. A diferença para a meta só é calculada quando todos os registros daquele dia têm o nutriente informado, e sempre se refere ao que está registrado, não a uma garantia de que todas as refeições foram relatadas.
+
+Exemplos de comportamento:
+
+- Objetivo de ganhar massa + registros apenas de frutas: favorece uma refeição mais reforçada, variada e com fontes de proteína.
+- Pouca fome ou pré-treino leve explícitos: mantêm a porção menor/leve, mesmo no cenário anterior.
+- Proteína registrada já alcançando a meta informada: não presume que seja necessário aumentar a proteína.
+- Perder peso ou calorias registradas já alcançando a meta: favorece opções leves, sem recomendar pular refeições nem criar limite de zero calorias para o próximo prato.
+- Sem registros: não presume jejum ou ausência de alimentação.
+
+Também é possível escrever **“meu objetivo é ganhar massa muscular, só comi frutas hoje, quero frango até R$ 30”** na busca. O contexto é usado somente nessa busca; os alimentos já consumidos não viram termos da refeição procurada. Para guardar o objetivo e o consumo, use os formulários do perfil e do diário.
+
+O LLM interpreta o contexto quando está disponível; regras locais preservam os principais comportamentos sem ele. O cache da interpretação inclui a data, o objetivo e os registros/totais do dia. Mudanças nesses dados geram uma nova interpretação. `request_intent.diet_context` guarda o contexto usado e os cards explicam como ele influenciou as sugestões. Logs `diet.ready` contêm somente presença de objetivo e contagens, sem descrições dos alimentos ou orientações da dieta.
+
+Endpoints locais: `GET /api/daily-context`, `POST /api/food-diary`, `DELETE /api/food-diary/{id}` e `GET/PUT /api/consumption`. Os dados são isolados pelo perfil da sessão e sobrevivem a reinícios do servidor, mas continuam vinculados ao cookie, sem conta autenticada. Nenhuma ferramenta MCP foi alterada.

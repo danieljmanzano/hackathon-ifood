@@ -126,6 +126,9 @@ def rank(
         score += nutrition_points
         reasons = nutrition_fit.reasons + fit.reasons + reasons
         limitations += fit.limitations + nutrition_fit.limitations
+        if intent.diet_context:
+            reasons = intent.diet_context.reasons + reasons
+            limitations += intent.diet_context.limitations
         exposure = recently_shown.count((candidate.merchant_id, candidate.item_id))
         merchant_exposure = sum(mid == candidate.merchant_id for mid, _ in recently_shown)
         rotation_penalty = 2 * exposure + 0.5 * merchant_exposure
