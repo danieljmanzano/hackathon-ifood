@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hackathon SEMCOMP &amp; iFood 2026 — Vendendo com Agentes</title>
+<style>
+:root{
+    --red: #EA1D2C;
+    --red-dark: #B8101C;
+    --ink: #1A1A1A;
+    --ink-soft: #55565A;
+    --line: #DCDCDC;
+    --paper: #FFFFFF;
+    --wash: #FAF7F5;
+    --good: #1E7E34;
+    --bad: #B8101C;
+  }
+*{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  html,body{margin:0;padding:0;background:#0E0E0F;color:var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+.lp-scope{
+    --lp-bg:#0E0E0F; --lp-card:#1A1A1B; --lp-line:#2B2B2D; --lp-text:#F4F1EE; --lp-soft:#A9A6A2;
+    background:var(--lp-bg); color:var(--lp-text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  .lp-nav{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;
+      padding:18px 40px;border-bottom:1px solid var(--lp-line);background:rgba(14,14,15,.92);backdrop-filter:blur(6px);}
+  .lp-logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;letter-spacing:.01em;}
+  .lp-logo .mark{width:30px;height:30px;border-radius:8px;background:var(--red);display:flex;align-items:center;
+      justify-content:center;font-size:15px;}
+  .lp-logo .txt{line-height:1.15;}
+  .lp-logo .txt small{display:block;color:var(--lp-soft);font-weight:500;font-size:10.5px;}
+  .lp-anchors{display:flex;gap:26px;}
+  .lp-anchors a{color:var(--lp-soft);text-decoration:none;font-size:13px;font-weight:600;}
+  .lp-anchors a:hover{color:#fff;}
+
+  .lp-hero{position:relative;padding:90px 40px 70px;overflow:hidden;
+      background: radial-gradient(ellipse 900px 500px at 50% -10%, rgba(234,29,44,.30), transparent 60%);}
+  .lp-hero-inner{max-width:760px;margin:0 auto;text-align:center;}
+  .lp-eyebrow{display:inline-flex;gap:8px;align-items:center;font-size:13px;color:#FFB9BE;
+      background:rgba(234,29,44,.14);border:1px solid rgba(234,29,44,.35);border-radius:20px;padding:6px 14px;margin-bottom:26px;}
+  .lp-hero h1{font-size:44px;line-height:1.14;font-weight:800;letter-spacing:-0.01em;margin:0 0 18px;}
+  .lp-hero p.sub{font-size:17px;line-height:1.6;color:var(--lp-soft);max-width:600px;margin:0 auto 34px;}
+  .lp-cta{display:flex;gap:14px;justify-content:center;margin-bottom:44px;}
+  .lp-btn{border-radius:10px;padding:13px 26px;font-size:14.5px;font-weight:700;cursor:pointer;border:none;
+      font-family:inherit;}
+  .lp-btn.primary{background:var(--red);color:#fff;}
+  .lp-btn.ghost{background:transparent;color:#fff;border:1.5px solid #3A3A3C;}
+
+  .lp-facts{display:flex;gap:0;justify-content:center;flex-wrap:wrap;max-width:760px;margin:0 auto;}
+  .lp-fact{padding:14px 26px;text-align:center;min-width:150px;}
+  .lp-fact .ico{font-size:20px;margin-bottom:6px;}
+  .lp-fact .v{font-size:14px;font-weight:700;}
+  .lp-fact .l{font-size:11.5px;color:var(--lp-soft);margin-top:2px;}
+
+  .lp-section{max-width:920px;margin:0 auto;padding:70px 40px;border-top:1px solid var(--lp-line);scroll-margin-top:80px;}
+  .lp-section:first-of-type{border-top:none;}
+  .lp-kicker{font-size:12px;font-weight:700;color:var(--red);letter-spacing:.03em;margin-bottom:10px;}
+  .lp-section h2{font-size:26px;font-weight:800;margin:0 0 16px;letter-spacing:-0.01em;max-width:560px;}
+  .lp-section p.lead{font-size:15px;line-height:1.7;color:var(--lp-soft);max-width:640px;margin:0 0 8px;}
+
+  .lp-stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:28px 0 8px;}
+  .lp-stat{background:var(--lp-card);border:1px solid var(--lp-line);border-radius:12px;padding:20px;}
+  .lp-stat .big{font-size:26px;font-weight:800;color:var(--red);}
+  .lp-stat .lbl{font-size:13px;font-weight:600;margin-top:4px;}
+  .lp-stat .dsc{font-size:12.5px;color:var(--lp-soft);margin-top:4px;line-height:1.5;}
+
+  .lp-two-col{display:grid;grid-template-columns:1.1fr .9fr;gap:34px;align-items:start;margin-top:12px;}
+  .lp-panel{background:var(--lp-card);border:1px solid var(--lp-line);border-radius:14px;padding:26px;}
+  .lp-panel h3{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px;}
+  .lp-panel p{font-size:13.5px;color:var(--lp-soft);line-height:1.65;margin:0;}
+
+  .lp-crit-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:26px;}
+  .lp-crit{background:var(--lp-card);border:1px solid var(--lp-line);border-radius:12px;padding:18px 20px;}
+  .lp-crit h4{font-size:14.5px;margin:0 0 6px;}
+  .lp-crit p{font-size:13px;color:var(--lp-soft);margin:0;line-height:1.55;}
+
+  .lp-prize-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px;}
+  .lp-prize{background:var(--lp-card);border:1px solid var(--lp-line);border-radius:14px;padding:24px 18px;text-align:center;}
+  .lp-prize.gold{border-color:rgba(234,29,44,.5);background:linear-gradient(180deg, rgba(234,29,44,.12), var(--lp-card));}
+  .lp-prize .place{font-size:12px;color:var(--lp-soft);font-weight:700;margin-bottom:8px;}
+  .lp-prize .amount{font-size:24px;font-weight:800;}
+
+  .lp-tags{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+  .lp-tags span{background:var(--lp-card);border:1px solid var(--lp-line);border-radius:20px;padding:8px 16px;font-size:13px;}
+
+  .lp-req{margin-top:18px;padding:0;list-style:none;}
+  .lp-req li{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--lp-line);font-size:14px;color:var(--lp-soft);}
+  .lp-req li:first-child{border-top:none;}
+  .lp-req li .dot{color:var(--red);font-weight:800;}
+  .lp-req li b{color:var(--lp-text);font-weight:600;}
+
+  .lp-subhead{font-size:12px;font-weight:700;color:var(--red);text-transform:uppercase;
+      letter-spacing:.03em;margin:38px 0 4px;}
+
+  .lp-deliv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px;}
+  .lp-deliv{background:var(--lp-card);border:1px solid var(--lp-line);border-radius:12px;padding:18px 20px;}
+  .lp-deliv.highlight{border-color:rgba(234,29,44,.5);
+      background:linear-gradient(180deg, rgba(234,29,44,.10), var(--lp-card));}
+  .lp-deliv .num{font-size:11px;color:var(--lp-soft);font-weight:700;margin-bottom:8px;}
+  .lp-deliv h4{font-size:14px;margin:0 0 6px;}
+  .lp-deliv p{font-size:12.5px;color:var(--lp-soft);margin:0;line-height:1.5;}
+
+  .lp-footer{max-width:920px;margin:0 auto;padding:40px 40px 60px;display:flex;justify-content:space-between;
+      align-items:flex-end;gap:20px;flex-wrap:wrap;border-top:1px solid var(--lp-line);}
+  .lp-footer .cols{font-size:12px;color:var(--lp-soft);max-width:420px;line-height:1.6;}
+  .lp-footer .chips{display:flex;gap:10px;flex-wrap:wrap;}
+  .lp-footer .chips span{background:var(--lp-card);border:1px solid var(--lp-line);border-radius:20px;
+      padding:7px 14px;font-size:12px;color:var(--lp-soft);}
+
+  @media (max-width:760px){
+    .lp-hero h1{font-size:30px;}
+    .lp-two-col, .lp-stat-grid, .lp-crit-grid, .lp-prize-row, .lp-deliv-grid{grid-template-columns:1fr;}
+    .lp-anchors{display:none;}
+    .lp-nav{padding:16px 20px;}
+    .lp-section{padding:50px 22px;}
+    .lp-hero{padding:60px 22px 40px;}
+  }
+</style>
+</head>
+<body>
+<div class="lp-scope">
+
+  <nav class="lp-nav">
+    <div class="lp-logo">
+      <div class="mark">🤖</div>
+      <div class="txt">Hackathon SEMCOMP × iFood<small>Vendendo com Agentes</small></div>
+    </div>
+    <div class="lp-anchors">
+      <a href="#lp-contexto">Contexto</a>
+      <a href="#lp-missao">Missão &amp; Desafio</a>
+      <a href="#lp-criterios">Critério de Avaliação</a>
+      <a href="#lp-dinamica">Dinâmica, Agenda &amp; Entregáveis</a>
+    </div>
+  </nav>
+
+  <section class="lp-hero">
+    <div class="lp-hero-inner">
+      <div class="lp-eyebrow">🍔 SEMCOMP × iFood · São Carlos, USP</div>
+      <h1>Hackathon SEMCOMP &amp; iFood — Vendendo com Agentes</h1>
+      <p class="sub">30 horas para construir, em equipe, um agente de IA que faz pedidos de verdade usando o MCP do iFood. Alojamento oferecido, mentoria do time iFood e R$7.000 em premiação.</p>
+      <div class="lp-facts">
+        <div class="lp-fact"><div class="ico">📅</div><div class="v">17–18 de outubro</div><div class="l">Sáb 12h30 → Dom 17h</div></div>
+        <div class="lp-fact"><div class="ico">👥</div><div class="v">80 participantes</div><div class="l">20 grupos de 4</div></div>
+        <div class="lp-fact"><div class="ico">🏆</div><div class="v">R$ 7.000 em prêmios</div><div class="l">1º · 2º · 3º lugar</div></div>
+        <div class="lp-fact"><div class="ico">📍</div><div class="v">São Carlos, USP</div><div class="l">Evento SEMCOMP</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 1. CONTEXTO ================= -->
+  <section class="lp-section" id="lp-contexto">
+    <div class="lp-kicker">CONTEXTO</div>
+    <h2>Por que construir um agente que faz pedidos</h2>
+    <p class="lead">O iFood conecta milhões de pedidos todos os dias, e agentes de IA estão virando um novo jeito de decidir o que e onde comer. Em parceria com o SEMCOMP e a USP São Carlos, abrimos esse desafio para explorar, na prática, como um agente pode operar o MCP do iFood do início ao fim de um pedido — direto com quem vai construir a próxima geração de produtos de tecnologia.</p>
+    <div class="lp-two-col">
+      <div class="lp-panel">
+        <h3>🍔 Por que o iFood</h3>
+        <p>Pedidos são um problema real, com regras de negócio de verdade — cardápio, disponibilidade, endereço, pagamento. É um terreno rico para testar o que um agente consegue (e não consegue) fazer sozinho.</p>
+      </div>
+      <div class="lp-panel">
+        <h3>🎓 Por que o SEMCOMP</h3>
+        <p>O SEMCOMP reúne quem já está de olho em LLMs e MCP na prática. É a oportunidade de colocar esse conhecimento pra rodar em um caso real, com mentoria direta do time do iFood.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 2. MISSÃO & DESAFIO ================= -->
+  <section class="lp-section" id="lp-missao">
+    <div class="lp-kicker">MISSÃO &amp; DESAFIO</div>
+    <h2>Construir um agente que faz pedidos de verdade</h2>
+    <p class="lead">O desafio deste hackathon é construir um agente de IA capaz de operar o MCP (Model Context Protocol) do iFood para realizar pedidos — da escolha do restaurante ao fechamento do carrinho. O objetivo é explorar como agentes conversacionais e ferramentas determinísticas podem trabalhar juntos para resolver um problema real de milhões de pessoas todos os dias.</p>
+
+    <div class="lp-stat-grid">
+      <div class="lp-stat">
+        <div class="big">80</div>
+        <div class="lbl">participantes</div>
+        <div class="dsc">Selecionados pela organização do SEMCOMP, com conhecimento básico de LLMs e MCP.</div>
+      </div>
+      <div class="lp-stat">
+        <div class="big">~30h</div>
+        <div class="lbl">de imersão</div>
+        <div class="dsc">De sábado às 12h30 a domingo às 17h, com alojamento oferecido pela organização.</div>
+      </div>
+    </div>
+
+    <div class="lp-two-col">
+      <div class="lp-panel">
+        <h3>🧠 Uso de IA é permitido</h3>
+        <p>Participantes podem usar LLMs livremente durante a construção do agente, com acesso próprio aos modelos de sua escolha.</p>
+      </div>
+      <div class="lp-panel">
+        <h3>🎓 Não precisa ser formando</h3>
+        <p>O requisito é conhecimento básico de LLMs e MCP — o público é definido pela organização do SEMCOMP, sem exigência de estar próximo da formatura.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3. CRITÉRIO DE AVALIAÇÃO ================= -->
+  <section class="lp-section" id="lp-criterios">
+    <div class="lp-kicker">CRITÉRIO DE AVALIAÇÃO</div>
+    <h2>O que a banca vai olhar</h2>
+    <p class="lead">Uma banca avalia todos os 20 grupos pelos 5 pilares abaixo. Os pitches são apresentados para todos os participantes antes do resultado.</p>
+    <div class="lp-crit-grid">
+      <div class="lp-crit"><h4>Visão &amp; Originalidade</h4><p>Originalidade da solução e uso criativo do agente para resolver o problema de pedidos.</p></div>
+      <div class="lp-crit"><h4>Arquitetura &amp; Engenharia</h4><p>Qualidade do código, uso correto do MCP do iFood e robustez do agente.</p></div>
+      <div class="lp-crit"><h4>Design &amp; Experiência</h4><p>Fluidez da interação com o agente e clareza para quem está fazendo o pedido.</p></div>
+      <div class="lp-crit"><h4>Impacto</h4><p>A solução resolve um problema real de pedidos e é viável de usar na prática.</p></div>
+      <div class="lp-crit"><h4>Comunicação &amp; Pitch</h4><p>Clareza da demo, storytelling e qualidade das respostas às perguntas da banca.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= 4. DINÂMICA, AGENDA & ENTREGÁVEIS ================= -->
+  <section class="lp-section" id="lp-dinamica">
+    <div class="lp-kicker">DINÂMICA, AGENDA &amp; ENTREGÁVEIS</div>
+    <h2>Como funciona, o que entregar e quando</h2>
+    <p class="lead">80 pessoas, organizadas em 20 grupos de 4. O evento acontece dentro da programação do SEMCOMP, na USP São Carlos, com desenvolvimento contínuo ao longo de sábado e domingo, intercalado por refeições e descanso.</p>
+    <ul class="lp-req">
+      <li><span class="dot">＋</span> <span><b>Grupos de 4 pessoas</b> — formados antes ou no início do evento, conforme critério do SEMCOMP.</span></li>
+      <li><span class="dot">＋</span> <span><b>Alojamento oferecido</b> — para participantes de fora de São Carlos aproveitarem as ~30h corridas.</span></li>
+      <li><span class="dot">＋</span> <span><b>Mentoria do time iFood</b> — cerca de 10 avaliadores e mentores do iFood acompanham o desenvolvimento, além de professores e alunos de doutorado da USP.</span></li>
+      <li><span class="dot">＋</span> <span><b>Submissão no domingo</b> — desenvolvimento termina ao meio-dia e meia, seguido da consolidação das avaliações e dos pitches finais.</span></li>
+    </ul>
+
+    <div class="lp-subhead">Agenda resumida</div>
+    <ul class="lp-req">
+      <li><span class="dot">◆</span> <span><b>Sáb 12h30</b> — credenciamento e abertura, início do desenvolvimento.</span></li>
+      <li><span class="dot">◆</span> <span><b>Sáb 13h → Dom 12h30</b> — desenvolvimento contínuo, com jantar e café da manhã.</span></li>
+      <li><span class="dot">◆</span> <span><b>Dom 12h30</b> — fim do desenvolvimento e submissão das soluções.</span></li>
+      <li><span class="dot">◆</span> <span><b>Dom 13h → 16h</b> — pitches finais para todos os participantes.</span></li>
+      <li><span class="dot">◆</span> <span><b>Dom 16h30</b> — consolidação dos resultados.
+      </li>
+      <li>
+        <span class="dot">◆</span> <span><b>Dom 17h</b> — liberação dos resultados, premiação e encerramento.</span></li>
+    </ul>
+
+    <div class="lp-subhead">Entregáveis obrigatórios</div>
+    <p class="lead" style="margin-bottom:6px;">Todo grupo deve submeter os seis itens abaixo até o fim do desenvolvimento — eles são a base usada pela banca na avaliação.</p>
+    <div class="lp-deliv-grid">
+      <div class="lp-deliv"><div class="num">01</div><h4>Proposta de Negócio</h4><p>O problema escolhido e a proposta de valor do agente para quem faz o pedido.</p></div>
+      <div class="lp-deliv"><div class="num">02</div><h4>Desenho de Solução</h4><p>Como o agente resolve o problema — fluxo geral da solução.</p></div>
+      <div class="lp-deliv"><div class="num">03</div><h4>Racional da Experiência</h4><p>As decisões de UX por trás da interação com o agente.</p></div>
+      <div class="lp-deliv"><div class="num">04</div><h4>Interface Visual</h4><p>Telas, protótipo ou interface que representa a experiência final.</p></div>
+      <div class="lp-deliv"><div class="num">05</div><h4>Documento Técnico Resumido</h4><p>Arquitetura, uso do MCP e decisões técnicas principais.</p></div>
+      <div class="lp-deliv highlight"><div class="num">06</div><h4>Feedback sobre os MCPs</h4><p>Dificuldades e dores reais sentidas ao usar o MCP do iFood — insumo direto para o time que mantém a ferramenta.</p></div>
+    </div>
+
+    <div class="lp-subhead">Premiação</div>
+    <div class="lp-prize-row">
+      <div class="lp-prize gold"><div class="place">1º LUGAR</div><div class="amount">R$ 4.000</div></div>
+      <div class="lp-prize"><div class="place">2º LUGAR</div><div class="amount">R$ 2.000</div></div>
+      <div class="lp-prize"><div class="place">3º LUGAR</div><div class="amount">R$ 1.000</div></div>
+    </div>
+  </section>
+
+  <footer class="lp-footer">
+    <div class="cols">
+      Hackathon SEMCOMP &amp; iFood 2026 — Vendendo com Agentes. Desafio colaborativo para criação de
+      soluções com agentes de IA, produto, dados e engenharia, em parceria com o SEMCOMP e a USP São Carlos.
+    </div>
+    <div class="chips">
+      <span>20 grupos de 4</span>
+      <span>R$ 7.000 em prêmios</span>
+      <span>17–18 de outubro</span>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
