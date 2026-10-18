@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Request, Response
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from app.core import logs
 from app.core.config import Settings, get_settings
@@ -404,6 +404,7 @@ def update_profile(
     def update(s: Session):
         s.nutrition_search = None
         s.profile = payload
+        s.pending_preference_update = None
 
     updated = mutate_session(request, session, update)
     review_context(request.app.state.db, updated.profile.id, updated.mode == "mock", updated.profile)
@@ -441,10 +442,13 @@ async def search(
         # O agente lê as últimas mensagens e a busca anterior para entender "mais barato", "outra opção"...
         conversa = montar_conversa(session, settings)
         event("conversation.ready", **resumo_conversa(conversa))
-        interpreted = await interpret_intent(payload.model_copy(update={"text": meal_text}), settings,
-                                            diet_context=diet_context if has_diet_context else None,
-                                            conversa=conversa, preferencias=preferencias_do_cliente(session.profile))
-        intent = apply_profile_preferences(apply_diet_context(interpreted, diet_context, meal_text), session.profile)
+        try:
+            interpreted = await interpret_intent(payload.model_copy(update={"text": meal_text}), settings,
+                                                diet_context=diet_context if has_diet_context else None,
+                                                conversa=conversa, preferencias=preferencias_do_cliente(session.profile))
+            intent = apply_profile_preferences(apply_diet_context(interpreted, diet_context, meal_text), session.profile)
+        except (ValueError, ValidationError):
+            raise MacroError("Os limites nutricionais se contradizem. Confira os mínimos e máximos do pedido e das preferências.", 422) from None
         event("intent.ready", source=intent.interpretation_source, goals=intent.goals,
               fallback_reason=intent.fallback_reason, duration_ms=elapsed_ms(started))
         # "pegue o footlong de 30cm": se cita uma das sugestões já mostradas (ou não pede comida nova), monta ela
@@ -575,6 +579,23 @@ async def chat(payload: ChatInput, request: Request, response: Response,
                session: Session = Depends(current_session), provider: MockIFood = Depends(get_provider),
                settings: Settings = Depends(get_settings)):
     """Guarda o contexto relatado na conversa; pedidos de comida seguem o motor existente."""
+    from app.services.preference_updates import interpret_update
+    preference_update = await interpret_update(payload.text, session.profile, settings,
+                                              pending=session.pending_preference_update, messages=session.messages)
+    if preference_update is not None:
+        def save_preferences(s: Session):
+            s.profile = preference_update.profile
+            s.pending_preference_update = preference_update.pending
+            s.nutrition_search = None
+            s.last_chat_action = 'preferences'
+            s.messages = (s.messages + [Message(role='user', text=payload.text),
+                          Message(role='assistant', text=preference_update.message)])[-40:]
+        updated = mutate_session(request, session, save_preferences)
+        if updated.profile != session.profile:
+            review_context(request.app.state.db, updated.profile.id, updated.mode == 'mock', updated.profile)
+        return updated
+    if session.pending_preference_update:
+        session = mutate_session(request, session, lambda s: setattr(s, 'pending_preference_update', None))
     if session.nutrition_search and session.nutrition_search.state == "pending":
         session = mutate_session(request, session, lambda s: setattr(s, "nutrition_search", None))
     meal_text, foods, goal = split_daily_message(payload.text)

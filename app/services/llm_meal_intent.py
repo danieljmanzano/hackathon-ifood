@@ -18,7 +18,7 @@ from app.services import horario
 from app.services.llm_texto import chat_completion_fallback as chat_completion
 from app.services.openrouter import OpenRouterError
 from app.services.review_processing import digest, normalized
-from app.services.nutrition_preferences import merge_preferences, preference_labels, without_daily_targets
+from app.services.nutrition_preferences import LIMIT_SPECS, UNIT_PATTERNS, merge_preferences, preference_labels, without_daily_targets
 from app.skills import busca_intencao
 
 VERSION = 'context-intent-v6-variedade'
@@ -121,9 +121,7 @@ def merge_intent(base: MealIntent, result: LLMIntent, message: str = "", *, grou
     # As regras e campos estruturados prevalecem. Números do LLM exigem unidade
     # correspondente na mensagem para não transformar contexto em metas inventadas.
     nutritional = result.nutrition_preferences.model_copy(deep=True)
-    units = {'max_calories': r'(?:kcal|calorias)', 'min_protein_g': r'g(?:ramas)?\s*(?:de\s+)?proteina[s]?',
-             'max_carbs_g': r'g(?:ramas)?\s*(?:de\s+)?carboidratos?',
-             'max_fat_g': r'g(?:ramas)?\s*(?:de\s+)?gordura[s]?'}
+    units = {field: UNIT_PATTERNS[metric] for field, metric, _, _ in LIMIT_SPECS}
     # Remove metas diárias também da validação das unidades citadas pelo modelo.
     grounding = without_daily_targets(message)
     for field, unit in units.items():

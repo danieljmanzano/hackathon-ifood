@@ -51,7 +51,7 @@ def test_descrever_item_cobre_os_tres_casos_de_opcoes():
 
 def test_skills_do_agente_sao_carregadas_pelo_nome():
     from app.agent.skills import list_skills, load_skill
-    assert list_skills() == sorted(AGENTE) == ["ifood_mcp", "nutrition_enrichment"]
+    assert list_skills() == sorted(AGENTE) == ["ifood_mcp", "nutrition_enrichment", "user_preferences"]
     skill = load_skill("ifood_mcp")
     assert skill.name == "ifood_mcp" and "mcp_call" in skill.content and skill.content == skill.content.strip()
     with pytest.raises(FileNotFoundError):

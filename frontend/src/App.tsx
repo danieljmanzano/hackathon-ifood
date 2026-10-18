@@ -5,7 +5,7 @@ import { Brand, MealCard, SelectedNutrition, Spinner, Stepper } from "./componen
 import { OrderReviewCard } from "./Reviews";
 import { ChatPreferences } from "./ChatPreferences";
 import { AddressPicker } from "./Addresses";
-import { addressIntent, confirmsOrder, matchChoice, normalize, reportsContext, requestedQuantity, wantsNewOrder } from "./chat-flow";
+import { addressIntent, confirmsOrder, matchChoice, normalize, preferenceCommand, preferenceReply, reportsContext, requestedQuantity, wantsNewOrder } from "./chat-flow";
 import { consumptionMigrated, loadConsumption, markConsumptionMigrated, saveConsumption } from "./storage";
 import type { Address, Assembly, Candidate, SelectedItem, CheckoutChoices, NewAddress, Nutrition, OrderReviewInput, Recommendation, SelectedOption, Session } from "./types";
 
@@ -381,6 +381,7 @@ export default function App() {
       else await saveOrderReview({ rating: null, comment });
       return;
     }
+    if (preferenceReply(value, !!session.pending_preference_update) || preferenceCommand(value)) { await search(value); return; }
     if (reportsContext(value)) { await search(value); return; }
     if (phase === "address") {
       const option = matchChoice(value, addresses, a => a.label);
@@ -450,7 +451,7 @@ export default function App() {
     </div></header>
     <main id="conversation" className="chat-main">
       {session?.mode === "mock" && <p className="demo-note">Demonstração: pratos, preços e pedidos fictícios. Sem cobrança.</p>}
-      {preferencesOpen && session && <div id="chat-preferences"><ChatPreferences profile={session.profile} busy={busy} onClose={() => setPreferencesOpen(false)}
+      {preferencesOpen && session && <div id="chat-preferences"><ChatPreferences key={JSON.stringify(session.profile)} profile={session.profile} busy={busy} onClose={() => setPreferencesOpen(false)}
         onSave={async profile => {
           const next = await perform(() => api.profile(profile));
           if (!next) return false;
