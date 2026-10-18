@@ -2,6 +2,10 @@
 export const normalize = (text: string) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 export const confirmsOrder = (text: string) => /^(?:confirmar|confirmo|pode confirmar)(?: o)? pedido[.!]?$/.test(normalize(text));
 export const wantsNewOrder = (text: string) => /^(?:novo pedido|nova busca|buscar outra refeicao|recomecar)[.!]?$/.test(normalize(text));
+/** Toda resposta à pergunta pendente passa pela validação de confirmação do backend. */
+export function preferenceReply(text: string, pending: boolean): boolean {
+  return pending && !!normalize(text) && !confirmsOrder(text);
+}
 /** "add" abre o cadastro; "change" abre a lista de endereços para trocar. */
 export function addressIntent(text: string): "add" | "change" | undefined {
   const value = normalize(text).replace(/[.!?]$/, "");
@@ -26,9 +30,12 @@ export function requestedQuantity(text: string): number | undefined {
   return value >= 1 && value <= 20 ? value : undefined;
 }
 
-/** Encaminha comandos explícitos de perfil ao backend, mesmo durante uma compra ou sem endereço. */
+/** Encaminha mensagens sobre o perfil para o agente decidir se deve salvar, buscar ou esclarecer. */
 export function preferenceCommand(text: string): boolean {
   const value = normalize(text);
-  const scope = /(?:meu|minha)\s+(?:minim[oa]|maxim[oa])|preferencias?|perfil|metas?|objetivo|limites?|orcamento|restricoes|alergias|ingredientes? (?:que|preferidos|favoritos)|alimentos? (?:que|preferidos|favoritos)|gostos?/;
-  return scope.test(value) && /^(?:por favor[, ]*)?(?:(?:quero que voce|quero|pode|voce pode|gostaria que voce|preciso que voce)\s+)?(?:salve|salvar|guarde|guardar|registre|registrar|atualize|atualizar|mude|mudar|altere|alterar|defina|definir|ajuste|ajustar|remova|remover|retire|retirar|adicione|adicionar|inclua|incluir|limpe|limpar|apague|apagar|esqueca|esquecer|substitua|substituir)\b/.test(value);
+  const scope = /(?:meu|minha)\s+(?:minim[oa]|maxim[oa])|preferencias?|perfil|metas?|objetivo|limites?|orcamento|restricoes|alergias|(?:ingredientes?|alimentos?|coisas) (?:que|preferidos|favoritos)|gostos?/;
+  const persistent = /\b(?:de agora em diante|daqui (?:para|pra) frente|a partir de agora|nas proximas sugestoes|sempre|passe a evitar|passe a preferir)\b/;
+  const personal = /\b(?:gosto de|nao como|prefiro evitar|nao quero mais|sou alergic[oa]|tenho alergia|sou intolerante)\b/;
+  if (/^(?:como|onde|qual|posso)\b/.test(value) || /^nao (?:salve|salvar|altere|alterar|mude|mudar)\b/.test(value)) return false;
+  return scope.test(value) || persistent.test(value) || personal.test(value);
 }

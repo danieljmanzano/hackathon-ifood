@@ -463,7 +463,12 @@ class NutritionSearchProgress(Model):
     reason: str | None = None
 
 
+class PendingPreferenceUpdate(Model):
+    source_message: str = Field(min_length=1, max_length=4000)
+
+
 class Session(Model):
+    pending_preference_update: PendingPreferenceUpdate | None = None
     nutrition_search: NutritionSearchProgress | None = None
     id: str = Field(default_factory=lambda: str(uuid4()))
     mode: Literal["mock", "live"]

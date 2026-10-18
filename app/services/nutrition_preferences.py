@@ -67,7 +67,8 @@ def extract_preferences(text: str) -> tuple[str, NutritionPreferences]:
             return " "
         working = re.sub(r"\b(?:" + pattern + r")\b", limit, working)
     for field, metric, _, minimum in LIMIT_SPECS:
-        pattern = rf"(?:{'minimo|minima' if minimum else 'maximo|maxima'})(?: de)?\s*(?:{NAMES[metric]})\s*(?:para|de|:|=)?\s*{NUMBER}\s*(?:kcal|calorias|g(?:ramas)?)?"
+        direction = 'minimo|minima' if minimum else 'maximo|maxima|limite'
+        pattern = rf"(?:{direction})(?: de)?\s*(?:{NAMES[metric]})\s*(?:agora\s+)?(?:para|de|e|:|=)?\s*{NUMBER}\s*(?:kcal|calorias|g(?:ramas)?)?"
         def reversed_limit(match):
             if not re.search(r"\bnao (?:quero |preciso )?$", working[:match.start()]):
                 fields[field] = float(match[1].replace(",", "."))

@@ -5,7 +5,7 @@ import { Brand, MealCard, SelectedNutrition, Spinner, Stepper } from "./componen
 import { OrderReviewCard } from "./Reviews";
 import { ChatPreferences } from "./ChatPreferences";
 import { AddressPicker } from "./Addresses";
-import { addressIntent, confirmsOrder, matchChoice, normalize, preferenceCommand, reportsContext, requestedQuantity, wantsNewOrder } from "./chat-flow";
+import { addressIntent, confirmsOrder, matchChoice, normalize, preferenceCommand, preferenceReply, reportsContext, requestedQuantity, wantsNewOrder } from "./chat-flow";
 import { consumptionMigrated, loadConsumption, markConsumptionMigrated, saveConsumption } from "./storage";
 import type { Address, Candidate, CheckoutChoices, NewAddress, OrderReviewInput, Recommendation, SelectedOption, Session } from "./types";
 
@@ -281,7 +281,7 @@ export default function App() {
       else await saveOrderReview({ rating: null, comment });
       return;
     }
-    if (preferenceCommand(value)) { await search(value); return; }
+    if (preferenceReply(value, !!session.pending_preference_update) || preferenceCommand(value)) { await search(value); return; }
     if (reportsContext(value)) { await search(value); return; }
     if (phase === "address") {
       const option = matchChoice(value, addresses, a => a.label);

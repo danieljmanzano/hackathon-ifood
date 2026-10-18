@@ -41,3 +41,24 @@ test('alterações explícitas de preferências são encaminhadas sem capturar p
     assert.equal(preferenceCommand(value), false);
   }
 });
+
+
+test('frases naturais de preferências chegam ao agente durante o fluxo de compra', () => {
+  for (const value of ['Queria que você colocasse frango nos ingredientes que gosto',
+    'De agora em diante prefiro evitar cebola', 'Meu limite de calorias agora é 600 kcal',
+    'Não quero mais cebola nas minhas preferências', 'Gosto de frango', 'Sou alérgico a amendoim']) {
+    assert.equal(preferenceCommand(value), true, value);
+  }
+});
+
+
+test('sim e não respondem à preferência pendente sem autorizar compra', async () => {
+  const { preferenceReply } = await import('../src/chat-flow.ts');
+  for (const reply of ['sim', 'Sim!', 'pode salvar', 'não', 'não salve', 'só hoje', 'talvez', 'isso', 'ok', 'sim, mas não salve']) {
+    assert.equal(preferenceReply(reply, true), true, reply);
+    assert.equal(preferenceReply(reply, false), false, reply);
+    assert.equal(confirmsOrder(reply), false);
+  }
+  assert.equal(preferenceReply('confirmar pedido', true), false);
+  assert.equal(preferenceReply('quero pizza', true), true);
+});

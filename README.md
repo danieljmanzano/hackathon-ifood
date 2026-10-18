@@ -389,6 +389,9 @@ O agente pode salvar alterações quando o usuário pedir explicitamente, por ex
 - “Adicione frango e legumes aos ingredientes que gosto”.
 - “Adicione cebola aos ingredientes que prefiro evitar”.
 - “Remova meu máximo de proteína”.
+- “De agora em diante prefiro evitar cebola”.
+- “Meu limite de calorias agora é 600 kcal”.
+- “Não quero mais cebola nas minhas preferências”.
 
 “Quero frango até 600 kcal hoje” aplica o limite à busca atual e não muda o perfil.
 Perguntas, negativas e pedidos condicionais não autorizam alterações. O comando
@@ -400,5 +403,18 @@ pedido em operações tipadas quando o LLM está habilitado; comandos comuns de
 limites e ingredientes também têm interpretação local. O backend exige evidência
 na mensagem, números/unidades explícitos, campos permitidos e validação do perfil
 completo antes de persistir. Uma proposta inválida mantém todas as preferências.
+O agente também classifica frases naturais relacionadas ao perfil como alteração,
+pedido da refeição atual ou dúvida que precisa de esclarecimento. Não é necessário
+começar com um verbo específico. Ele recebe as preferências atuais para resolver
+remoções; se houver mais de uma categoria possível, pede esclarecimento. Sem LLM,
+comandos locais continuam funcionando e frases ambíguas pedem um comando explícito.
+Quando o agente pergunta se deve salvar uma preferência, o pedido fica pendente
+na sessão. “Sim” ou “pode salvar” confirma esse pedido, e “não” o cancela, sem
+disparar busca ou confirmar compra. Enquanto houver uma pergunta pendente, qualquer
+resposta sem confirmação afirmativa mantém o perfil intacto e pede “sim” ou “não”.
+“Isso”, “talvez” e negativas não contam como consentimento. Uma edição pelo painel
+descarta a pendência. O agente de preferências também recebe as seis
+mensagens recentes; o histórico ajuda na interpretação, mas não autoriza mudanças
+sozinho. As confirmações continuam sujeitas à validação de ingredientes e valores.
 Mudanças são gravadas no SQLite da sessão, reaparecem no painel e valem para as
 próximas buscas. Campos omitidos e dados de compra são preservados.
