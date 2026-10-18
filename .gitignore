@@ -11,3 +11,4 @@ dist/
 *.tsbuildinfo
 playwright-report/
 test-results/
+.ifood_tokens.json

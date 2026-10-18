@@ -25,6 +25,7 @@ import {
   ShoppingBag,
   SlidersHorizontal,
   Sparkles,
+  Store,
   Target,
   Trash2,
   Truck,
@@ -36,9 +37,12 @@ import {
   Brand,
   MealCard,
   MealImage,
+  MenuItemCard,
+  MerchantCard,
   Modal,
   NutritionDetails,
   photos,
+  SelectedNutrition,
   Spinner,
   Stepper,
 } from "./components";
@@ -50,6 +54,7 @@ import type {
   CheckoutChoices,
   Consumption,
   Health,
+  MerchantSummary,
   Profile,
   Recommendation,
   SelectedOption,
@@ -60,6 +65,7 @@ import type {
 const nav = [
   { id: "home", name: "Visão geral", icon: Home },
   { id: "chat", name: "Pedir com o Macro", icon: MessageCircle },
+  { id: "restaurants", name: "Restaurantes perto", icon: Store },
   { id: "day", name: "Meu dia", icon: Flame },
   { id: "orders", name: "Meus pedidos", icon: ShoppingBag },
   { id: "profile", name: "Preferências", icon: SlidersHorizontal },
@@ -109,6 +115,11 @@ export default function App() {
   const [recommendation, setRecommendation] = useState<Recommendation | null>(
     null,
   );
+  const [merchants, setMerchants] = useState<MerchantSummary[] | null>(null);
+  const [activeMerchant, setActiveMerchant] = useState<MerchantSummary | null>(
+    null,
+  );
+  const [menu, setMenu] = useState<Candidate[]>([]);
   const [options, setOptions] = useState<SelectedOption[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [choices, setChoices] = useState<CheckoutChoices | null>(null);
@@ -227,8 +238,57 @@ export default function App() {
       setText((current) => (current.trim() === query.trim() ? "" : current));
     }
   }
-  async function choose(rec: Recommendation) {
-    const item = await perform(() => api.item(rec.candidate));
+  async function loadMerchants() {
+    if (!session) return;
+    if (!session.address) {
+      open("address");
+      return;
+    }
+    const list = await perform(() => api.merchants());
+    if (list) setMerchants(list);
+  }
+  async function openMerchant(merchant: MerchantSummary) {
+    const items = await perform(() => api.menu(merchant.merchant_id));
+    if (items) {
+      setActiveMerchant(merchant);
+      setMenu(items);
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }
+  // Recarrega a lista quando o endereço muda.
+  useEffect(() => {
+    setMerchants(null);
+    setActiveMerchant(null);
+    setMenu([]);
+  }, [session?.address?.id]);
+  useEffect(() => {
+    if (view === "restaurants" && merchants === null && session?.address)
+      void loadMerchants();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, merchants, session?.address?.id]);
+  // A estimativa do prato escolhido pode terminar depois da resposta: consulta até ficar pronta.
+  const selectedNutritionState = session?.selected?.nutrition.state;
+  useEffect(() => {
+    if (selectedNutritionState !== "pending") return;
+    let tries = 0;
+    const timer = window.setInterval(async () => {
+      tries += 1;
+      try {
+        const next = await api.selectionNutrition();
+        if (next.selected?.nutrition.state !== "pending") {
+          setSession(next);
+          clearInterval(timer);
+        }
+      } catch {
+        // Tenta de novo no próximo ciclo; o pedido continua utilizável.
+      }
+      if (tries >= 30) clearInterval(timer);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [selectedNutritionState, session?.selected?.candidate.item_id]);
+
+  async function choose(candidate: Candidate, rec: Recommendation | null) {
+    const item = await perform(() => api.item(candidate));
     if (item) {
       setDetail(item);
       setRecommendation(rec);
@@ -274,7 +334,14 @@ export default function App() {
     if (next) {
       setSession(next);
       setDialog(null);
-      setToast("Prato adicionado. Revise a entrega e o pagamento.");
+      const nutrition = next.selected?.nutrition;
+      setToast(
+        nutrition?.state === "ready"
+          ? `Prato adicionado: ≈ ${Math.round(nutrition.calories! * next.selected!.quantity)} kcal no total.`
+          : nutrition?.state === "pending"
+            ? "Prato adicionado. Ainda calculando as calorias…"
+            : "Prato adicionado. Revise a entrega e o pagamento.",
+      );
     }
   }
   async function openCheckout() {
@@ -353,9 +420,11 @@ export default function App() {
         fraction: 1,
         quantity: session.selected.quantity,
         consumed_at: new Date().toISOString(),
-        // Recommendation estimates do not describe a customized plate.
+        // Prefer the estimate of the plate as assembled; recommendation estimates do not describe a customized plate.
         nutrition:
-          session.selected.options.length === 0
+          session.selected.nutrition?.state === "ready"
+            ? session.selected.nutrition
+            : session.selected.options.length === 0
             ? (session.recommendations.find(
                 (r) =>
                   r.candidate.item_id === session.selected!.candidate.item_id &&
@@ -808,7 +877,7 @@ export default function App() {
                             key={`${r.candidate.merchant_id}-${r.candidate.item_id}`}
                             recommendation={r}
                             index={index}
-                            onSelect={() => void choose(r)}
+                            onSelect={() => void choose(r.candidate, r)}
                             disabled={disabled || !!session.order}
                           />
                         ))}
@@ -902,6 +971,113 @@ export default function App() {
                     <span>Um pedido por vez, no seu controle.</span>
                   </div>
                 </>
+              )}
+
+              {view === "restaurants" && (
+                <section className="restaurants-view">
+                  <div className="page-heading">
+                    <div>
+                      <span className="greeting">
+                        Perto de{" "}
+                        {session.address?.label || "você"}
+                      </span>
+                      <h1>
+                        {activeMerchant
+                          ? activeMerchant.name
+                          : "Restaurantes abertos agora"}
+                      </h1>
+                    </div>
+                    {activeMerchant ? (
+                      <button
+                        className="secondary-button"
+                        onClick={() => {
+                          setActiveMerchant(null);
+                          setMenu([]);
+                        }}
+                        disabled={busy}
+                      >
+                        Ver todos os restaurantes
+                      </button>
+                    ) : (
+                      <button
+                        className="secondary-button"
+                        onClick={() => void loadMerchants()}
+                        disabled={disabled}
+                      >
+                        Atualizar lista
+                      </button>
+                    )}
+                  </div>
+                  {!session.address ? (
+                    <div className="empty-results">
+                      <MapPin size={25} />
+                      <h3>Escolha um endereço</h3>
+                      <p>Precisamos dele para mostrar quem entrega perto de você.</p>
+                      <button
+                        className="primary-button"
+                        onClick={() => open("address")}
+                      >
+                        Selecionar endereço
+                      </button>
+                    </div>
+                  ) : busy ? (
+                    <div className="search-loading">
+                      <Brand small />
+                      <Spinner
+                        text={
+                          activeMerchant || merchants
+                            ? "Carregando…"
+                            : "Procurando restaurantes perto de você…"
+                        }
+                      />
+                    </div>
+                  ) : activeMerchant ? (
+                    menu.length ? (
+                      <>
+                        <p className="section-footnote">
+                          <Info size={13} />
+                          Escolha um prato e as opções: o Macro calcula as
+                          calorias do prato montado ao adicionar ao pedido.
+                        </p>
+                        <div className="meal-grid">
+                          {menu.map((item) => (
+                            <MenuItemCard
+                              key={item.item_id}
+                              item={item}
+                              onSelect={() => void choose(item, null)}
+                              disabled={disabled || !!session.order}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="empty-results">
+                        <Utensils size={25} />
+                        <h3>Cardápio indisponível</h3>
+                        <p>Este restaurante não retornou pratos agora.</p>
+                      </div>
+                    )
+                  ) : merchants?.length ? (
+                    <div className="merchant-grid">
+                      {merchants.map((m) => (
+                        <MerchantCard
+                          key={m.merchant_id}
+                          merchant={m}
+                          onSelect={() => void openMerchant(m)}
+                          disabled={disabled}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    merchants && (
+                      <div className="empty-results">
+                        <Store size={25} />
+                        <h3>Nenhum restaurante aberto por perto</h3>
+                        <p>Tente atualizar a lista daqui a pouco.</p>
+                      </div>
+                    )
+                  )}
+                </section>
               )}
 
               {view === "profile" && (
@@ -1309,6 +1485,27 @@ export default function App() {
                         session.selected.unit_total_cents,
                     )}
                   </p>
+                  {session.selected.option_labels.length > 0 && (
+                    <p className="small muted">
+                      {session.selected.option_labels.join(" · ")}
+                    </p>
+                  )}
+                  {session.selected.nutrition && (
+                    <>
+                      <SelectedNutrition
+                        nutrition={session.selected.nutrition}
+                        quantity={session.selected.quantity}
+                      />
+                      {session.selected.nutrition.state === "ready" && (
+                        <details className="selected-nutrition-details">
+                          <summary>Como calculamos</summary>
+                          <NutritionDetails
+                            nutrition={session.selected.nutrition}
+                          />
+                        </details>
+                      )}
+                    </>
+                  )}
                   <button
                     className="primary-button"
                     onClick={() => void openCheckout()}
@@ -1357,7 +1554,13 @@ export default function App() {
               onClick={() => navigate(id)}
             >
               <Icon size={20} />
-              <span>{name === "Pedir com o Macro" ? "Pedir" : name}</span>
+              <span>
+                {name === "Pedir com o Macro"
+                  ? "Pedir"
+                  : name === "Restaurantes perto"
+                    ? "Perto"
+                    : name}
+              </span>
             </button>
           ))}
       </nav>
@@ -1632,14 +1835,23 @@ export default function App() {
                 <div className="info-box">
                   <Info size={18} />
                   <p>
-                    A composição do prato mudou. A estimativa anterior está
-                    desatualizada; o cálculo das opções selecionadas ainda não
-                    está disponível. Você pode continuar sem estimativa.
+                    A composição do prato mudou. A estimativa acima vale para o
+                    prato sem opções; ao adicionar ao pedido, o Macro recalcula
+                    as calorias com as opções escolhidas.
                   </p>
                 </div>
               ) : (
                 <NutritionDetails nutrition={recommendation.nutrition} />
               )}
+            </div>
+          )}
+          {!recommendation && (
+            <div className="info-box">
+              <Info size={18} />
+              <p>
+                Ao adicionar ao pedido, o Macro calcula as calorias deste prato
+                com a descrição do restaurante e as opções que você escolheu.
+              </p>
             </div>
           )}
           <div className="modal-action-bar">
@@ -1654,7 +1866,7 @@ export default function App() {
               onClick={() => void addSelection()}
             >
               {busy ? (
-                <Spinner text="Adicionando…" />
+                <Spinner text="Adicionando e calculando calorias…" />
               ) : (
                 <>
                   <span>Adicionar ao pedido</span>

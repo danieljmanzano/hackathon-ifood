@@ -1,5 +1,5 @@
 from ..errors import MacroError
-from ..schemas import Address, DeliveryChoice, MealCandidate, Option, OptionGroup, PaymentChoice
+from ..schemas import Address, DeliveryChoice, MealCandidate, MerchantSummary, Option, OptionGroup, PaymentChoice
 
 
 def catalog() -> list[MealCandidate]:
@@ -28,6 +28,14 @@ class MockIFood:
 
     async def search(self, query: str, address: Address, budget_cents: int | None):
         return catalog()
+
+    async def merchants(self, address: Address):
+        return [MerchantSummary(merchant_id="demo-cozinha", name="Cozinha do treino (demo)", distance_km=1.2, rating=4.8,
+                                rating_count=120, eta_min=30, eta_max=40, delivery_fee_cents=590,
+                                minimum_order_cents=2000, simulated=True)]
+
+    async def menu(self, merchant_id: str, address: Address):
+        return [item for item in catalog() if item.merchant_id == merchant_id]
 
     async def item(self, merchant_id: str, item_id: str, address: Address):
         for item in catalog():

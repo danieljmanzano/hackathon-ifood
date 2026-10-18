@@ -11,7 +11,8 @@ from .domain import rank, search_terms, select
 from .errors import MacroError
 from .ifood.mcp import MCPIFood
 from .ifood.mock import MockIFood
-from .schemas import (CheckoutInput, CheckoutSummary, ConfirmationInput, MealRequest,
+from .nutrition import enrich_recommendations, estimate_selected
+from .schemas import (CheckoutInput, CheckoutSummary, ConfirmationInput, MealCandidate, MealRequest, MerchantSummary,
                       Message, OrderRecord, SelectionInput, Session, UserProfile)
 from .storage.database import Database
 
@@ -118,6 +119,7 @@ def create_app(settings: Settings | None = None, provider=None) -> FastAPI:
             budget = snapshot.profile.default_budget_cents
         candidates = await provider.search(query, snapshot.address, budget)
         recommendations = rank(candidates, payload, snapshot.profile, budget)
+        recommendations = await enrich_recommendations(recommendations, settings)
         def update(s):
             s.budget_cents = budget
             s.recommendations, s.selected, s.summary = recommendations, None, None
@@ -126,25 +128,62 @@ def create_app(settings: Settings | None = None, provider=None) -> FastAPI:
             s.messages = (s.messages + [Message(role="user", text=payload.text), Message(role="assistant", text=message)])[-40:]
         return mutate(snapshot, update)
 
+    def offered(s: Session, merchant_id: str, item_id: str) -> bool:
+        """Item veio da busca atual ou do cardápio aberto."""
+        return (any((r.candidate.merchant_id, r.candidate.item_id) == (merchant_id, item_id) for r in s.recommendations)
+                or (s.menu_merchant_id == merchant_id and item_id in s.menu_item_ids))
+
+    @app.get("/api/merchants", response_model=list[MerchantSummary])
+    async def merchants(request: Request):
+        snapshot = current(request)
+        if snapshot.address is None:
+            raise MacroError("Selecione o endereço antes de ver os restaurantes.", 422)
+        return await provider.merchants(snapshot.address)
+
+    @app.get("/api/merchants/{merchant_id}/menu", response_model=list[MealCandidate])
+    async def menu(merchant_id: str, request: Request):
+        snapshot = current(request)
+        if snapshot.address is None:
+            raise MacroError("Selecione o endereço antes de ver o cardápio.", 422)
+        items = await provider.menu(merchant_id, snapshot.address)
+        def update(s):
+            s.menu_merchant_id, s.menu_item_ids = merchant_id, [i.item_id for i in items]
+        mutate(snapshot, update)
+        return items
+
     @app.get("/api/items/{merchant_id}/{item_id}")
     async def item(merchant_id: str, item_id: str, request: Request):
         snapshot = current(request)
-        if not snapshot.address or not any((r.candidate.merchant_id, r.candidate.item_id) == (merchant_id, item_id)
-                                           for r in snapshot.recommendations):
-            raise MacroError("Escolha um item da busca atual.", 422)
+        if not snapshot.address or not offered(snapshot, merchant_id, item_id):
+            raise MacroError("Escolha um item da busca atual ou do cardápio aberto.", 422)
         return await provider.item(merchant_id, item_id, snapshot.address)
 
     @app.put("/api/selection", response_model=Session)
     async def selection(payload: SelectionInput, request: Request):
         snapshot = current(request)
         editable(snapshot)
-        if not snapshot.address or not any((r.candidate.merchant_id, r.candidate.item_id) == (payload.merchant_id, payload.item_id)
-                                           for r in snapshot.recommendations):
-            raise MacroError("Escolha um item da busca atual.", 422)
+        if not snapshot.address or not offered(snapshot, payload.merchant_id, payload.item_id):
+            raise MacroError("Escolha um item da busca atual ou do cardápio aberto.", 422)
         candidate = await provider.item(payload.merchant_id, payload.item_id, snapshot.address)
         selected = select(candidate, payload)
+        # Prato montado: calcula as calorias com a descrição completa e as opções escolhidas.
+        selected = selected.model_copy(update={"nutrition": await estimate_selected(selected, settings)})
         def update(s):
             s.selected, s.summary = selected, None
+        return mutate(snapshot, update)
+
+    @app.get("/api/selection/nutrition", response_model=Session)
+    async def selection_nutrition(request: Request):
+        """Atualiza a estimativa do prato escolhido quando ela ainda estava "pending"."""
+        snapshot = current(request)
+        if not snapshot.selected or snapshot.selected.nutrition.state != "pending":
+            return snapshot
+        nutrition = await estimate_selected(snapshot.selected, settings, aguardar=False)
+        if nutrition.state == "pending":
+            return snapshot
+        def update(s):
+            if s.selected and s.selected.nutrition.state == "pending":
+                s.selected = s.selected.model_copy(update={"nutrition": nutrition})
         return mutate(snapshot, update)
 
     @app.get("/api/checkout/choices")

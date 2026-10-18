@@ -5,13 +5,22 @@ import {
   Flame,
   Info,
   LoaderCircle,
+  MapPin,
   Minus,
   Plus,
   Sparkles,
+  Star,
+  Store,
+  Timer,
   X,
 } from "lucide-react";
 import { money, safeUrl } from "./api";
-import type { Candidate, Nutrition, Recommendation } from "./types";
+import type {
+  Candidate,
+  MerchantSummary,
+  Nutrition,
+  Recommendation,
+} from "./types";
 
 export function Brand({ small = false }: { small?: boolean }) {
   return (
@@ -320,5 +329,149 @@ export function MealCard({
         </div>
       </div>
     </article>
+  );
+}
+
+export function MerchantCard({
+  merchant,
+  onSelect,
+  disabled,
+}: {
+  merchant: MerchantSummary;
+  onSelect: () => void;
+  disabled: boolean;
+}) {
+  const logo = safeUrl(merchant.logo_url);
+  return (
+    <button
+      className="merchant-card"
+      onClick={onSelect}
+      disabled={disabled}
+      aria-label={`Ver cardápio de ${merchant.name}`}
+    >
+      <span className="merchant-logo">
+        {logo ? (
+          <img
+            src={logo}
+            alt=""
+            loading="lazy"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
+        ) : (
+          <Store size={22} />
+        )}
+      </span>
+      <span className="merchant-info">
+        <strong>{merchant.name}</strong>
+        <span className="merchant-meta">
+          {merchant.rating != null && (
+            <span>
+              <Star size={12} />
+              {merchant.rating.toFixed(1).replace(".", ",")}
+            </span>
+          )}
+          {merchant.distance_km != null && (
+            <span>
+              <MapPin size={12} />
+              {merchant.distance_km.toFixed(1).replace(".", ",")} km
+            </span>
+          )}
+          {merchant.eta_min != null && merchant.eta_max != null && (
+            <span>
+              <Timer size={12} />
+              {merchant.eta_min}–{merchant.eta_max} min
+            </span>
+          )}
+        </span>
+        <span className="merchant-fee">
+          {merchant.delivery_fee_cents == null
+            ? "Entrega a consultar"
+            : merchant.delivery_fee_cents === 0
+              ? "Entrega grátis"
+              : `Entrega ${money(merchant.delivery_fee_cents)}`}
+          {merchant.minimum_order_cents
+            ? ` · mínimo ${money(merchant.minimum_order_cents)}`
+            : ""}
+        </span>
+      </span>
+      <ArrowUpRight size={18} className="merchant-arrow" />
+    </button>
+  );
+}
+
+export function MenuItemCard({
+  item,
+  onSelect,
+  disabled,
+}: {
+  item: Candidate;
+  onSelect: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <article className="meal-card menu-item-card">
+      <div className="meal-card-photo">
+        <MealImage item={item} />
+      </div>
+      <div className="meal-card-body">
+        <h3>{item.name}</h3>
+        <div className="meal-card-footer">
+          <div>
+            <strong>{money(item.price_cents)}</strong>
+            <span>+ opções e entrega</span>
+          </div>
+          <button
+            onClick={onSelect}
+            disabled={disabled || !item.available}
+            className="select-meal"
+            aria-label={`Escolher ${item.name}`}
+          >
+            <Plus size={20} />
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+/** Calorias do prato montado, multiplicadas pela quantidade escolhida. */
+export function SelectedNutrition({
+  nutrition,
+  quantity,
+}: {
+  nutrition: Nutrition;
+  quantity: number;
+}) {
+  if (nutrition.state === "pending")
+    return (
+      <p className="selected-nutrition pending">
+        <LoaderCircle size={14} className="spin" />
+        Calculando as calorias do seu prato…
+      </p>
+    );
+  if (nutrition.state !== "ready")
+    return (
+      <p className="selected-nutrition muted">
+        <Info size={14} />
+        {nutrition.evidence || "Informação nutricional indisponível."}
+      </p>
+    );
+  const times = (n: number | null) => Math.round((n ?? 0) * quantity);
+  return (
+    <div className="selected-nutrition ready">
+      <Flame size={15} />
+      <div>
+        <strong>≈ {times(nutrition.calories)} kcal</strong>
+        <span>
+          {times(nutrition.minimum)}–{times(nutrition.maximum)} kcal
+          {quantity > 1 ? ` · ${quantity} unidades` : ""} ·{" "}
+          {nutrition.method === "published"
+            ? "tabela do restaurante"
+            : "estimativa"}
+        </span>
+      </div>
+    </div>
   );
 }

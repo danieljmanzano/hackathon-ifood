@@ -91,14 +91,6 @@ class SelectionInput(Model):
     options: list[SelectedOption] = Field(default_factory=list, max_length=100)
 
 
-class SelectedItem(Model):
-    candidate: MealCandidate
-    quantity: Quantity
-    options: list[SelectedOption]
-    option_labels: list[str]
-    unit_total_cents: Cents
-
-
 class NutritionResult(Model):
     state: Literal["pending", "ready", "unavailable", "error"] = "unavailable"
     portion_basis: str | None = None
@@ -127,6 +119,31 @@ class NutritionResult(Model):
         elif any(n is not None for n in numbers):
             raise ValueError("Dados indisponíveis não podem conter calorias.")
         return self
+
+
+class SelectedItem(Model):
+    candidate: MealCandidate
+    quantity: Quantity
+    options: list[SelectedOption]
+    option_labels: list[str]
+    unit_total_cents: Cents
+    # Calorias de uma unidade com as opções escolhidas (a quantidade é aplicada na exibição).
+    nutrition: NutritionResult = Field(default_factory=NutritionResult)
+
+
+class MerchantSummary(Model):
+    merchant_id: str
+    name: str
+    logo_url: str | None = None
+    is_open: bool = True
+    distance_km: float | None = None
+    rating: float | None = None
+    rating_count: int | None = None
+    eta_min: int | None = None
+    eta_max: int | None = None
+    delivery_fee_cents: Cents | None = None
+    minimum_order_cents: Cents | None = None
+    simulated: bool = False
 
 
 class Recommendation(Model):
@@ -204,3 +221,6 @@ class Session(Model):
     summary: CheckoutSummary | None = None
     order: OrderRecord | None = None
     budget_cents: Cents | None = None
+    # Cardápio aberto pelo usuário: libera abrir e escolher esses itens, como as recomendações.
+    menu_merchant_id: str | None = None
+    menu_item_ids: list[str] = Field(default_factory=list)
