@@ -2,6 +2,16 @@
 
 Aplicação centralizada com frontend em React/TypeScript/Vite e backend em FastAPI, integrando recomendações nutricionais e o ecossistema do iFood via MCP.
 
+## Experiência centrada no chat
+
+O Macro funciona como um assistente complementar ao iFood. A entrada é a conversa: recomendações, montagem do prato, escolha de entrega e pagamento, revisão do total e confirmação aparecem no próprio chat. As telas de visão geral, Meu dia, restaurantes, cardápios independentes e Meus pedidos foram retiradas, assim como o painel de metas e o cadastro próprio de endereços. A conversa utiliza endereços já recebidos do iFood; quando é necessário escolher entre eles, a escolha acontece no chat.
+
+O atalho **Preferências** abre uma configuração compacta na conversa. Você também pode dizer “meu objetivo é ganhar massa e hoje só comi frutas”: o objetivo e o relato ficam salvos para as próximas sugestões. Se a mensagem contiver também um pedido de comida, a busca acontece em seguida, sem duplicar os alimentos registrados. Descrições não geram macros automaticamente.
+
+Para comprar, escolha um prato pelo botão, nome ou número da sugestão. Ajuste complementos e quantidade e diga **“continuar”**. Selecione entrega e pagamento por nome, número ou botão. O pedido só é confirmado pelo botão com o total ou por uma mensagem explícita como **“confirmar pedido”** depois da revisão. “Sim” ou “ok” não finalizam a compra. O checkout continua simulado no modo mock; as restrições existentes para compra real via MCP continuam em vigor.
+
+Depois da confirmação, a avaliação modificada aceita nota opcional, comentário livre e interpretação em segundo plano, com correção de nota e aspectos. Para escrever pelo chat, use **“avaliação: estava gostoso, mas a entrega demorou”**. Para outra refeição, diga **“novo pedido”**; objetivos, contexto alimentar e aprendizado das avaliações são preservados.
+
 ---
 
 ## 🚀 Como Executar
@@ -51,7 +61,7 @@ Abra **http://127.0.0.1:5180/** no navegador. O Vite encaminha automaticamente a
 │   └── agent/                # Orquestrador de IA e skills
 ├── frontend/                 # Frontend React + TypeScript + Vite
 │   ├── src/
-│   │   ├── App.tsx           # Telas e fluxo do usuário
+│   │   ├── App.tsx           # Conversa e etapas da compra
 │   │   ├── api.ts            # Cliente HTTP integrado com o backend
 │   │   ├── components.tsx    # Componentes de UI
 │   │   ├── types.ts          # Tipos TypeScript
@@ -70,6 +80,9 @@ pytest
 
 # Build do frontend
 cd frontend && npm run build
+
+# Comandos do chat (Node.js 22.6+)
+npm test
 ```
 
 ## Mocks para recomendação por reviews
@@ -97,7 +110,7 @@ Em Python, use `from app.services.mock_reviews import review_dataset`. Relacione
 
 No modo mock, cada sessão começa com uma cópia do histórico `demo-user`; novas notas substituem a seed do mesmo item. No modo live, somente avaliações locais não simuladas entram no cálculo: ainda não há importação de reviews do iFood nem metadados de cozinha reais, então a afinidade por cozinha fica neutra. Sem histórico relacionado, o motor usa a comunidade; sem reviews, usa a busca e as preferências existentes.
 
-Na interface, abra um prato e expanda **“Já provou?”** para registrar ou atualizar sua avaliação. O histórico aparece em **Preferências → Suas avaliações**. A próxima busca já utiliza a nova nota.
+Na interface, avalie pela conversa depois de confirmar o pedido. A interpretação mostra nota e aspectos e permite corrigir o resultado. O histórico continua no backend para personalização, sem uma tela paralela de avaliações.
 
 - `GET /api/reviews/me`: histórico da sessão atual, incluindo seed apenas no modo mock.
 - `PUT /api/reviews`: cria ou atualiza a avaliação de um item apresentado na busca, no cardápio, selecionado ou previamente avaliado pela sessão. A identidade vem do cookie, sem aceitar `user_id` enviado pelo cliente.
@@ -134,7 +147,7 @@ A tabela `user_tastes` guarda preferências, rejeições e restrições explíci
 
 Menções textuais indicam aspectos relevantes, sem inferir alergias nem transformar críticas em restrições. O ranqueamento cruza esses aspectos com elogios/críticas da comunidade e usa as notas estruturadas com maior peso nos aspectos em que o usuário já teve experiências ruins. A explicação distingue observações sobre o restaurante de características garantidas do prato.
 
-`GET /api/profile/tastes` consulta o perfil de gostos da sessão. A interface mostra **Preferências → Gostos aprendidos e salvos**, separando as inferências das preferências informadas. O armazenamento sobrevive a reinícios, mas continua vinculado ao cookie da sessão; ainda não existe identidade de conta para recuperar o perfil em outro navegador.
+`GET /api/profile/tastes` consulta o perfil de gostos da sessão. Esses sinais alimentam as justificativas dos pratos na conversa, separados das preferências explícitas. O armazenamento sobrevive a reinícios, mas continua vinculado ao cookie da sessão; ainda não existe identidade de conta para recuperar o perfil em outro navegador.
 
 A pipeline é local e não altera ferramentas, argumentos ou autenticação do MCP. O adaptador atual não importa textos de reviews do iFood: em live, processamos apenas avaliações locais não simuladas. Os dados fictícios não entram no perfil live.
 
@@ -229,9 +242,9 @@ Valores ausentes não contam como zero calorias/macros nem como atendimento da p
 
 ## Objetivos de dieta e alimentação do dia
 
-Em **Preferências → Qual é seu objetivo de dieta?**, cadastre ganhar massa muscular, perder peso, manter o peso, desempenho nos treinos ou alimentação equilibrada. É possível acrescentar orientações em texto e metas diárias de proteína, carboidratos e gordura que você já utiliza. A meta diária de calorias continua no campo existente. O perfil é persistido em `diet_plan`; nenhuma meta numérica é criada automaticamente a partir do objetivo.
+No chat, informe seu objetivo ou use **Preferências → Objetivo de dieta**: ganhar massa muscular, perder peso, manter o peso, desempenho nos treinos ou alimentação equilibrada. As configurações opcionais permitem informar orientações e metas que você já utiliza. O perfil é persistido em `diet_plan`; nenhuma meta numérica é criada automaticamente a partir do objetivo.
 
-Em **Meu dia → O que você já comeu hoje?**, registre refeições de casa ou de outros lugares. Calorias e macros são opcionais, relativos à quantidade efetivamente consumida. Descrever “banana e maçã” não gera números nutricionais. Os consumos confirmados dos pedidos são sincronizados com o backend, incluindo quantidade e fração consumida, e os registros antigos do navegador são migrados na primeira abertura da versão atualizada. Evite registrar a mesma refeição nos dois lugares.
+Relate na conversa refeições de casa ou de outros lugares: **“hoje só comi banana e maçã”**. O chat salva esse relato, sem estimar números a partir da descrição. Consumos anteriores com calorias e macros continuam sendo considerados pelo backend e os registros antigos do navegador são migrados na primeira abertura. A tela de diário e a confirmação separada de consumo foram removidas. Comprar continua sem significar que o prato foi consumido.
 
 O backend considera apenas o dia no fuso `TIMEZONE` (padrão `America/Sao_Paulo`). Registros de ontem continuam salvos, mas não influenciam o contexto de hoje. A soma aplica quantidade e fração dos pedidos; campos ausentes permanecem desconhecidos. A diferença para a meta só é calculada quando todos os registros daquele dia têm o nutriente informado, e sempre se refere ao que está registrado, não a uma garantia de que todas as refeições foram relatadas.
 
@@ -243,7 +256,7 @@ Exemplos de comportamento:
 - Perder peso ou calorias registradas já alcançando a meta: favorece opções leves, sem recomendar pular refeições nem criar limite de zero calorias para o próximo prato.
 - Sem registros: não presume jejum ou ausência de alimentação.
 
-Também é possível escrever **“meu objetivo é ganhar massa muscular, só comi frutas hoje, quero frango até R$ 30”** na busca. O contexto é usado somente nessa busca; os alimentos já consumidos não viram termos da refeição procurada. Para guardar o objetivo e o consumo, use os formulários do perfil e do diário.
+Escreva **“meu objetivo é ganhar massa muscular, só comi frutas hoje, quero frango até R$ 30”** no chat para salvar o contexto e buscar em uma mensagem. Os alimentos já consumidos não viram termos da refeição procurada. Clientes de `POST /api/search` mantêm o comportamento anterior de contexto temporário; `POST /api/chat` salva objetivos e relatos e distingue `last_chat_action=context` de `search`.
 
 O LLM interpreta o contexto quando está disponível; regras locais preservam os principais comportamentos sem ele. O cache da interpretação inclui a data, o objetivo e os registros/totais do dia. Mudanças nesses dados geram uma nova interpretação. `request_intent.diet_context` guarda o contexto usado e os cards explicam como ele influenciou as sugestões. Logs `diet.ready` contêm somente presença de objetivo e contagens, sem descrições dos alimentos ou orientações da dieta.
 

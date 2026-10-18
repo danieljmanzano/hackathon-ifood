@@ -85,6 +85,10 @@ class MealRequest(Model):
     nutrition_preferences: NutritionPreferences = Field(default_factory=NutritionPreferences)
 
 
+class ChatInput(MealRequest):
+    message_id: str = Field(default_factory=lambda: str(uuid4()), min_length=1, max_length=80, pattern=r'^[a-zA-Z0-9-]+$')
+
+
 class Address(Model):
     id: str
     label: str
@@ -442,6 +446,7 @@ class Session(Model):
     recommendations: list[Recommendation] = Field(default_factory=list)
     recent_recommendations: list[tuple[str, str]] = Field(default_factory=list, max_length=18)
     request_intent: MealIntent | None = None
+    last_chat_action: Literal['search', 'context'] | None = None
     selected: SelectedItem | None = None
     summary: CheckoutSummary | None = None
     order: OrderRecord | None = None

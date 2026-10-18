@@ -1,23 +1,17 @@
-import { useEffect, useId, useRef } from "react";
 import {
   ArrowUpRight,
   Check,
   Flame,
   Info,
   LoaderCircle,
-  MapPin,
   Minus,
   Plus,
   Sparkles,
   Star,
-  Store,
-  Timer,
-  X,
 } from "lucide-react";
 import { money, safeUrl } from "./api";
 import type {
   Candidate,
-  MerchantSummary,
   Nutrition,
   Recommendation,
 } from "./types";
@@ -47,61 +41,6 @@ export function Spinner({ text = "Carregando…" }: { text?: string }) {
       <LoaderCircle className="spin" size={18} />
       {text}
     </span>
-  );
-}
-export function Modal({
-  title,
-  children,
-  onClose,
-  wide = false,
-  busy = false,
-  error,
-}: {
-  title: string;
-  children: React.ReactNode;
-  onClose: () => void;
-  wide?: boolean;
-  busy?: boolean;
-  error?: string;
-}) {
-  const ref = useRef<HTMLDialogElement>(null);
-  const titleId = useId();
-  useEffect(() => {
-    const element = ref.current;
-    element?.showModal();
-    return () => element?.close();
-  }, []);
-  return (
-    <dialog
-      ref={ref}
-      className={`modal ${wide ? "modal-wide" : ""}`}
-      aria-labelledby={titleId}
-      onCancel={(e) => {
-        e.preventDefault();
-        if (!busy) onClose();
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !busy) onClose();
-      }}
-    >
-      <div className="modal-header">
-        <h2 id={titleId}>{title}</h2>
-        <button
-          className="icon-button"
-          onClick={onClose}
-          disabled={busy}
-          aria-label="Fechar janela"
-        >
-          <X size={21} />
-        </button>
-      </div>
-      {error && (
-        <div className="inline-error" role="alert">
-          {error}
-        </div>
-      )}
-      {children}
-    </dialog>
   );
 }
 export function Stepper({
@@ -263,14 +202,6 @@ export function NutritionDetails({ nutrition }: { nutrition: Nutrition }) {
                 : "Estimativa"}{" "}
             por {nutrition.portion_basis}.
           </p>
-          {macrosDe(nutrition).length > 0 && (
-            <p>
-              {macrosDe(nutrition)
-                .map((m) => `${m.nome} ${m.valor} g`)
-                .join(" · ")}
-              {nutrition.portion_grams ? ` (prato de cerca de ${nutrition.portion_grams} g)` : ""}.
-            </p>
-          )}
           {nutrition.revisar && (
             <p>
               Estimativa com pouca certeza: confira antes de decidir.
@@ -320,10 +251,11 @@ export function NutritionDetails({ nutrition }: { nutrition: Nutrition }) {
             : "Não há dados suficientes para mostrar calorias deste prato. Você pode continuar o pedido."}
         </p>
       )}
-      <p className="muted small">
-        Proteínas, carboidratos e gorduras ainda não estão disponíveis. A foto
-        não comprova o tamanho da porção.
-      </p>
+      {nutrition.state === "ready" && <p className="nutrition-macros">
+        {[['Proteína', nutrition.protein_g], ['Carboidratos', nutrition.carbs_g], ['Gordura', nutrition.fat_g]].map(([label, value]) =>
+          <span key={label}>{label}: {value == null ? 'não informado' : `${Math.round(Number(value))} g`}</span>)}
+      </p>}
+      <p className="muted small">A foto não comprova o tamanho da porção.</p>
     </div>
   );
 }
@@ -377,6 +309,11 @@ export function MealCard({
             ))}
           </ul>
         </div>
+        <details className="recommendation-details"><summary>Ver detalhes e nutrição</summary>
+          {reasons.length > 3 && <ul>{reasons.slice(3).map(reason => <li key={reason}>{reason}</li>)}</ul>}
+          {!!recommendation.limitations.length && <ul>{recommendation.limitations.map(limit => <li key={limit}>{limit}</li>)}</ul>}
+          <NutritionDetails nutrition={nutrition} />
+        </details>
         <div className="meal-card-footer">
           <div>
             <strong>{money(item.price_cents)}</strong>
@@ -389,110 +326,7 @@ export function MealCard({
             aria-label={`Escolher ${item.name}`}
           >
             <Plus size={20} />
-          </button>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-export function MerchantCard({
-  merchant,
-  onSelect,
-  disabled,
-}: {
-  merchant: MerchantSummary;
-  onSelect: () => void;
-  disabled: boolean;
-}) {
-  const logo = safeUrl(merchant.logo_url);
-  return (
-    <button
-      className="merchant-card"
-      onClick={onSelect}
-      disabled={disabled}
-      aria-label={`Ver cardápio de ${merchant.name}`}
-    >
-      <span className="merchant-logo">
-        {logo ? (
-          <img
-            src={logo}
-            alt=""
-            loading="lazy"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-          />
-        ) : (
-          <Store size={22} />
-        )}
-      </span>
-      <span className="merchant-info">
-        <strong>{merchant.name}</strong>
-        <span className="merchant-meta">
-          {merchant.rating != null && (
-            <span>
-              <Star size={12} />
-              {merchant.rating.toFixed(1).replace(".", ",")}
-            </span>
-          )}
-          {merchant.distance_km != null && (
-            <span>
-              <MapPin size={12} />
-              {merchant.distance_km.toFixed(1).replace(".", ",")} km
-            </span>
-          )}
-          {merchant.eta_min != null && merchant.eta_max != null && (
-            <span>
-              <Timer size={12} />
-              {merchant.eta_min}–{merchant.eta_max} min
-            </span>
-          )}
-        </span>
-        <span className="merchant-fee">
-          {merchant.delivery_fee_cents == null
-            ? "Entrega a consultar"
-            : merchant.delivery_fee_cents === 0
-              ? "Entrega grátis"
-              : `Entrega ${money(merchant.delivery_fee_cents)}`}
-          {merchant.minimum_order_cents
-            ? ` · mínimo ${money(merchant.minimum_order_cents)}`
-            : ""}
-        </span>
-      </span>
-      <ArrowUpRight size={18} className="merchant-arrow" />
-    </button>
-  );
-}
-
-export function MenuItemCard({
-  item,
-  onSelect,
-  disabled,
-}: {
-  item: Candidate;
-  onSelect: () => void;
-  disabled: boolean;
-}) {
-  return (
-    <article className="meal-card menu-item-card">
-      <div className="meal-card-photo">
-        <MealImage item={item} />
-      </div>
-      <div className="meal-card-body">
-        <h3>{item.name}</h3>
-        <div className="meal-card-footer">
-          <div>
-            <strong>{money(item.price_cents)}</strong>
-            <span>+ opções e entrega</span>
-          </div>
-          <button
-            onClick={onSelect}
-            disabled={disabled || !item.available}
-            className="select-meal"
-            aria-label={`Escolher ${item.name}`}
-          >
-            <Plus size={20} />
+            <span>Escolher</span>
           </button>
         </div>
       </div>

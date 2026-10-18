@@ -239,6 +239,7 @@ export interface Order {
   review?: OrderReview | null;
 }
 export interface Session {
+  last_chat_action?: "search" | "context" | null;
   request_intent?: MealIntent | null;
   id: string;
   mode: "mock" | "live";
@@ -269,14 +270,6 @@ export interface Consumption {
   nutrition: Nutrition | null;
   feedback: string;
 }
-export type View =
-  | "home"
-  | "chat"
-  | "restaurants"
-  | "day"
-  | "orders"
-  | "profile";
-
 export interface ReviewAspects {
   taste: number;
   delivery: number;

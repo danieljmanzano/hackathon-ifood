@@ -1,3024 +1,419 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import {
-  ArrowRight,
-  ArrowUp,
-  ArrowUpRight,
-  Check,
-  CheckCheck,
-  ChevronDown,
-  ChevronRight,
-  CircleCheck,
-  Clock3,
-  CreditCard,
-  Dumbbell,
-  Flame,
-  Heart,
-  History,
-  Home,
-  Info,
-  Leaf,
-  MapPin,
-  MessageCircle,
-  Pencil,
-  Plus,
-  Settings2,
-  ShieldCheck,
-  ShoppingBag,
-  SlidersHorizontal,
-  Sparkles,
-  Store,
-  Target,
-  Trash2,
-  Truck,
-  Utensils,
-  X,
-} from "lucide-react";
-import { api, dayKey, money } from "./api";
-import {
-  Brand,
-  MealCard,
-  MealImage,
-  MenuItemCard,
-  MerchantCard,
-  Modal,
-  NutritionDetails,
-  photos,
-  SelectedNutrition,
-  Spinner,
-  Stepper,
-} from "./components";
-import { effectiveReview, OrderReviewCard, ReviewEditor, ReviewHistory, TasteSummary } from "./Reviews";
+import { ArrowUp, CheckCircle2, ChevronDown, MapPin, MessageCircle, Settings2, ShoppingBag, Sparkles } from "lucide-react";
+import { api, money } from "./api";
+import { Brand, MealCard, SelectedNutrition, Spinner, Stepper } from "./components";
+import { OrderReviewCard } from "./Reviews";
+import { ChatPreferences } from "./ChatPreferences";
+import { confirmsOrder, matchChoice, normalize, reportsContext, requestedQuantity, wantsNewOrder } from "./chat-flow";
 import { consumptionMigrated, loadConsumption, markConsumptionMigrated, saveConsumption } from "./storage";
-import { DietDiary } from "./DietDiary";
-import type { NutritionPreferences } from "./types";
-import type { DailyFoodDiary, DietGoal } from "./types";
-import type {
-  Address,
-  Candidate,
-  CheckoutChoices,
-  Consumption,
-  GeocodeResult,
-  Health,
-  MerchantSummary,
-  NewAddress,
-  Profile,
-  Recommendation,
-  SelectedOption,
-  Session,
-  View,
-  OrderAspects,
-  UserReview,
-  UserTastes,
-} from "./types";
+import type { Address, Candidate, CheckoutChoices, OrderReviewInput, Recommendation, SelectedOption, Session } from "./types";
 
-const nav = [
-  { id: "home", name: "Visão geral", icon: Home },
-  { id: "chat", name: "Pedir com o Macro", icon: MessageCircle },
-  { id: "restaurants", name: "Restaurantes perto", icon: Store },
-  { id: "day", name: "Meu dia", icon: Flame },
-  { id: "orders", name: "Meus pedidos", icon: ShoppingBag },
-  { id: "profile", name: "Preferências", icon: SlidersHorizontal },
-] as const;
-const inspirations = [
-  {
-    title: "O clássico que funciona",
-    subtitle: "Frango, uma boa base e muito sabor.",
-    photo: photos.chicken,
-    query: "Quero frango grelhado até R$ 40",
-    tag: "Depois do treino",
-    icon: Dumbbell,
-  },
-  {
-    title: "Mais plantas no prato",
-    subtitle: "Novos sabores para variar a rotina.",
-    photo: photos.plant,
-    query: "Quero uma refeição com grão-de-bico até R$ 40",
-    tag: "Para variar",
-    icon: Leaf,
-  },
-  {
-    title: "Comida que abraça",
-    subtitle: "Uma pausa gostosa no seu dia.",
-    photo: photos.comfort,
-    query: "Quero carne de panela até R$ 40",
-    tag: "Sabor de casa",
-    icon: Heart,
-  },
-];
-
-type Dialog = "address" | "item" | "checkout" | "consumption" | "about" | null;
+type Phase = "address" | "discover" | "customize" | "delivery" | "payment" | "confirm" | "ordered";
+type ChatMessage = { id: string; role: "user" | "assistant"; text: string; recommendations?: Recommendation[] };
+const greeting = "Oi! Me conte o que você quer comer e como está seu dia. Posso considerar seus gostos, suas avaliações e seu objetivo para encontrar um prato que combine com você.";
+const prompts = ["Treinei hoje e estou com muita fome", "Quero algo leve até R$ 30", "Meu objetivo é ganhar massa e hoje só comi frutas"];
+const phaseLabels: Record<Phase, string> = {
+  address: "Endereço do iFood", discover: "Sua próxima refeição", customize: "Seu prato",
+  delivery: "Entrega", payment: "Pagamento", confirm: "Revisão do pedido", ordered: "Pedido confirmado",
+};
+const errorText = (error: unknown) => error instanceof Error ? error.message : "Não foi possível concluir. Tente novamente.";
+const restoredPhase = (session: Session): Phase => !session.address ? "address" : session.order ? "ordered" : session.summary ? "confirm" : session.selected ? "delivery" : "discover";
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
-  const [tastes, setTastes] = useState<UserTastes | null>(null);
-  const [reviews, setReviews] = useState<UserReview[]>([]);
-  const [health, setHealth] = useState<Health | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [phase, setPhase] = useState<Phase>("discover");
   const [addresses, setAddresses] = useState<Address[]>([]);
-  const [view, setView] = useState<View>("home");
-  const [dialog, setDialog] = useState<Dialog>(null);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const actionLock = useRef(false);
-  const [error, setError] = useState("");
-  const [toast, setToast] = useState("");
   const [text, setText] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [preferencesOpen, setPreferencesOpen] = useState(false);
+  const [activeSearch, setActiveSearch] = useState<string | null>(null);
   const [detail, setDetail] = useState<Candidate | null>(null);
-  // A janela do prato abre com os dados do card; descrição e opções chegam depois do iFood.
-  const [detailState, setDetailState] = useState<"loading" | "ready" | "error">(
-    "ready",
-  );
-  const detailRequest = useRef(0);
-  const [recommendation, setRecommendation] = useState<Recommendation | null>(
-    null,
-  );
-  const [merchants, setMerchants] = useState<MerchantSummary[] | null>(null);
-  const [activeMerchant, setActiveMerchant] = useState<MerchantSummary | null>(
-    null,
-  );
-  const [menu, setMenu] = useState<Candidate[]>([]);
   const [options, setOptions] = useState<SelectedOption[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [choices, setChoices] = useState<CheckoutChoices | null>(null);
   const [delivery, setDelivery] = useState("");
-  const [payment, setPayment] = useState("");
-  const [accepted, setAccepted] = useState(false);
-  const [orderRating, setOrderRating] = useState<number | null>(null);
-  const [reviewText, setReviewText] = useState("");
-  const [entries, setEntries] = useState<Consumption[]>([]);
-  const [foodDiary, setFoodDiary] = useState<DailyFoodDiary | null>(null);
-  const [fraction, setFraction] = useState("1");
-  const [feedback, setFeedback] = useState("");
-  const [recordDate, setRecordDate] = useState("");
+  const actionLock = useRef(false);
+  const epoch = useRef(0);
+  const bottom = useRef<HTMLDivElement>(null);
+  const latestTurn = useRef<HTMLDivElement>(null);
   const composer = useRef<HTMLTextAreaElement>(null);
 
-  async function perform<T>(task: () => Promise<T>): Promise<T | undefined> {
+  function say(role: ChatMessage["role"], content: string, recommendations?: Recommendation[]) {
+    const id = crypto.randomUUID();
+    setMessages(current => [...current, { id, role, text: content, recommendations }].slice(-100));
+    return id;
+  }
+  async function perform<T>(action: () => Promise<T>): Promise<T | undefined> {
     if (actionLock.current) return;
     actionLock.current = true;
+    epoch.current++;
     setBusy(true);
     setError("");
+    try { return await action(); }
+    catch (reason) { setError(errorText(reason)); }
+    finally { actionLock.current = false; setBusy(false); }
+  }
+  async function boot() {
+    setLoading(true);
+    setError("");
     try {
-      return await task();
-    } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : "Não foi possível concluir a ação. Tente novamente.",
-      );
-    } finally {
-      actionLock.current = false;
-      setBusy(false);
-    }
-  }
-
-  useEffect(() => {
-    let active = true;
-    async function boot() {
-      try {
-        const [current, status] = await Promise.all([
-          api.session(),
-          api.health(),
-        ]);
-        if (!active) return;
-        setSession(current);
-        setHealth(status);
-        const local = loadConsumption(current.id);
-        setEntries(local);
-        try {
-          let saved = await api.consumption();
-          if (!consumptionMigrated(current.id)) {
-            const merged = new Map([...local, ...saved].map(entry => [`${entry.order_id}:${entry.item_id}`, entry]));
-            if (merged.size > saved.length) saved = await api.saveConsumption([...merged.values()]);
-            markConsumptionMigrated(current.id);
-          }
-          if (!active) return;
-          setEntries(saved);
-          try { saveConsumption(current.id, saved); } catch { /* Cache opcional. */ }
-          const diary = await api.dailyContext();
-          if (active) setFoodDiary(diary);
-        } catch {
-          if (active) setError("Não foi possível sincronizar o consumo com o servidor. Os registros locais foram preservados.");
-        }
-        try {
-          const list = await api.addresses();
-          if (!active) return;
-          setAddresses(list);
-          if (!current.address && list.length === 1 && !current.order) {
-            const updated = await api.address(list[0].id);
-            if (active) setSession(updated);
-          }
-        } catch (e) {
-          if (active)
-            setError(
-              e instanceof Error
-                ? e.message
-                : "Não foi possível carregar endereços.",
-            );
-        }
-      } catch (e) {
-        if (active)
-          setError(
-            e instanceof Error ? e.message : "Não foi possível iniciar.",
-          );
-      } finally {
-        if (active) setLoading(false);
+      let current = await api.session();
+      const available = !current.address ? await api.addresses() : [];
+      setAddresses(available);
+      if (!current.address && available.length === 1 && !current.order) current = await api.address(available[0].id);
+      // Mantém os consumos antigos na personalização, sem uma tela de diário.
+      if (!consumptionMigrated(current.id)) {
+        const saved = await api.consumption();
+        const merged = new Map([...loadConsumption(current.id), ...saved].map(e => [`${e.order_id}:${e.item_id}`, e]));
+        if (merged.size > saved.length) await api.saveConsumption([...merged.values()]);
+        markConsumptionMigrated(current.id);
+        try { saveConsumption(current.id, [...merged.values()]); } catch { /* Cache opcional. */ }
       }
-    }
-    void boot();
-    return () => {
-      active = false;
-    };
-  }, []);
+      setSession(current);
+      setPhase(restoredPhase(current));
+      setDelivery(current.summary?.delivery.id ?? "");
+      const history: ChatMessage[] = current.messages.map(m => ({ ...m, id: crypto.randomUUID() }));
+      if (!history.length) history.push({ id: crypto.randomUUID(), role: "assistant", text: greeting });
+      const lastAssistant = [...history].reverse().find(m => m.role === "assistant");
+      if (lastAssistant && current.recommendations.length) lastAssistant.recommendations = current.recommendations;
+      setActiveSearch(lastAssistant?.id ?? null);
+      setMessages(history);
+      if (current.selected && !current.order && current.mode === "mock") setChoices(await api.choices());
+    } catch (reason) { setError(errorText(reason)); }
+    finally { setLoading(false); }
+  }
+  useEffect(() => { void boot(); }, []);
   useEffect(() => {
-    if (!session?.id) return;
-    let active = true;
-    async function refreshDay() {
-      try {
-        const diary = await api.dailyContext();
-        if (active) setFoodDiary(diary);
-      } catch { /* A próxima atualização tenta novamente; o formulário permanece disponível. */ }
-    }
-    void refreshDay();
-    const timer = window.setInterval(() => void refreshDay(), 60_000);
-    return () => { active = false; window.clearInterval(timer); };
-  }, [session?.id, session?.profile, view]);
-  useEffect(() => {
-    if (!session?.id) return;
-    let active = true;
-    void api.myReviews().then((items) => {
-      if (active) setReviews(items);
-    }).catch((reason: unknown) => {
-      if (active) setError(reason instanceof Error ? reason.message : "Não foi possível carregar avaliações.");
-    });
-    return () => { active = false; };
-  }, [session?.id]);
-  useEffect(() => {
-    if (!session?.id) return;
-    let active = true;
-    void api.tastes().then((value) => {
-      if (active) setTastes(value);
-    }).catch((reason: unknown) => {
-      if (active) setError(reason instanceof Error ? reason.message : "Não foi possível carregar seus gostos.");
-    });
-    return () => { active = false; };
-  }, [session?.profile, reviews]);
-  useEffect(() => {
-    if (toast) {
-      const timer = window.setTimeout(() => setToast(""), 4500);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
-  useEffect(() => {
-    setAccepted(false);
-  }, [session?.summary?.version, delivery, payment]);
+    if (phase === 'discover' && messages.at(-1)?.recommendations?.length) latestTurn.current?.scrollIntoView({ block: 'start' });
+    else bottom.current?.scrollIntoView({ behavior: "auto", block: "end" });
+  }, [messages.length, phase, busy]);
 
-  function navigate(next: View) {
-    setView(next);
-    setError("");
-    window.scrollTo({ top: 0, behavior: "instant" });
-  }
-  function open(next: Dialog) {
-    setError("");
-    setDialog(next);
-  }
-  async function search(query: string) {
-    if (!query.trim() || !session || busy || loading) return;
-    if (session.order) {
-      navigate("orders");
-      setToast(
-        "Este pedido já foi confirmado. Confira os detalhes em Meus pedidos.",
-      );
-      return;
-    }
-    if (!session.address) {
-      open("address");
-      return;
-    }
-    setText(query);
-    navigate("chat");
-    const next = await perform(() => api.search(query.trim()));
-    if (next) {
-      setSession(next);
-      setText("");
-    }
-  }
-  async function loadMerchants() {
-    if (!session) return;
-    if (!session.address) {
-      open("address");
-      return;
-    }
-    const list = await perform(() => api.merchants());
-    if (list) setMerchants(list);
-  }
-  async function openMerchant(merchant: MerchantSummary) {
-    const items = await perform(() => api.menu(merchant.merchant_id));
-    if (items) {
-      setActiveMerchant(merchant);
-      setMenu(items);
-      window.scrollTo({ top: 0, behavior: "instant" });
-    }
-  }
-  // Recarrega a lista quando o endereço muda.
+  const pendingNutrition = session?.recommendations.some(r => r.nutrition.state === "pending");
   useEffect(() => {
-    setMerchants(null);
-    setActiveMerchant(null);
-    setMenu([]);
-  }, [session?.address?.id]);
-  useEffect(() => {
-    if (view === "restaurants" && merchants === null && session?.address)
-      void loadMerchants();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, merchants, session?.address?.id]);
-  // A estimativa do prato escolhido pode terminar depois da resposta: consulta até ficar pronta.
-  const selectedNutritionState = session?.selected?.nutrition.state;
-  useEffect(() => {
-    if (selectedNutritionState !== "pending") return;
-    let tries = 0;
+    if (!pendingNutrition) return;
+    let cancelled = false, tries = 0;
     const timer = window.setInterval(async () => {
-      tries += 1;
-      try {
-        const next = await api.selectionNutrition();
-        if (next.selected?.nutrition.state !== "pending") {
-          setSession(next);
-          clearInterval(timer);
-        }
-      } catch {
-        // Tenta de novo no próximo ciclo; o pedido continua utilizável.
-      }
-      if (tries >= 30) clearInterval(timer);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [selectedNutritionState, session?.selected?.candidate.item_id]);
-
-  // A interpretação da avaliação roda em segundo plano depois da confirmação.
-  const reviewState = session?.order?.review?.interpretation_state;
-  useEffect(() => {
-    if (reviewState !== "pending") return;
-    let tries = 0;
-    const timer = window.setInterval(async () => {
-      tries += 1;
-      try {
-        const next = await api.order();
-        if (next.order?.review?.interpretation_state !== "pending") {
-          setSession(next);
-          clearInterval(timer);
-          void api.myReviews().then(setReviews).catch(() => undefined);
-        }
-      } catch {
-        // Tenta de novo no próximo ciclo; o pedido já está confirmado.
-      }
-      if (tries >= 20) clearInterval(timer);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [reviewState, session?.order?.id]);
-
-  // A busca responde antes das calorias: consulta até todas as recomendações ficarem prontas.
-  const pendingRecommendations =
-    session?.recommendations
-      .filter((r) => r.nutrition.state === "pending")
-      .map((r) => `${r.candidate.merchant_id}/${r.candidate.item_id}`)
-      .join(",") ?? "";
-  useEffect(() => {
-    if (!pendingRecommendations) return;
-    let tries = 0;
-    const timer = window.setInterval(async () => {
-      tries += 1;
+      if (actionLock.current || ++tries > 40) { if (tries > 40) clearInterval(timer); return; }
+      const version = epoch.current;
       try {
         const next = await api.recommendationsNutrition();
-        const stillPending = next.recommendations
-          .filter((r) => r.nutrition.state === "pending")
-          .map((r) => `${r.candidate.merchant_id}/${r.candidate.item_id}`)
-          .join(",");
-        if (stillPending !== pendingRecommendations) {
-          setSession(next);
-          clearInterval(timer);
-        }
-      } catch {
-        // Tenta de novo no próximo ciclo; os pratos continuam selecionáveis.
-      }
-      if (tries >= 30) clearInterval(timer);
+        if (cancelled || version !== epoch.current) return;
+        setSession(next);
+        setMessages(current => current.map(m => m.id === activeSearch ? { ...m, recommendations: next.recommendations } : m));
+      } catch { /* A busca continua disponível mesmo sem estimativa. */ }
     }, 3000);
-    return () => clearInterval(timer);
-  }, [pendingRecommendations]);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [pendingNutrition, activeSearch]);
 
-  async function choose(candidate: Candidate, rec: Recommendation | null) {
-    if (busy || loading) return;
-    setDetail(candidate);
-    setRecommendation(rec);
-    setOptions([]);
-    setQuantity(1);
-    open("item");
-    await loadDetail(candidate);
-  }
-  async function loadDetail(candidate: Candidate) {
-    // Ignora respostas atrasadas de um prato que o usuário já trocou ou fechou.
-    const request = ++detailRequest.current;
-    setDetailState("loading");
-    try {
-      const item = await api.item(candidate);
-      if (detailRequest.current !== request) return;
-      setDetail(item);
-      setDetailState("ready");
-    } catch (e) {
-      if (detailRequest.current !== request) return;
-      setError(
-        e instanceof Error
-          ? e.message
-          : "Não foi possível carregar as opções deste prato.",
-      );
-      setDetailState("error");
-    }
-  }
-  function updateOption(groupId: string, optionId: string, count: number) {
-    setOptions((previous) => [
-      ...previous.filter(
-        (o) => !(o.group_id === groupId && o.option_id === optionId),
-      ),
-      ...(count
-        ? [{ group_id: groupId, option_id: optionId, quantity: count }]
-        : []),
-    ]);
-  }
-  const optionCount = (groupId: string) =>
-    options
-      .filter((o) => o.group_id === groupId)
-      .reduce((sum, o) => sum + o.quantity, 0);
-  const validOptions =
-    detail?.option_groups.every(
-      (g) =>
-        optionCount(g.id) >= g.min_selections &&
-        optionCount(g.id) <= g.max_selections,
-    ) ?? false;
-  const selectionTotal = detail
-    ? (detail.price_cents +
-        options.reduce((sum, choice) => {
-          const option = detail.option_groups
-            .find((g) => g.id === choice.group_id)
-            ?.options.find((o) => o.id === choice.option_id);
-          return sum + (option?.price_cents || 0) * choice.quantity;
-        }, 0)) *
-      quantity
-    : 0;
+  const reviewPending = session?.order?.review?.interpretation_state === "pending";
+  useEffect(() => {
+    if (!reviewPending) return;
+    let cancelled = false, tries = 0;
+    const timer = window.setInterval(async () => {
+      if (actionLock.current || ++tries > 20) { if (tries > 20) clearInterval(timer); return; }
+      const version = epoch.current;
+      try {
+        const next = await api.order();
+        if (!cancelled && version === epoch.current) setSession(next);
+      } catch { /* A avaliação será consultada no próximo ciclo. */ }
+    }, 3000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [reviewPending, session?.order?.id]);
 
-  async function addSelection() {
-    if (!detail || !validOptions) return;
-    const next = await perform(() => api.select(detail, quantity, options));
-    if (next) {
-      setSession(next);
-      setDialog(null);
-      const nutrition = next.selected?.nutrition;
-      setToast(
-        nutrition?.state === "ready"
-          ? `Prato adicionado: ≈ ${Math.round(nutrition.calories! * next.selected!.quantity)} kcal no total.`
-          : nutrition?.state === "pending"
-            ? "Prato adicionado. Ainda calculando as calorias…"
-            : "Prato adicionado. Revise a entrega e o pagamento.",
-      );
-    }
+  const selectedNutritionPending = session?.selected?.nutrition.state === "pending";
+  useEffect(() => {
+    if (!selectedNutritionPending) return;
+    let cancelled = false, tries = 0;
+    const timer = window.setInterval(async () => {
+      if (actionLock.current || ++tries > 40) { if (tries > 40) clearInterval(timer); return; }
+      const version = epoch.current;
+      try { const next = await api.selectionNutrition(); if (!cancelled && version === epoch.current) setSession(next); }
+      catch { /* O pedido não depende da estimativa. */ }
+    }, 3000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [selectedNutritionPending, session?.selected?.candidate.item_id]);
+
+  async function selectAddress(address: Address, echo = true) {
+    const next = await perform(() => api.address(address.id));
+    if (!next) return;
+    setSession(next); setPhase("discover"); setActiveSearch(null);
+    if (echo) say("user", `Usar ${address.label}.`);
+    say("assistant", "Endereço selecionado. O que você quer comer?");
   }
-  async function openCheckout() {
-    if (!session?.selected) {
-      navigate("chat");
-      composer.current?.focus();
-      return;
-    }
-    if (session.mode !== "mock") {
-      setError(
-        "O checkout real ainda não está disponível. Você pode consultar e escolher os pratos.",
-      );
-      return;
-    }
-    const available = await perform(() => api.choices());
-    if (available) {
-      setChoices(available);
-      setDelivery(
-        session.summary?.delivery.id || available.delivery[0]?.id || "",
-      );
-      setPayment(session.summary?.payment.id || available.payment[0]?.id || "");
-      setAccepted(false);
-      setOrderRating(null);
-      setReviewText("");
-      open("checkout");
-    }
-  }
-  async function review() {
-    const next = await perform(() => api.review(delivery, payment));
-    if (next) {
-      setSession(next);
-      setAccepted(false);
-    }
-  }
-  async function confirm() {
-    if (
-      !session?.summary ||
-      !accepted ||
-      session.mode !== "mock" ||
-      session.order
-    )
-      return;
-    // Never retry a submission automatically. A refreshed summary requires a new checkbox event.
-    const comment = reviewText.trim();
-    const orderReview =
-      orderRating != null || comment ? { rating: orderRating, comment } : undefined;
-    const next = await perform(() =>
-      api.confirm(session.summary!.version, orderReview),
-    );
-    if (next) {
-      setSession(next);
-      // With a rating the backend also records a review, so tastes and history must reload.
-      if (next.order?.review && effectiveReview(next.order.review).rating != null)
-        void api.myReviews().then(setReviews).catch(() => undefined);
-      setDialog(null);
-      navigate("orders");
-      setToast(
-        "Pedido de demonstração confirmado. Nenhuma cobrança foi realizada.",
-      );
-    }
-  }
-  async function editOrderReview(rating: number, aspects: OrderAspects) {
-    const next = await perform(() => api.editOrderReview(rating, aspects));
-    if (!next) return false;
+  async function search(message: string) {
+    if (!session) return;
+    const next = await perform(() => api.chat(message, crypto.randomUUID()));
+    if (!next) return;
     setSession(next);
-    void api.myReviews().then(setReviews).catch(() => undefined);
-    setToast("Avaliação ajustada. Suas próximas sugestões já consideram a correção.");
+    const reply = next.messages.at(-1)?.text ?? "Seu contexto foi atualizado.";
+    const searched = next.last_chat_action === "search";
+    const id = say("assistant", reply, searched ? next.recommendations : undefined);
+    if (searched) { setActiveSearch(id); setPhase("discover"); setDetail(null); }
+  }
+  async function choose(candidate: Candidate, echo = true) {
+    if (!session || session.order || phase !== "discover" || busy) return;
+    if (echo) say("user", `Quero ${candidate.name}.`);
+    const item = await perform(() => api.item(candidate));
+    if (!item) return;
+    setDetail(item); setOptions([]); setQuantity(1); setPhase("customize");
+    say("assistant", item.option_groups.length ? "Vamos montar seu prato. Escolha os complementos abaixo ou escreva o nome da opção. Depois, diga “continuar”." : "Quantas unidades você quer? Pode ajustar aqui ou escrever, por exemplo, “2 unidades”. Depois, diga “continuar”.");
+  }
+  const optionCount = (group: string) => options.filter(o => o.group_id === group).reduce((sum, o) => sum + o.quantity, 0);
+  const validOptions = !!detail && detail.option_groups.every(g => optionCount(g.id) >= g.min_selections && optionCount(g.id) <= g.max_selections);
+  function updateOption(groupId: string, optionId: string, count: number) {
+    const group = detail?.option_groups.find(g => g.id === groupId);
+    if (!group) return;
+    const previous = options.find(o => o.group_id === groupId && o.option_id === optionId)?.quantity ?? 0;
+    if (optionCount(groupId) - previous + count > group.max_selections) return;
+    setOptions(current => [...current.filter(o => !(o.group_id === groupId && o.option_id === optionId)),
+      ...(count ? [{ group_id: groupId, option_id: optionId, quantity: count }] : [])]);
+  }
+  const selectionTotal = detail ? quantity * (detail.price_cents + options.reduce((sum, o) =>
+    sum + (detail.option_groups.find(g => g.id === o.group_id)?.options.find(option => option.id === o.option_id)?.price_cents ?? 0) * o.quantity, 0)) : 0;
+  async function continueWithDish(echo = true) {
+    if (!detail || !validOptions || busy) return;
+    if (echo) say("user", `Continuar com ${quantity} unidade${quantity > 1 ? "s" : ""} de ${detail.name}.`);
+    await perform(async () => {
+      const next = await api.select(detail, quantity, options);
+      setSession(next); setPhase("delivery"); setDelivery("");
+      if (next.mode !== "mock") {
+        say("assistant", "Seu prato foi selecionado. A compra real ainda não está habilitada nesta integração; a consulta e as recomendações continuam disponíveis.");
+        return;
+      }
+      setChoices(await api.choices());
+      say("assistant", "Prato escolhido. Qual opção de entrega você prefere?");
+    });
+  }
+  function chooseDelivery(id: string, echo = true) {
+    const option = choices?.delivery.find(d => d.id === id);
+    if (!option || busy) return;
+    setDelivery(id); setPhase("payment");
+    if (echo) say("user", `Entrega: ${option.label} (${money(option.fee_cents)}).`);
+    say("assistant", "Como você prefere pagar?");
+  }
+  async function choosePayment(id: string, echo = true) {
+    const option = choices?.payment.find(p => p.id === id);
+    if (!option || !delivery || busy) return;
+    if (echo) say("user", `Pagamento: ${option.label}.`);
+    const next = await perform(() => api.review(delivery, id));
+    if (!next) return;
+    setSession(next); setPhase("confirm");
+    say("assistant", `Confira o pedido abaixo. O total é ${money(next.summary!.total_cents)}. Se estiver tudo certo, use o botão de confirmação ou escreva “confirmar pedido”.`);
+  }
+  async function confirmOrder() {
+    if (!session?.summary || session.order || phase !== "confirm" || session.mode !== "mock" || busy) return;
+    const version = session.summary.version;
+    say("user", "Confirmar pedido.");
+    // Somente uma ação explícita confirma a versão exibida. Sem retry automático.
+    const next = await perform(() => api.confirm(version));
+    if (!next) return;
+    setSession(next); setPhase("ordered");
+    say("assistant", "Pedido de demonstração confirmado! Nenhuma cobrança foi realizada. Você pode deixar uma avaliação aqui na conversa: escolha uma nota, escreva um comentário, ou os dois.");
+  }
+  async function startNewOrder() {
+    const next = await perform(api.newOrder);
+    if (!next) return false;
+    setSession(next); setPhase("discover"); setActiveSearch(null); setDetail(null); setChoices(null);
+    say("assistant", next.messages.at(-1)!.text);
     return true;
   }
-  function openConsumption() {
-    if (
-      !session?.order ||
-      !session.selected ||
-      session.order.status !== "submitted"
-    )
-      return;
-    const existing = entries.find(
-      (e) =>
-        e.order_id === session.order!.id &&
-        e.item_id === session.selected!.candidate.item_id,
-    );
-    setFraction(String(existing?.fraction || 1));
-    setFeedback(existing?.feedback || "");
-    setRecordDate(existing?.consumed_at || new Date().toISOString());
-    open("consumption");
+  async function saveOrderReview(value: OrderReviewInput) {
+    const next = await perform(() => api.addOrderReview(value));
+    if (!next) return false;
+    setSession(next); say("assistant", "Avaliação salva. Sua nota e seu comentário vão ajudar a personalizar as próximas sugestões.");
+    return true;
   }
-  async function persistConsumption(next: Consumption[]) {
-    if (!session) return false;
-    return (await perform(async () => {
-      const saved = await api.saveConsumption(next);
-      try { saveConsumption(session.id, saved); } catch { /* O servidor já persistiu o registro. */ }
-      setEntries(saved);
-      const diary = await api.dailyContext().catch(() => null);
-      if (diary) setFoodDiary(diary);
-      return true;
-    })) === true;
-  }
-  async function recordConsumption() {
-    if (
-      !session?.order ||
-      !session.selected ||
-      ![0.25, 0.5, 0.75, 1].includes(Number(fraction))
-    )
-      return;
-    const id = session.selected.candidate.item_id;
-    const previous = entries.find(
-      (e) => e.order_id === session.order!.id && e.item_id === id,
-    );
-    // Prefer the estimate of the plate as assembled; recommendation estimates do not describe a customized plate.
-    const nutrition =
-      previous?.nutrition ??
-      (session.selected.nutrition?.state === "ready"
-        ? session.selected.nutrition
-        : session.selected.options.length === 0
-          ? session.recommendations.find((r) => r.candidate.item_id === id)
-              ?.nutrition || null
-          : null);
-    const entry: Consumption = {
-      order_id: session.order.id,
-      item_id: id,
-      name: session.selected.candidate.name,
-      fraction: Number(fraction),
-      quantity: session.selected.quantity,
-      consumed_at: recordDate,
-      nutrition,
-      feedback,
-    };
-    const next = [
-      ...entries.filter(
-        (e) => !(e.order_id === entry.order_id && e.item_id === id),
-      ),
-      entry,
-    ];
-    if (await persistConsumption(next)) {
-      setDialog(null);
-      navigate("day");
-      setToast("Consumo salvo no servidor. A próxima busca vai considerar essa refeição.");
-    }
-  }
-  const today = entries.filter(
-    (e) => dayKey(e.consumed_at) === dayKey(new Date()),
-  );
-  const knownEntries = today.filter((e) => e.nutrition?.state === "ready");
-  const currentDayContext = foodDiary?.context.date === dayKey(new Date()) ? foodDiary.context : null;
-  const knownCalories = currentDayContext?.known_intake.calories ?? knownEntries.reduce(
-    (total, e) => total + e.nutrition!.calories! * e.fraction * e.quantity,
-    0,
-  );
-  const hasKnownCalories = currentDayContext ? currentDayContext.known_intake.calories !== null : knownEntries.length > 0;
-  const goal = session?.profile.daily_calorie_goal;
-  const consumed =
-    session?.order &&
-    entries.some(
-      (e) =>
-        e.order_id === session.order!.id &&
-        e.item_id === session.selected?.candidate.item_id,
-    );
-  const reviewCurrent =
-    session?.summary &&
-    session.summary.delivery.id === delivery &&
-    session.summary.payment.id === payment;
-  const disabled = loading || busy || !session;
-
-  return (
-    <div className="app-shell">
-      <a className="skip-link" href="#main-content">
-        Ir para o conteúdo
-      </a>
-      <aside className="sidebar">
-        <a
-          className="brand-link"
-          href="#inicio"
-          onClick={(e) => {
-            e.preventDefault();
-            navigate("home");
-          }}
-          aria-label="Macro, início"
-        >
-          <Brand />
-        </a>
-        <div className="sidebar-caption">Comer bem. Seguir em frente.</div>
-        <nav aria-label="Navegação principal">
-          {nav.map(({ id, name, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => navigate(id)}
-              className={`nav-item ${view === id ? "active" : ""}`}
-              aria-current={view === id ? "page" : undefined}
-            >
-              <Icon size={19} strokeWidth={1.8} />
-              <span>{name}</span>
-              {id === "chat" && (
-                <span className="nav-spark">
-                  <Sparkles size={13} />
-                </span>
-              )}
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-bottom">
-          <div className="sidebar-note">
-            <span className="note-icon">
-              <Utensils size={20} />
-            </span>
-            <strong>Uma escolha de cada vez.</strong>
-            <p>Seu ritmo, seu gosto e uma refeição que faz sentido.</p>
-          </div>
-          <button className="sidebar-help" onClick={() => open("about")}>
-            <Info size={17} />
-            Conheça o Macro
-            <ArrowUpRight size={14} />
-          </button>
-          <button className="user-pill" onClick={() => navigate("profile")}>
-            <span className="avatar">V</span>
-            <span>
-              <strong>Seu espaço</strong>
-              <small>Feito para a sua rotina</small>
-            </span>
-            <Settings2 size={17} />
-          </button>
-        </div>
-      </aside>
-
-      <div className="workspace">
-        <header className="topbar">
-          <a
-            className="mobile-brand"
-            href="#inicio"
-            aria-label="Macro, início"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate("home");
-            }}
-          >
-            <Brand />
-          </a>
-          <div className="breadcrumb">
-            Seu espaço
-            <ChevronRight size={13} />
-            <span>{nav.find((n) => n.id === view)?.name}</span>
-          </div>
-          <div className="topbar-actions">
-            <button
-              className="address-button"
-              onClick={() => open("address")}
-              disabled={disabled || !!session?.order}
-            >
-              <span className="location-icon">
-                <MapPin size={18} />
-              </span>
-              <span>
-                <small>Entregar em</small>
-                <strong>
-                  {session?.address?.label || "Selecionar endereço"}
-                </strong>
-              </span>
-              <ChevronDown size={14} />
-            </button>
-            <span className="topbar-divider" />
-            <button
-              className="bag-button"
-              onClick={() =>
-                session?.order ? navigate("orders") : void openCheckout()
-              }
-              disabled={disabled}
-              aria-label={
-                session?.selected ? "Ver meu pedido" : "Começar um pedido"
-              }
-            >
-              <ShoppingBag size={21} />
-              {session?.selected && (
-                <span className="bag-count">{session.selected.quantity}</span>
-              )}
-            </button>
-          </div>
-        </header>
-        <div className="mode-strip">
-          <span
-            className={`status-dot ${health?.mode === "live" ? "live" : ""}`}
-          />
-          <span>
-            {health?.mode === "live"
-              ? "Modo de consulta ao iFood"
-              : "Modo demonstração"}
-          </span>
-          <span className="mode-description">
-            {health?.mode === "live"
-              ? "Pedidos reais ainda indisponíveis"
-              : "Explore à vontade. Nenhum pedido ou cobrança real."}
-          </span>
-          <button
-            onClick={() => open("about")}
-            aria-label="Saiba mais sobre o ambiente"
-          >
-            <Info size={14} />
-          </button>
-        </div>
-        {error && !dialog && (
-          <div className="page-error" role="alert">
-            <Info size={18} />
-            <span>{error}</span>
-            <button onClick={() => window.location.reload()}>
-              Atualizar dados
-            </button>
-            <button
-              className="icon-button"
-              aria-label="Fechar aviso"
-              onClick={() => setError("")}
-            >
-              <X size={16} />
-            </button>
-          </div>
-        )}
-        {loading ? (
-          <div className="initial-loading">
-            <Brand small />
-            <Spinner text="Preparando seu espaço…" />
-          </div>
-        ) : !session ? (
-          <div className="empty-page">
-            <h1>Vamos reconectar?</h1>
-            <p>Inicie o backend para carregar seu perfil e continuar.</p>
-            <button
-              className="primary-button"
-              onClick={() => window.location.reload()}
-            >
-              Tentar novamente
-            </button>
-          </div>
-        ) : (
-          <div
-            className={`content-layout ${view === "profile" ? "profile-layout" : ""}`}
-          >
-            <main className="main-content" id="main-content">
-              {(view === "home" || view === "chat") && (
-                <>
-                  <div className="page-heading">
-                    <div>
-                      <span className="greeting">
-                        Uma pausa para cuidar de você{" "}
-                        <span aria-hidden="true">☀</span>
-                      </span>
-                      <h1>
-                        {view === "chat"
-                          ? "O que vai bem com o seu dia?"
-                          : "Sua próxima boa escolha."}
-                      </h1>
-                    </div>
-                    <div className="date-label">
-                      <span className="calendar-day">
-                        {new Intl.DateTimeFormat("pt-BR", {
-                          day: "2-digit",
-                          timeZone: "America/Sao_Paulo",
-                        }).format(new Date())}
-                      </span>
-                      <span>
-                        {new Intl.DateTimeFormat("pt-BR", {
-                          month: "short",
-                          timeZone: "America/Sao_Paulo",
-                        })
-                          .format(new Date())
-                          .replace(".", "")}
-                        <small>
-                          {new Intl.DateTimeFormat("pt-BR", {
-                            weekday: "short",
-                            timeZone: "America/Sao_Paulo",
-                          })
-                            .format(new Date())
-                            .replace(".", "")}
-                        </small>
-                      </span>
-                    </div>
-                  </div>
-                  {view === "home" && (
-                    <section className="hero">
-                      <div className="hero-copy">
-                        <span className="hero-label">
-                          <span />
-                          <Dumbbell size={14} />
-                          Do treino à mesa
-                        </span>
-                        <h2>
-                          Você cuida do treino.
-                          <br />A gente facilita
-                          <br />o prato.
-                        </h2>
-                        <p>
-                          Conte o que está com vontade. O Macro encontra opções
-                          que combinam com você.
-                        </p>
-                        <button
-                          onClick={() => {
-                            navigate("chat");
-                            requestAnimationFrame(() =>
-                              composer.current?.focus(),
-                            );
-                          }}
-                          className="hero-link"
-                          aria-label="Encontre sua próxima refeição"
-                        >
-                          Encontre sua próxima refeição{" "}
-                          <span>
-                            <ArrowUpRight size={18} />
-                          </span>
-                        </button>
-                      </div>
-                      <div className="hero-visual">
-                        <span className="hero-orbit orbit-one" />
-                        <span className="hero-orbit orbit-two" />
-                        <img
-                          src={photos.hero}
-                          alt="Bowl colorido com vegetais, grãos e folhas, foto ilustrativa"
-                          fetchPriority="high"
-                          onError={(e) => {
-                            e.currentTarget.style.opacity = "0";
-                          }}
-                        />
-                        <span className="floating-leaf">
-                          <Leaf size={20} />
-                        </span>
-                        <div className="hero-sticker">
-                          <span>
-                            <Check size={14} />
-                          </span>
-                          Seu gosto vem primeiro.
-                        </div>
-                      </div>
-                    </section>
-                  )}
-                  <section
-                    className="composer-section"
-                    aria-label="Converse com o Macro"
-                  >
-                    <div className="section-label">
-                      <span className="mini-spark">
-                        <Sparkles size={16} />
-                      </span>
-                      <h2>
-                        {session.messages.length && view === "chat"
-                          ? "Continue a conversa"
-                          : "Bora encontrar seu próximo prato?"}
-                      </h2>
-                      <span className="text-only">Por texto, do seu jeito</span>
-                    </div>
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        void search(text);
-                      }}
-                      className="composer"
-                    >
-                      <label className="sr-only" htmlFor="meal-request">
-                        O que você quer comer?
-                      </label>
-                      <textarea
-                        ref={composer}
-                        id="meal-request"
-                        rows={2}
-                        maxLength={2000}
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                        placeholder="Quero frango até R$ 40, até 600 kcal e pelo menos 30 g de proteína…"
-                        disabled={disabled || !!session.order}
-                        onKeyDown={(e) => {
-                          if (
-                            e.key === "Enter" &&
-                            !e.shiftKey &&
-                            !e.nativeEvent.isComposing
-                          ) {
-                            e.preventDefault();
-                            void search(text);
-                          }
-                        }}
-                      />
-                      <div className="composer-footer">
-                        <span>
-                          <SlidersHorizontal size={14} />
-                          {session.profile.preferences.length
-                            ? `${session.profile.preferences.length} preferência${session.profile.preferences.length > 1 ? "s" : ""} no seu perfil`
-                            : "Suas preferências fazem a diferença"}
-                        </span>
-                        <button
-                          className="send-button"
-                          type="submit"
-                          disabled={disabled || !text.trim() || !!session.order}
-                          aria-label="Buscar refeições"
-                        >
-                          {busy ? (
-                            <span className="button-spinner" />
-                          ) : (
-                            <ArrowUp size={20} />
-                          )}
-                        </button>
-                      </div>
-                    </form>
-                    <div className="quick-prompts">
-                      {[
-                        {
-                          text: "Pós-treino sem complicar",
-                          icon: Dumbbell,
-                          query: "Quero frango grelhado até R$ 40",
-                        },
-                        {
-                          text: "Hoje vou de vegetal",
-                          icon: Leaf,
-                          query: "Quero grão-de-bico até R$ 40",
-                        },
-                        {
-                          text: "Até R$ 30",
-                          icon: Utensils,
-                          query: "Quero uma refeição até R$ 30",
-                        },
-                      ].map(({ text: label, icon: Icon, query }) => (
-                        <button
-                          disabled={disabled || !!session.order}
-                          onClick={() => void search(query)}
-                          key={label}
-                        >
-                          <Icon size={14} />
-                          {label}
-                          <Plus size={13} />
-                        </button>
-                      ))}
-                    </div>
-                  </section>
-                  {busy && (
-                    <div className="search-loading">
-                      <Brand small />
-                      <Spinner text="Consultando opções para você…" />
-                    </div>
-                  )}
-                  {view === "chat" && session.messages.length > 0 && (
-                    <section
-                      className="conversation"
-                      aria-label="Conversa"
-                      aria-live="polite"
-                    >
-                      {session.messages.slice(-6).map((message, i) => (
-                        <div
-                          className={`message ${message.role}`}
-                          key={`${i}-${message.text}`}
-                        >
-                          {message.role === "assistant" && <Brand small />}
-                          <div>
-                            <span>
-                              {message.role === "assistant" ? "Macro" : "Você"}
-                            </span>
-                            <p>{message.text}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </section>
-                  )}
-                  {session.recommendations.length > 0 && (
-                    <section className="recommendations">
-                      <div className="section-heading">
-                        <div>
-                          <h2>Um prato que combina com você</h2>
-                          <p>Escolha o seu e deixe os detalhes com a gente.</p>
-                        </div>
-                        <span className="result-count">
-                          {session.recommendations.length} opções
-                        </span>
-                      </div>
-                      {!!session.request_intent?.labels.length && (
-                        <div className="intent-summary">
-                          {session.request_intent.context_summary && <p>{session.request_intent.context_summary}</p>}
-                          <p>Entendi seu pedido: {session.request_intent.labels.join(", ")}.</p>
-                          {session.request_intent.inferences?.length > 0 && (
-                            <p className="small">Inferências para esta busca: {session.request_intent.inferences.join(" ")}</p>
-                          )}
-                        </div>
-                      )}
-                      <div className="meal-grid">
-                        {session.recommendations.map((r, index) => (
-                          <MealCard
-                            key={`${r.candidate.merchant_id}-${r.candidate.item_id}`}
-                            recommendation={r}
-                            index={index}
-                            onSelect={() => void choose(r.candidate, r)}
-                            disabled={disabled || !!session.order}
-                          />
-                        ))}
-                      </div>
-                      <p className="section-footnote">
-                        <Info size={13} />O preço final inclui opções e entrega,
-                        e aparece na revisão do pedido.
-                      </p>
-                    </section>
-                  )}
-                  {view === "chat" &&
-                    !session.recommendations.length &&
-                    session.messages.length > 0 && (
-                      <div className="empty-results">
-                        <Utensils size={25} />
-                        <h3>Vamos ajustar a busca?</h3>
-                        <p>
-                          Tente outro prato ou aumente o orçamento. Suas
-                          preferências continuam salvas.
-                        </p>
-                        <button
-                          className="secondary-button"
-                          onClick={() => composer.current?.focus()}
-                        >
-                          Editar minha busca
-                        </button>
-                      </div>
-                    )}
-                  {!session.recommendations.length && (
-                    <section className="inspirations">
-                      <div className="section-heading">
-                        <div>
-                          <h2>Uma inspiração para a sua fome</h2>
-                          <p>
-                            Escolha um ponto de partida. O resto a gente
-                            descobre junto.
-                          </p>
-                        </div>
-                        <span className="illustration-label">
-                          Fotos ilustrativas
-                        </span>
-                      </div>
-                      <div className="inspiration-grid">
-                        {inspirations.map(
-                          ({
-                            title,
-                            subtitle,
-                            photo,
-                            query,
-                            tag,
-                            icon: Icon,
-                          }) => (
-                            <button
-                              className="inspiration-card"
-                              aria-label={`Buscar: ${title}`}
-                              key={title}
-                              disabled={disabled || !!session.order}
-                              onClick={() => void search(query)}
-                            >
-                              <div className="inspiration-photo">
-                                <img
-                                  src={photo}
-                                  alt=""
-                                  loading="lazy"
-                                  onError={(e) => {
-                                    e.currentTarget.style.visibility = "hidden";
-                                  }}
-                                />
-                                <span>
-                                  <Icon size={12} />
-                                  {tag}
-                                </span>
-                              </div>
-                              <div className="inspiration-copy">
-                                <h3>{title}</h3>
-                                <p>{subtitle}</p>
-                                <span className="inspiration-arrow">
-                                  <ArrowUpRight size={18} />
-                                </span>
-                              </div>
-                            </button>
-                          ),
-                        )}
-                      </div>
-                    </section>
-                  )}
-                  <div className="care-note">
-                    <ShieldCheck size={17} />
-                    <span>Você escolhe. Você revisa. Só depois confirma.</span>
-                    <span className="care-line" />
-                    <span>Um pedido por vez, no seu controle.</span>
-                  </div>
-                </>
-              )}
-
-              {view === "restaurants" && (
-                <section className="restaurants-view">
-                  <div className="page-heading">
-                    <div>
-                      <span className="greeting">
-                        Perto de{" "}
-                        {session.address?.label || "você"}
-                      </span>
-                      <h1>
-                        {activeMerchant
-                          ? activeMerchant.name
-                          : "Restaurantes abertos agora"}
-                      </h1>
-                    </div>
-                    {activeMerchant ? (
-                      <button
-                        className="secondary-button"
-                        onClick={() => {
-                          setActiveMerchant(null);
-                          setMenu([]);
-                        }}
-                        disabled={busy}
-                      >
-                        Ver todos os restaurantes
-                      </button>
-                    ) : (
-                      <button
-                        className="secondary-button"
-                        onClick={() => void loadMerchants()}
-                        disabled={disabled}
-                      >
-                        Atualizar lista
-                      </button>
-                    )}
-                  </div>
-                  {!session.address ? (
-                    <div className="empty-results">
-                      <MapPin size={25} />
-                      <h3>Escolha um endereço</h3>
-                      <p>Precisamos dele para mostrar quem entrega perto de você.</p>
-                      <button
-                        className="primary-button"
-                        onClick={() => open("address")}
-                      >
-                        Selecionar endereço
-                      </button>
-                    </div>
-                  ) : busy ? (
-                    <div className="search-loading">
-                      <Brand small />
-                      <Spinner
-                        text={
-                          activeMerchant || merchants
-                            ? "Carregando…"
-                            : "Procurando restaurantes perto de você…"
-                        }
-                      />
-                    </div>
-                  ) : activeMerchant ? (
-                    menu.length ? (
-                      <>
-                        <p className="section-footnote">
-                          <Info size={13} />
-                          Escolha um prato e as opções: o Macro calcula as
-                          calorias do prato montado ao adicionar ao pedido.
-                        </p>
-                        {!!session.request_intent?.labels.length && (
-                        <div className="intent-summary">
-                          {session.request_intent.context_summary && <p>{session.request_intent.context_summary}</p>}
-                          <p>Entendi seu pedido: {session.request_intent.labels.join(", ")}.</p>
-                          {session.request_intent.inferences?.length > 0 && (
-                            <p className="small">Inferências para esta busca: {session.request_intent.inferences.join(" ")}</p>
-                          )}
-                        </div>
-                      )}
-                      <div className="meal-grid">
-                          {menu.map((item) => (
-                            <MenuItemCard
-                              key={item.item_id}
-                              item={item}
-                              onSelect={() => void choose(item, null)}
-                              disabled={disabled || !!session.order}
-                            />
-                          ))}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="empty-results">
-                        <Utensils size={25} />
-                        <h3>Cardápio indisponível</h3>
-                        <p>Este restaurante não retornou pratos agora.</p>
-                      </div>
-                    )
-                  ) : merchants?.length ? (
-                    <div className="merchant-grid">
-                      {merchants.map((m) => (
-                        <MerchantCard
-                          key={m.merchant_id}
-                          merchant={m}
-                          onSelect={() => void openMerchant(m)}
-                          disabled={disabled}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    merchants && (
-                      <div className="empty-results">
-                        <Store size={25} />
-                        <h3>Nenhum restaurante aberto por perto</h3>
-                        <p>Tente atualizar a lista daqui a pouco.</p>
-                      </div>
-                    )
-                  )}
-                </section>
-              )}
-
-              {view === "profile" && (
-                <>
-                <ProfileForm
-                  profile={session.profile}
-                  busy={busy}
-                  onSave={async (profile) => {
-                    const next = await perform(() => api.profile(profile));
-                    if (next) {
-                      setSession(next);
-                      setToast(
-                        "Preferências salvas. A próxima busca já vai usar seu perfil.",
-                      );
-                    }
-                  }}
-                />
-                {tastes && <TasteSummary tastes={tastes} />}
-                <ReviewHistory reviews={reviews} simulated={session.mode === "mock"} />
-                </>
-              )}
-
-              {view === "day" && (
-                <>
-                  <div className="page-heading">
-                    <div>
-                      <span className="greeting">Sua rotina, no seu ritmo</span>
-                      <h1>Meu dia.</h1>
-                    </div>
-                    <span className="heading-icon">
-                      <Flame size={24} />
-                    </span>
-                  </div>
-                  <div className="day-intro">
-                    <Target size={25} />
-                    <div>
-                      <h2>Cada refeição conta quando você confirma.</h2>
-                      <p>
-                        Comprar e comer são momentos diferentes. Registre aqui
-                        apenas o que você consumiu.
-                      </p>
-                    </div>
-                  </div>
-                  <DietDiary diary={foodDiary} busy={busy}
-                    onAdd={async (description, nutrition) => {
-                      const saved = await perform(async () => {
-                        await api.addFood(description, nutrition);
-                        setFoodDiary(await api.dailyContext());
-                        return true;
-                      });
-                      if (saved) setToast("Alimentação registrada. Sua próxima busca vai considerar o que você comeu.");
-                      return saved === true;
-                    }}
-                    onRemove={async id => {
-                      await perform(async () => {
-                        await api.removeFood(id);
-                        setFoodDiary(await api.dailyContext());
-                        setToast("Alimento removido do diário.");
-                      });
-                    }} />
-                  <div className="section-heading">
-                    <div>
-                      <h2>Consumos confirmados dos pedidos</h2>
-                      <p>
-                        {new Intl.DateTimeFormat("pt-BR", {
-                          dateStyle: "long",
-                          timeZone: "America/Sao_Paulo",
-                        }).format(new Date())}
-                      </p>
-                    </div>
-                    <span className="result-count">
-                      {today.length} registro{today.length !== 1 ? "s" : ""}
-                    </span>
-                  </div>
-                  {today.length ? (
-                    <div className="consumption-list">
-                      {today.map((entry) => (
-                        <article
-                          className="consumption-row"
-                          key={`${entry.order_id}-${entry.item_id}`}
-                        >
-                          <span className="consumption-icon">
-                            <Utensils size={21} />
-                          </span>
-                          <div>
-                            <h3>{entry.name}</h3>
-                            <p>
-                              {Math.round(entry.fraction * 100)}% de{" "}
-                              {entry.quantity} unidade
-                              {entry.quantity > 1 ? "s" : ""} consumida
-                              {entry.quantity > 1 ? "s" : ""} ·{" "}
-                              {entry.nutrition?.state === "ready"
-                                ? `${Math.round(entry.nutrition.minimum! * entry.fraction * entry.quantity)}–${Math.round(entry.nutrition.maximum! * entry.fraction * entry.quantity)} kcal`
-                                : "Calorias indisponíveis"}
-                            </p>
-                            {entry.feedback && (
-                              <small>Seu feedback: {entry.feedback}</small>
-                            )}
-                            {session.order?.id === entry.order_id &&
-                              session.order.review && (
-                                <p className="review">
-                                  🗒️{" "}
-                                  {effectiveReview(session.order.review).rating != null &&
-                                    `★ ${effectiveReview(session.order.review).rating}/5 `}
-                                  {session.order.review.comment && (
-                                    <em>{session.order.review.comment}</em>
-                                  )}
-                                </p>
-                              )}
-                          </div>
-                          <button
-                            className="icon-button"
-                            aria-label={`Editar consumo de ${entry.name}`}
-                            onClick={openConsumption}
-                          >
-                            <Pencil size={17} />
-                          </button>
-                          <button
-                            className="icon-button danger"
-                            aria-label={`Excluir consumo de ${entry.name}`}
-                            onClick={async () => {
-                              if (
-                                await persistConsumption(
-                                  entries.filter(
-                                    (e) =>
-                                      !(
-                                        e.order_id === entry.order_id &&
-                                        e.item_id === entry.item_id
-                                      ),
-                                  ),
-                                )
-                              )
-                                setToast("Registro de consumo excluído.");
-                            }}
-                          >
-                            <Trash2 size={17} />
-                          </button>
-                        </article>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="empty-state">
-                      <span className="empty-icon">
-                        <Utensils size={30} />
-                      </span>
-                      <h2>Nenhum consumo de pedido confirmado hoje.</h2>
-                      <p>
-                        Depois do seu pedido, conte quanto comeu. Outras refeições podem ser registradas no formulário acima.
-                      </p>
-                      <button
-                        className="primary-button"
-                        onClick={() =>
-                          navigate(session.order ? "orders" : "chat")
-                        }
-                      >
-                        {session.order
-                          ? "Ver meu pedido"
-                          : "Encontrar uma refeição"}
-                        <ArrowRight size={16} />
-                      </button>
-                    </div>
-                  )}
-                  {session.order && !consumed && (
-                    <div className="pending-consumption">
-                      <Clock3 size={20} />
-                      <div>
-                        <strong>Já fez sua refeição?</strong>
-                        <p>
-                          Seu pedido está aguardando confirmação de consumo.
-                        </p>
-                      </div>
-                      <button
-                        className="secondary-button"
-                        onClick={openConsumption}
-                        disabled={session.order.status !== "submitted"}
-                      >
-                        Registrar consumo
-                      </button>
-                    </div>
-                  )}
-                  <p className="section-footnote">
-                    <Info size={14} />
-                    Registros e feedback ficam salvos no servidor, no seu perfil atual,
-                    e são considerados nas próximas buscas.
-                  </p>
-                </>
-              )}
-
-              {view === "orders" && (
-                <>
-                  <div className="page-heading">
-                    <div>
-                      <span className="greeting">
-                        Do primeiro clique à última garfada
-                      </span>
-                      <h1>Meus pedidos.</h1>
-                    </div>
-                    <span className="heading-icon">
-                      <ShoppingBag size={24} />
-                    </span>
-                  </div>
-                  {!session.order ? (
-                    <div className="empty-state">
-                      <span className="empty-icon">
-                        <ShoppingBag size={30} />
-                      </span>
-                      <h2>A próxima refeição começa aqui.</h2>
-                      <p>
-                        {session.selected
-                          ? "Seu prato já está no carrinho. Confira os detalhes para continuar."
-                          : "Encontre um prato, personalize e revise tudo antes de confirmar."}
-                      </p>
-                      <button
-                        className="primary-button"
-                        onClick={() =>
-                          session.selected
-                            ? void openCheckout()
-                            : navigate("chat")
-                        }
-                      >
-                        {session.selected
-                          ? "Revisar meu pedido"
-                          : "Pedir com o Macro"}
-                        <ArrowRight size={16} />
-                      </button>
-                    </div>
-                  ) : (
-                    <article className="order-card">
-                      <div className="order-status">
-                        <span className="success-icon">
-                          <CheckCheck size={24} />
-                        </span>
-                        <div>
-                          <h2>
-                            {session.order.status === "uncertain"
-                              ? "Aguardando confirmação do pedido"
-                              : "Tudo certo com seu pedido!"}
-                          </h2>
-                          <p>
-                            {session.order.simulated
-                              ? "Demonstração concluída. Nenhuma compra ou entrega real."
-                              : "Pedido recebido. Confira o identificador abaixo."}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="order-identifier">
-                        <small>Identificador do pedido</small>
-                        <code>{session.order.id}</code>
-                      </div>
-                      {session.selected && (
-                        <div className="order-meal">
-                          <MealImage item={session.selected.candidate} />
-                          <div>
-                            <span>
-                              {session.selected.candidate.merchant_name}
-                            </span>
-                            <h3>
-                              {session.selected.quantity} ×{" "}
-                              {session.selected.candidate.name}
-                            </h3>
-                            <p>{session.selected.option_labels.join(", ")}</p>
-                          </div>
-                          <strong>
-                            {money(
-                              session.selected.quantity *
-                                session.selected.unit_total_cents,
-                            )}
-                          </strong>
-                        </div>
-                      )}
-                      {session.order.review && (
-                        <OrderReviewCard
-                          review={session.order.review}
-                          busy={busy}
-                          onSave={editOrderReview}
-                        />
-                      )}
-                      {session.summary && (
-                        <div className="order-summary">
-                          <div>
-                            <MapPin size={18} />
-                            <span>{session.summary.address.formatted}</span>
-                          </div>
-                          <div>
-                            <Truck size={18} />
-                            <span>{session.summary.delivery.label}</span>
-                          </div>
-                          <div>
-                            <CreditCard size={18} />
-                            <span>{session.summary.payment.label}</span>
-                          </div>
-                          <div className="order-total">
-                            <strong>Total</strong>
-                            <strong>
-                              {money(session.summary.total_cents)}
-                            </strong>
-                          </div>
-                        </div>
-                      )}
-                      <div className="consumption-callout">
-                        <Leaf size={22} />
-                        <div>
-                          <h3>
-                            {consumed
-                              ? "Consumo registrado."
-                              : "Pediu. Chegou. Comeu?"}
-                          </h3>
-                          <p>
-                            {consumed
-                              ? "Você pode corrigir a quantidade no Meu dia."
-                              : "O pedido só entra no seu dia quando você confirmar quanto comeu."}
-                          </p>
-                        </div>
-                        <button
-                          className="primary-button"
-                          onClick={() =>
-                            consumed ? navigate("day") : openConsumption()
-                          }
-                          disabled={session.order.status !== "submitted"}
-                        >
-                          {consumed ? "Ver meu dia" : "Já comi"}
-                          <ArrowRight size={15} />
-                        </button>
-                      </div>
-                    </article>
-                  )}
-                  <p className="section-footnote">
-                    <History size={14} />
-                    Esta versão mostra o pedido da sessão atual. O histórico
-                    completo será conectado depois.
-                  </p>
-                </>
-              )}
-            </main>
-
-            <aside className="day-rail" aria-label="Resumo do dia">
-              <section className="daily-card">
-                <div className="rail-heading">
-                  <h2>Seu dia em equilíbrio</h2>
-                  <span className="today-tag">Hoje</span>
-                </div>
-                <p className="rail-subtitle">
-                  Pequenas escolhas, seu próprio ritmo.
-                </p>
-                <div
-                  className="daily-ring"
-                  style={
-                    {
-                      "--progress": `${goal && hasKnownCalories ? Math.min(knownCalories / goal, 1) * 100 : 0}%`,
-                    } as React.CSSProperties
-                  }
-                >
-                  <div>
-                    <Flame size={24} />
-                    <strong>
-                      {hasKnownCalories
-                        ? Math.round(knownCalories).toLocaleString("pt-BR")
-                        : "—"}
-                    </strong>
-                    <span>
-                      {goal != null
-                        ? `de ${goal.toLocaleString("pt-BR")} kcal`
-                        : "Sem meta cadastrada"}
-                    </span>
-                  </div>
-                </div>
-                {(currentDayContext ? currentDayContext.known_counts.calories < currentDayContext.meal_count
-                  : today.some((e) => e.nutrition?.state !== "ready")) && (
-                  <p className="partial-note">
-                    Total parcial: há refeições sem calorias disponíveis.
-                  </p>
-                )}
-                <button
-                  className="goal-link"
-                  onClick={() => navigate("profile")}
-                >
-                  <Pencil size={12} />
-                  {goal != null ? "Editar minha meta" : "Definir minha meta"}
-                </button>
-                <div className="macro-rows">
-                  {[
-                    { label: "Proteínas", color: "orange", metric: "protein_g" },
-                    { label: "Carboidratos", color: "blue", metric: "carbs_g" },
-                    { label: "Gorduras", color: "purple", metric: "fat_g" },
-                  ].map((m) => (
-                    <div key={m.label}>
-                      <span>
-                        <i className={m.color} />
-                        {m.label}
-                      </span>
-                      <strong>{currentDayContext?.known_intake[m.metric as "protein_g" | "carbs_g" | "fat_g"] != null
-                        ? `${Math.round(currentDayContext.known_intake[m.metric as "protein_g" | "carbs_g" | "fat_g"]!)} g` : "—"}</strong>
-                    </div>
-                  ))}
-                </div>
-                <p className="nutrition-note">
-                  <Info size={13} />
-                  Somamos apenas os valores conhecidos dos alimentos que você informou.
-                </p>
-                <button
-                  className="rail-bottom-link"
-                  onClick={() => navigate("day")}
-                >
-                  Acompanhar meu dia
-                  <ArrowUpRight size={16} />
-                </button>
-              </section>
-              <section className="preference-card">
-                <div className="rail-heading">
-                  <h2>
-                    <SlidersHorizontal size={16} />
-                    Do seu jeito
-                  </h2>
-                  <button
-                    className="icon-button"
-                    aria-label="Editar preferências"
-                    onClick={() => navigate("profile")}
-                  >
-                    <Pencil size={14} />
-                  </button>
-                </div>
-                <p>O que importa na hora de escolher.</p>
-                <div className="preference-tags">
-                  {session.profile.preferences.length ? (
-                    session.profile.preferences.slice(0, 4).map((p) => (
-                      <span key={p}>
-                        <Check size={12} />
-                        {p}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="neutral-tag">
-                      <Heart size={12} />
-                      Seu gosto vem primeiro
-                    </span>
-                  )}
-                  {session.profile.default_budget_cents != null && (
-                    <span>
-                      Até {money(session.profile.default_budget_cents)}
-                    </span>
-                  )}
-                  {session.profile.restrictions.length > 0 && (
-                    <span>
-                      {session.profile.restrictions.length} restrição(ões)
-                    </span>
-                  )}
-                </div>
-                <button
-                  className="text-link"
-                  onClick={() => navigate("profile")}
-                >
-                  {session.profile.preferences.length
-                    ? "Ajustar preferências"
-                    : "Personalizar minhas escolhas"}
-                  <ArrowRight size={14} />
-                </button>
-              </section>
-              {session.selected && !session.order && (
-                <section className="mini-cart">
-                  <span>
-                    <ShoppingBag size={18} />
-                    Seu próximo prato
-                  </span>
-                  <strong>{session.selected.candidate.name}</strong>
-                  <p>
-                    {session.selected.quantity} unidade
-                    {session.selected.quantity > 1 ? "s" : ""} ·{" "}
-                    {money(
-                      session.selected.quantity *
-                        session.selected.unit_total_cents,
-                    )}
-                  </p>
-                  {session.selected.option_labels.length > 0 && (
-                    <p className="small muted">
-                      {session.selected.option_labels.join(" · ")}
-                    </p>
-                  )}
-                  {session.selected.nutrition && (
-                    <>
-                      <SelectedNutrition
-                        nutrition={session.selected.nutrition}
-                        quantity={session.selected.quantity}
-                      />
-                      {session.selected.nutrition.state === "ready" && (
-                        <details className="selected-nutrition-details">
-                          <summary>Como calculamos</summary>
-                          <NutritionDetails
-                            nutrition={session.selected.nutrition}
-                          />
-                        </details>
-                      )}
-                    </>
-                  )}
-                  <button
-                    className="primary-button"
-                    onClick={() => void openCheckout()}
-                    disabled={disabled}
-                  >
-                    Revisar pedido
-                    <ArrowRight size={15} />
-                  </button>
-                </section>
-              )}
-              <div className="ifood-note">
-                <span className="ifood-wordmark">
-                  iFood<span aria-hidden="true">⌣</span>
-                </span>
-                <div>
-                  <strong>Seu delivery, com mais contexto.</strong>
-                  <p>
-                    {session.mode === "mock"
-                      ? "Integração real em preparação."
-                      : "Consulta pelo iFood. Checkout pendente."}
-                  </p>
-                </div>
-              </div>
-            </aside>
-          </div>
-        )}
-        <footer className="app-footer">
-          <span>
-            macro. <span>Uma refeição que combina com a sua vida.</span>
-          </span>
-          <button onClick={() => open("about")}>
-            Feito para o SEMCOMP × iFood
-            <ArrowUpRight size={12} />
-          </button>
-        </footer>
-      </div>
-      <nav className="mobile-nav" aria-label="Navegação no celular">
-        {nav
-          .filter((n) => n.id !== "home")
-          .map(({ id, name, icon: Icon }) => (
-            <button
-              key={id}
-              aria-current={view === id ? "page" : undefined}
-              className={view === id ? "active" : ""}
-              onClick={() => navigate(id)}
-            >
-              <Icon size={20} />
-              <span>
-                {name === "Pedir com o Macro"
-                  ? "Pedir"
-                  : name === "Restaurantes perto"
-                    ? "Perto"
-                    : name}
-              </span>
-            </button>
-          ))}
-      </nav>
-      {toast && (
-        <div className="toast" role="status">
-          <CircleCheck size={18} />
-          <span>{toast}</span>
-          <button onClick={() => setToast("")} aria-label="Fechar notificação">
-            <X size={15} />
-          </button>
-        </div>
-      )}
-
-      {dialog === "about" && (
-        <Modal
-          title="Seu próximo prato, com o Macro."
-          onClose={() => setDialog(null)}
-        >
-          <div className="about-content">
-            <Brand />
-            <p>
-              Um assistente para encontrar refeições que combinam com seu gosto,
-              orçamento e rotina de treino.
-            </p>
-            <div className="info-box">
-              <ShieldCheck size={21} />
-              <div>
-                <strong>
-                  {health?.mode === "live"
-                    ? "Consultas ao iFood"
-                    : "Você está em uma demonstração"}
-                </strong>
-                <p>
-                  {health?.mode === "live"
-                    ? "O acesso depende de autenticação no servidor. Pedidos reais continuam bloqueados."
-                    : "Catálogo, endereço, preços e pedidos são fictícios. Você pode explorar o fluxo sem fazer uma compra."}
-                </p>
-              </div>
-            </div>
-            <h3>Transparência em cada escolha</h3>
-            <p>
-              A busca combina sua mensagem, preferências, avaliações e o contexto
-              da alimentação do dia. A interpretação por IA usa regras locais quando estiver indisponível.
-            </p>
-            <p>
-              Calorias só aparecem quando disponíveis, com faixa e origem.
-              Proteína, carboidratos e gordura são exibidos quando há estimativas disponíveis.
-            </p>
-            <p>
-              Consumo e feedback são informados por você e ficam salvos no servidor,
-              vinculados ao perfil da sessão. Pedir não adiciona calorias ao seu dia.
-            </p>
-          </div>
-        </Modal>
-      )}
-
-      {dialog === "address" && (
-        <Modal
-          title="Onde vai ser sua refeição?"
-          onClose={() => setDialog(null)}
-          busy={busy}
-          error={error}
-        >
-          <div className="modal-body">
-            <p className="muted">
-              O endereço ajuda a encontrar os pratos disponíveis para você.
-            </p>
-            {addresses.length ? (
-              <div className="address-list">
-                {addresses.map((address) => (
-                  <button
-                    disabled={busy || !!session?.order}
-                    onClick={async () => {
-                      const next = await perform(() => api.address(address.id));
-                      if (next) {
-                        setSession(next);
-                        setDialog(null);
-                        setToast(
-                          "Endereço selecionado. A busca e o carrinho foram atualizados.",
-                        );
-                      }
-                    }}
-                    key={address.id}
-                    className={`address-choice ${session?.address?.id === address.id ? "selected" : ""}`}
-                  >
-                    <MapPin size={22} />
-                    <span>
-                      <strong>{address.label}</strong>
-                      <small>{address.formatted}</small>
-                    </span>
-                    {session?.address?.id === address.id ? (
-                      <CircleCheck size={20} />
-                    ) : (
-                      <ChevronRight size={18} />
-                    )}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="empty-results">
-                <MapPin size={25} />
-                <h3>Nenhum endereço disponível</h3>
-                <p>
-                  Confira a conexão e os endereços cadastrados na sua conta do
-                  iFood.
-                </p>
-                <button
-                  className="secondary-button"
-                  disabled={busy}
-                  onClick={async () => {
-                    const list = await perform(() => api.addresses());
-                    if (list) setAddresses(list);
-                  }}
-                >
-                  Carregar endereços
-                </button>
-              </div>
-            )}
-            <NewAddressForm
-              busy={busy}
-              disabled={busy || !!session?.order}
-              onGeocode={(address) => perform(() => api.geocode(address))}
-              onCreate={async (payload) => {
-                const created = await perform(() => api.createAddress(payload));
-                if (!created) return false;
-                setAddresses(created.addresses);
-                setSession(created.session);
-                setDialog(null);
-                setToast(
-                  "Endereço salvo na sua conta do iFood e selecionado para a entrega.",
-                );
-                return true;
-              }}
-            />
-            <p className="small muted">
-              Trocar o endereço limpa a busca e o carrinho para consultar a
-              disponibilidade novamente.
-            </p>
-          </div>
-        </Modal>
-      )}
-
-      {dialog === "item" && detail && (
-        <Modal
-          title="Deixe o prato com a sua cara"
-          onClose={() => setDialog(null)}
-          busy={busy}
-          error={error}
-          wide
-        >
-          <div className="item-modal-intro">
-            <MealImage item={detail} />
-            <div>
-              <span className="merchant">{detail.merchant_name}</span>
-              <h3>{detail.name}</h3>
-              {detailState === "loading" ? (
-                <p className="muted">Carregando a descrição do restaurante…</p>
-              ) : (
-                <p>{detail.description}</p>
-              )}
-              <strong>{money(detail.price_cents)}</strong>
-            </div>
-          </div>
-          {detailState === "loading" && (
-            <div className="detail-loading">
-              <Spinner text="Buscando as opções no iFood…" />
-            </div>
-          )}
-          {detailState === "error" && (
-            <div className="detail-loading">
-              <p className="muted">
-                Não conseguimos carregar as opções deste prato.
-              </p>
-              <button
-                className="secondary-button"
-                onClick={() => void loadDetail(detail)}
-              >
-                Tentar de novo
-              </button>
-            </div>
-          )}
-          <div className="option-groups">
-            {detail.option_groups.map((group) => (
-              <fieldset key={group.id}>
-                <legend>
-                  {group.name}
-                  <span>
-                    {group.min_selections > 0 ? "Obrigatório" : "Opcional"}
-                  </span>
-                </legend>
-                <p>
-                  Escolha{" "}
-                  {group.min_selections === group.max_selections
-                    ? group.max_selections
-                    : `de ${group.min_selections} a ${group.max_selections}`}{" "}
-                  · {optionCount(group.id)} selecionado(s)
-                </p>
-                {group.options.map((option) => {
-                  const count =
-                    options.find(
-                      (o) =>
-                        o.group_id === group.id && o.option_id === option.id,
-                    )?.quantity || 0;
-                  return (
-                    <div className="option-row" key={option.id}>
-                      {option.max_quantity === 1 ? (
-                        <label>
-                          <input
-                            type={
-                              group.max_selections === 1 &&
-                              group.min_selections > 0
-                                ? "radio"
-                                : "checkbox"
-                            }
-                            name={group.id}
-                            checked={count > 0}
-                            disabled={
-                              busy ||
-                              (!count &&
-                                group.max_selections > 1 &&
-                                optionCount(group.id) >= group.max_selections)
-                            }
-                            onChange={() => {
-                              if (group.max_selections === 1)
-                                setOptions((previous) => [
-                                  ...previous.filter(
-                                    (o) => o.group_id !== group.id,
-                                  ),
-                                  ...(count && group.min_selections === 0
-                                    ? []
-                                    : [
-                                        {
-                                          group_id: group.id,
-                                          option_id: option.id,
-                                          quantity: 1,
-                                        },
-                                      ]),
-                                ]);
-                              else
-                                updateOption(
-                                  group.id,
-                                  option.id,
-                                  count ? 0 : 1,
-                                );
-                            }}
-                          />
-                          <span>{option.name}</span>
-                          <strong>
-                            {option.price_cents
-                              ? `+ ${money(option.price_cents)}`
-                              : "Incluso"}
-                          </strong>
-                        </label>
-                      ) : (
-                        <>
-                          <span>
-                            {option.name}
-                            <small>
-                              {option.price_cents
-                                ? `+ ${money(option.price_cents)}`
-                                : "Incluso"}
-                            </small>
-                          </span>
-                          <Stepper
-                            value={count}
-                            min={0}
-                            max={Math.min(
-                              option.max_quantity,
-                              count +
-                                group.max_selections -
-                                optionCount(group.id),
-                            )}
-                            label={option.name}
-                            onChange={(n) =>
-                              updateOption(group.id, option.id, n)
-                            }
-                          />
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
-              </fieldset>
-            ))}
-          </div>
-          {recommendation && (
-            <div className="item-details">
-              <details>
-                <summary>
-                  Por que esta opção?
-                  <ChevronDown size={16} />
-                </summary>
-                <ul>
-                  {recommendation.reasons.map((reason) => (
-                    <li key={reason}>{reason}</li>
-                  ))}
-                </ul>
-                {recommendation.limitations.map((limitation) => (
-                  <p className="small muted" key={limitation}>
-                    {limitation}
-                  </p>
-                ))}
-              </details>
-              {options.length > 0 &&
-              recommendation.nutrition.state === "ready" ? (
-                <div className="info-box">
-                  <Info size={18} />
-                  <p>
-                    A composição do prato mudou. A estimativa acima vale para o
-                    prato sem opções; ao adicionar ao pedido, o Macro recalcula
-                    as calorias com as opções escolhidas.
-                  </p>
-                </div>
-              ) : (
-                <NutritionDetails nutrition={recommendation.nutrition} />
-              )}
-            </div>
-          )}
-          {!recommendation && (
-            <div className="info-box">
-              <Info size={18} />
-              <p>
-                Ao adicionar ao pedido, o Macro calcula as calorias deste prato
-                com a descrição do restaurante e as opções que você escolheu.
-              </p>
-            </div>
-          )}
-          <ReviewEditor
-            key={`${detail.merchant_id}-${detail.item_id}`}
-            item={detail}
-            previous={reviews.find((r) => r.merchant_id === detail.merchant_id && r.item_id === detail.item_id)}
-            busy={busy}
-            onSave={async (input) => {
-              const saved = await perform(() => api.saveReview(input));
-              if (!saved) return false;
-              setReviews((current) => [saved, ...current.filter((r) => r.merchant_id !== saved.merchant_id || r.item_id !== saved.item_id)]);
-              setToast("Avaliação salva. A próxima busca já vai usar sua nota.");
-              return true;
-            }}
-          />
-          <div className="modal-action-bar">
-            <Stepper
-              value={quantity}
-              onChange={setQuantity}
-              label="quantidade de pratos"
-            />
-            <button
-              className="primary-button"
-              disabled={!validOptions || busy || detailState !== "ready"}
-              onClick={() => void addSelection()}
-            >
-              {busy ? (
-                <Spinner text="Adicionando e calculando calorias…" />
-              ) : (
-                <>
-                  <span>Adicionar ao pedido</span>
-                  <strong>{money(selectionTotal)}</strong>
-                </>
-              )}
-            </button>
-          </div>
-        </Modal>
-      )}
-
-      {dialog === "checkout" && session?.selected && choices && (
-        <Modal
-          title="Tudo certo com seu pedido?"
-          onClose={() => setDialog(null)}
-          busy={busy}
-          error={error}
-          wide
-        >
-          <div className="checkout-body">
-            <div className="checkout-steps">
-              <span className="complete">
-                <Check size={13} />
-                Escolha
-              </span>
-              <span />
-              <span className="current">Revisão</span>
-              <span />
-              <span>Confirmação</span>
-            </div>
-            <div className="checkout-item">
-              <MealImage item={session.selected.candidate} />
-              <div>
-                <h3>
-                  {session.selected.quantity} ×{" "}
-                  {session.selected.candidate.name}
-                </h3>
-                <p>{session.selected.option_labels.join(" · ")}</p>
-                <strong>
-                  {money(
-                    session.selected.unit_total_cents *
-                      session.selected.quantity,
-                  )}
-                </strong>
-              </div>
-              <button
-                className="icon-button"
-                aria-label="Editar prato e complementos"
-                disabled={busy}
-                onClick={() => {
-                  const rec = session.recommendations.find(
-                    (r) =>
-                      r.candidate.item_id ===
-                      session.selected!.candidate.item_id,
-                  );
-                  if (rec) {
-                    detailRequest.current += 1;
-                    setDetailState("ready");
-                    setDetail(session.selected!.candidate);
-                    setRecommendation(rec);
-                    setQuantity(session.selected!.quantity);
-                    setOptions(session.selected!.options);
-                    open("item");
-                  }
-                }}
-              >
-                <Pencil size={17} />
-              </button>
-            </div>
-            <div className="checkout-address">
-              <MapPin size={19} />
-              <div>
-                <strong>{session.address?.label}</strong>
-                <p>{session.address?.formatted}</p>
-              </div>
-            </div>
-            <fieldset className="checkout-fieldset">
-              <legend>
-                <Truck size={17} />
-                Entrega
-              </legend>
-              {choices.delivery.map((d) => (
-                <label className="checkout-choice" key={d.id}>
-                  <input
-                    type="radio"
-                    name="delivery"
-                    checked={delivery === d.id}
-                    onChange={() => setDelivery(d.id)}
-                    disabled={busy}
-                  />
-                  <span>{d.label}</span>
-                  <strong>{money(d.fee_cents)}</strong>
-                </label>
-              ))}
-            </fieldset>
-            <fieldset className="checkout-fieldset">
-              <legend>
-                <CreditCard size={17} />
-                Pagamento
-              </legend>
-              {choices.payment.map((p) => (
-                <label className="checkout-choice" key={p.id}>
-                  <input
-                    type="radio"
-                    name="payment"
-                    checked={payment === p.id}
-                    onChange={() => setPayment(p.id)}
-                    disabled={busy}
-                  />
-                  <span>{p.label}</span>
-                </label>
-              ))}
-            </fieldset>
-            {reviewCurrent && session.summary ? (
-              <>
-                <div className="checkout-totals">
-                  <div>
-                    <span>Prato e complementos</span>
-                    <span>{money(session.summary.subtotal_cents)}</span>
-                  </div>
-                  <div>
-                    <span>Entrega</span>
-                    <span>{money(session.summary.delivery.fee_cents)}</span>
-                  </div>
-                  <div className="final-total">
-                    <strong>Total do pedido</strong>
-                    <strong>{money(session.summary.total_cents)}</strong>
-                  </div>
-                </div>
-                {session.budget_cents != null &&
-                  session.summary.total_cents > session.budget_cents && (
-                    <div className="budget-warning">
-                      <Info size={17} />
-                      Com a entrega, o pedido ficou{" "}
-                      {money(
-                        session.summary.total_cents - session.budget_cents,
-                      )}{" "}
-                      acima do orçamento. Confira antes de confirmar.
-                    </div>
-                  )}
-                <label className="confirm-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={accepted}
-                    onChange={(e) => setAccepted(e.target.checked)}
-                    disabled={busy}
-                  />
-                  <span>
-                    Revisei os itens, o endereço, a entrega e o total de{" "}
-                    <strong>{money(session.summary.total_cents)}</strong>. Quero
-                    confirmar este pedido de demonstração.
-                  </span>
-                </label>
-                <fieldset className="order-review" disabled={busy}>
-                  <legend>
-                    Avalie o pedido <span className="optional">Opcional</span>
-                  </legend>
-                  <div className="order-review-stars" role="radiogroup" aria-label="Nota do pedido">
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        role="radio"
-                        aria-checked={orderRating === n}
-                        aria-label={`${n} de 5`}
-                        className={orderRating != null && n <= orderRating ? "filled" : ""}
-                        onClick={() => setOrderRating(orderRating === n ? null : n)}
-                      >
-                        ★
-                      </button>
-                    ))}
-                  </div>
-                  <textarea
-                    maxLength={200}
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                    placeholder="Deixe sua opinião sobre o pedido (opcional)"
-                    aria-label="Comentário sobre o pedido"
-                  />
-                  <div className="order-review-footer">
-                    <span
-                      className="order-review-hint"
-                      title="Escreva do seu jeito: o Macro interpreta o comentário em nota e aspectos (sabor, entrega, preço, porção), e você pode ajustar depois. Se escolher estrelas, sua nota prevalece. O iFood não recebe avaliações por esta integração; tudo fica salvo só no Macro."
-                    >
-                      <Info size={13} />
-                      Interpretamos seu texto. Fica só no Macro, não vai ao iFood.
-                    </span>
-                    <span>{reviewText.length}/200</span>
-                  </div>
-                </fieldset>
-              </>
-            ) : (
-              <div className="info-box">
-                <Info size={18} />
-                <p>
-                  Confira a entrega e o pagamento. Em seguida, atualize o resumo
-                  para ver o total final e confirmar.
-                </p>
-              </div>
-            )}
-          </div>
-          <div className="checkout-action">
-            <span>
-              <ShieldCheck size={14} />
-              Demonstração sem cobrança
-            </span>
-            {reviewCurrent ? (
-              <button
-                className="primary-button"
-                disabled={!accepted || busy}
-                onClick={() => void confirm()}
-              >
-                {busy ? (
-                  <Spinner text="Confirmando…" />
-                ) : (
-                  <>
-                    Confirmar pedido de demonstração
-                    <Check size={17} />
-                  </>
-                )}
-              </button>
-            ) : (
-              <button
-                className="primary-button"
-                disabled={!delivery || !payment || busy}
-                onClick={() => void review()}
-              >
-                {busy ? (
-                  <Spinner text="Atualizando…" />
-                ) : (
-                  <>
-                    Revisar total do pedido
-                    <ArrowRight size={17} />
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-        </Modal>
-      )}
-
-      {dialog === "consumption" && session?.selected && (
-        <Modal
-          title="Quanto do pedido você comeu?"
-          onClose={() => setDialog(null)}
-          error={error}
-        >
-          <form
-            className="modal-body consumption-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void recordConsumption();
-            }}
-          >
-            <p>
-              Considere as {session.selected.quantity} unidade(s) de{" "}
-              <strong>{session.selected.candidate.name}</strong>. Registre
-              somente a parte que você consumiu.
-            </p>
-            <fieldset>
-              <legend>Quantidade consumida</legend>
-              <div className="fraction-options">
-                {[
-                  { value: "1", label: "Tudo", sub: "100%" },
-                  { value: "0.75", label: "Boa parte", sub: "75%" },
-                  { value: "0.5", label: "Metade", sub: "50%" },
-                  { value: "0.25", label: "Um pouco", sub: "25%" },
-                ].map((f) => (
-                  <label
-                    key={f.value}
-                    className={fraction === f.value ? "selected" : ""}
-                  >
-                    <input
-                      type="radio"
-                      name="fraction"
-                      value={f.value}
-                      checked={fraction === f.value}
-                      onChange={(e) => setFraction(e.target.value)}
-                    />
-                    <strong>{f.label}</strong>
-                    <span>{f.sub}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            <label className="form-field">
-              Como foi a refeição? <span className="optional">Opcional</span>
-              <select
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-              >
-                <option value="">Prefiro não avaliar agora</option>
-                <option>Gostei, pediria de novo</option>
-                <option>A porção foi pequena para mim</option>
-                <option>A porção foi grande para mim</option>
-                <option>Tinha mais molho do que eu gosto</option>
-                <option>Não gostei do preparo</option>
-              </select>
-            </label>
-            <p className="small muted">
-              O feedback fica registrado para consulta. Suas preferências podem
-              ser editadas no perfil; o feedback não altera nutrientes.
-            </p>
-            <button className="primary-button full-width" type="submit">
-              Confirmar consumo
-              <Check size={17} />
-            </button>
-            <p className="small muted centered">
-              Você pode editar ou excluir esse registro no Meu dia.
-            </p>
-          </form>
-        </Modal>
-      )}
-    </div>
-  );
-}
-
-const nutritionFields = [
-  { key: "max_calories", label: "Máximo de calorias por prato", unit: "kcal" },
-  { key: "min_protein_g", label: "Mínimo de proteína por prato", unit: "g" },
-  { key: "max_carbs_g", label: "Máximo de carboidratos por prato", unit: "g" },
-  { key: "max_fat_g", label: "Máximo de gordura por prato", unit: "g" },
-] as const;
-const dailyDietFields = [
-  ["daily_protein_g", "Meta diária de proteína"],
-  ["daily_carbs_g", "Meta diária de carboidratos"],
-  ["daily_fat_g", "Meta diária de gordura"],
-] as const;
-
-function ProfileForm({
-  profile,
-  busy,
-  onSave,
-}: {
-  profile: Profile;
-  busy: boolean;
-  onSave: (p: Profile) => Promise<void>;
-}) {
-  const [preferences, setPreferences] = useState(
-    profile.preferences.join(", "),
-  );
-  const [restrictions, setRestrictions] = useState(
-    profile.restrictions.join(", "),
-  );
-  const [dislikes, setDislikes] = useState(profile.dislikes.join(", "));
-  const [budget, setBudget] = useState(
-    profile.default_budget_cents != null
-      ? String(profile.default_budget_cents / 100)
-      : "",
-  );
-  const [goal, setGoal] = useState(
-    profile.daily_calorie_goal != null
-      ? String(profile.daily_calorie_goal)
-      : "",
-  );
-  const [localError, setLocalError] = useState("");
-  const [dietGoal, setDietGoal] = useState<DietGoal | "">(profile.diet_plan?.goal ?? "");
-  const [dietDetails, setDietDetails] = useState(profile.diet_plan?.details ?? "");
-  const [dailyTargets, setDailyTargets] = useState(() => Object.fromEntries(
-    dailyDietFields.map(([key]) => [key, profile.diet_plan?.[key]?.toString() ?? ""]),
-  ));
-  const [nutritionGoals, setNutritionGoals] = useState<NutritionPreferences["goals"]>(
-    profile.nutrition_preferences?.goals ?? [],
-  );
-  const [nutritionLimits, setNutritionLimits] = useState(() =>
-    Object.fromEntries(nutritionFields.map(({ key }) => [
-      key, profile.nutrition_preferences?.[key]?.toString() ?? "",
-    ])),
-  );
-  const split = (value: string) => [
-    ...new Set(
-      value
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-    ),
-  ];
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    setLocalError("");
-    const budgetNumber = budget.trim()
-      ? Number(budget.replace(",", "."))
-      : null;
-    const goalNumber = goal.trim() ? Number(goal.replace(",", ".")) : null;
-    const nutritional = Object.fromEntries(nutritionFields.map(({ key }) => [
-      key, nutritionLimits[key].trim() ? Number(nutritionLimits[key].replace(",", ".")) : null,
-    ]));
-    const daily = Object.fromEntries(dailyDietFields.map(([key]) => [key,
-      dailyTargets[key].trim() ? Number(dailyTargets[key].replace(",", ".")) : null,
-    ]));
-    if ([...Object.values(nutritional), ...Object.values(daily)].some(value => value != null && (!Number.isFinite(value) || value < 0))) {
-      setLocalError("Informe preferências nutricionais válidas e não negativas.");
-      return;
-    }
-    if (
-      (budgetNumber != null &&
-        (!Number.isFinite(budgetNumber) ||
-          budgetNumber < 0 ||
-          budgetNumber > 100000 ||
-          Math.abs(budgetNumber * 100 - Math.round(budgetNumber * 100)) >
-            0.00001)) ||
-      (goalNumber != null && (!Number.isFinite(goalNumber) || goalNumber < 0))
-    ) {
-      setLocalError(
-        "Informe valores válidos e não negativos. Use até duas casas decimais no orçamento.",
-      );
-      return;
-    }
-    if (
-      [preferences, restrictions, dislikes].some(
-        (value) => split(value).length > 30,
-      )
-    ) {
-      setLocalError("Use no máximo 30 itens por campo.");
-      return;
-    }
-    void onSave({
-      ...profile,
-      preferences: split(preferences),
-      restrictions: split(restrictions),
-      dislikes: split(dislikes),
-      default_budget_cents:
-        budgetNumber == null ? null : Math.round(budgetNumber * 100),
-      daily_calorie_goal: goalNumber,
-      nutrition_preferences: { goals: nutritionGoals, ...nutritional } as NutritionPreferences,
-      diet_plan: { goal: dietGoal || null, details: dietDetails,
-        daily_protein_g: daily.daily_protein_g, daily_carbs_g: daily.daily_carbs_g, daily_fat_g: daily.daily_fat_g },
-    });
-  }
-  function togglePreference(value: string) {
-    const current = split(preferences);
-    setPreferences(
-      (current.includes(value)
-        ? current.filter((p) => p !== value)
-        : [...current, value]
-      ).join(", "),
-    );
-  }
-  return (
-    <>
-      <div className="page-heading">
-        <div>
-          <span className="greeting">Uma rotina que tem a sua cara</span>
-          <h1>Seu gosto é o ponto de partida.</h1>
-        </div>
-      </div>
-      <form className="profile-form" onSubmit={submit}>
-        <section>
-          <div className="form-section-title">
-            <span>
-              <Heart size={20} />
-            </span>
-            <div>
-              <h2>O que vai bem no seu prato?</h2>
-              <p>Ajude o Macro a conhecer suas preferências.</p>
-            </div>
-          </div>
-          <div className="preference-picker">
-            {[
-              "Frango",
-              "Arroz integral",
-              "Legumes",
-              "Grão-de-bico",
-              "Carne",
-              "Salada",
-            ].map((p) => (
-              <button
-                type="button"
-                aria-pressed={split(preferences).includes(p.toLowerCase())}
-                className={
-                  split(preferences).includes(p.toLowerCase()) ? "selected" : ""
-                }
-                key={p}
-                onClick={() => togglePreference(p.toLowerCase())}
-              >
-                {split(preferences).includes(p.toLowerCase()) ? (
-                  <Check size={14} />
-                ) : (
-                  <Plus size={14} />
-                )}
-                {p}
-              </button>
-            ))}
-          </div>
-          <label className="form-field">
-            Minhas preferências
-            <input
-              maxLength={1000}
-              value={preferences}
-              onChange={(e) => setPreferences(e.target.value)}
-              placeholder="Ex.: frango, legumes, arroz integral"
-            />
-            <small>
-              Separe por vírgulas. Vale contar outros ingredientes de que você
-              gosta.
-            </small>
-          </label>
-          <label className="form-field">
-            Prefiro evitar
-            <input
-              maxLength={1000}
-              value={dislikes}
-              onChange={(e) => setDislikes(e.target.value)}
-              placeholder="Ex.: cebola, pimenta"
-            />
-            <small>Gostos pessoais, separados por vírgulas.</small>
-          </label>
-        </section>
-        <section>
-          <div className="form-section-title">
-            <span className="blue">
-              <ShieldCheck size={20} />
-            </span>
-            <div>
-              <h2>Restrições merecem atenção.</h2>
-              <p>Elas são diferentes dos ingredientes de que você não gosta.</p>
-            </div>
-          </div>
-          <label className="form-field">
-            Alergias e restrições alimentares
-            <input
-              maxLength={1000}
-              value={restrictions}
-              onChange={(e) => setRestrictions(e.target.value)}
-              placeholder="Ex.: amendoim, lactose"
-            />
-            <small>
-              Separe por vírgulas. A descrição do prato não garante a ausência
-              desses ingredientes; confirme com o restaurante.
-            </small>
-          </label>
-        </section>
-        <section>
-          <div className="form-section-title">
-            <span className="purple">
-              <Target size={20} />
-            </span>
-            <div>
-              <h2>Seu orçamento e sua meta.</h2>
-              <p>Você define. Todos os campos são opcionais.</p>
-            </div>
-          </div>
-          <div className="form-columns">
-            <label className="form-field">
-              Orçamento por pedido
-              <div className="input-unit">
-                <span>R$</span>
-                <input
-                  inputMode="decimal"
-                  value={budget}
-                  onChange={(e) => setBudget(e.target.value)}
-                  placeholder="40,00"
-                  aria-label="Orçamento por pedido em reais"
-                />
-              </div>
-              <small>O total com entrega aparece na revisão.</small>
-            </label>
-            <label className="form-field">
-              Meta diária de calorias
-              <div className="input-unit suffix">
-                <input
-                  inputMode="decimal"
-                  value={goal}
-                  onChange={(e) => setGoal(e.target.value)}
-                  placeholder="Opcional"
-                  aria-label="Meta diária de calorias"
-                />
-                <span>kcal</span>
-              </div>
-              <small>Cadastre a meta que você já utiliza.</small>
-            </label>
-          </div>
-        </section>
-        <section>
-          <div className="form-section-title">
-            <span className="purple"><Dumbbell size={20} /></span>
-            <div>
-              <h2>O que você prioriza na nutrição?</h2>
-              <p>Essas preferências ajudam a ordenar os pratos da busca.</p>
-            </div>
-          </div>
-          <div className="preference-picker">
-            {([
-              ["high_protein", "Mais proteína"], ["low_carb", "Menos carboidratos"],
-              ["low_fat", "Menos gordura"], ["low_calorie", "Menos calorias"],
-            ] as const).map(([value, label]) => (
-              <button type="button" key={value} aria-pressed={nutritionGoals.includes(value)}
-                className={nutritionGoals.includes(value) ? "selected" : ""}
-                onClick={() => setNutritionGoals(current => current.includes(value)
-                  ? current.filter(goal => goal !== value) : [...current, value])}>
-                {nutritionGoals.includes(value) ? <Check size={14} /> : <Plus size={14} />}
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="form-columns">
-            {nutritionFields.map(({ key, label, unit }) => (
-              <label className="form-field" key={key}>
-                {label}
-                <div className="input-unit suffix">
-                  <input inputMode="decimal" value={nutritionLimits[key]} placeholder="Opcional"
-                    aria-label={label} maxLength={12}
-                    onChange={e => setNutritionLimits(current => ({ ...current, [key]: e.target.value }))} />
-                  <span>{unit}</span>
-                </div>
-              </label>
-            ))}
-          </div>
-          <p>Usamos estimativas por prato, antes dos adicionais. Dados ausentes são sinalizados.
-            Você pode informar outros valores na mensagem da busca; eles valem para aquele pedido.</p>
-        </section>
-        <section>
-          <div className="form-section-title">
-            <span className="purple"><Target size={20} /></span>
-            <div><h2>Qual é seu objetivo de dieta?</h2>
-              <p>Vamos considerar seu objetivo e o que você já comeu ao sugerir a próxima refeição.</p></div>
-          </div>
-          <label className="form-field">Objetivo de dieta
-            <select value={dietGoal} onChange={event => setDietGoal(event.target.value as DietGoal | "")}>
-              <option value="">Sem objetivo definido</option>
-              <option value="gain_muscle">Ganhar massa muscular</option>
-              <option value="lose_weight">Perder peso</option>
-              <option value="maintain_weight">Manter o peso</option>
-              <option value="performance">Desempenho nos treinos</option>
-              <option value="balanced">Alimentação equilibrada</option>
-            </select>
-          </label>
-          <label className="form-field">Orientações da sua dieta
-            <textarea rows={3} maxLength={1000} value={dietDetails} onChange={event => setDietDetails(event.target.value)}
-              placeholder="Ex.: Quero refeições variadas e completas. Prefiro algo leve antes do treino." />
-          </label>
-          <div className="form-columns">
-            {dailyDietFields.map(([key, label]) => <label className="form-field" key={key}>{label}
-              <div className="input-unit suffix"><input inputMode="decimal" maxLength={12} value={dailyTargets[key]}
-                aria-label={label} placeholder="Opcional" onChange={event => setDailyTargets(current => ({ ...current, [key]: event.target.value }))} />
-                <span>g</span>
-              </div>
-            </label>)}
-          </div>
-          <p>Informe apenas metas que você já utiliza. A meta diária de calorias fica no campo acima.
-            Em Meu dia, registre o que já comeu. O aplicativo usa esse contexto para ordenar sugestões, sem criar uma prescrição de dieta.</p>
-        </section>
-        {localError && (
-          <p className="inline-error" role="alert">
-            {localError}
-          </p>
-        )}
-        <div className="profile-save">
-          <span>
-            <ShieldCheck size={15} />
-            Salvo no seu perfil, nesta sessão.
-          </span>
-          <button type="submit" className="primary-button" disabled={busy}>
-            {busy ? (
-              <Spinner text="Salvando…" />
-            ) : (
-              <>
-                Salvar preferências
-                <Check size={17} />
-              </>
-            )}
-          </button>
-        </div>
-      </form>
-    </>
-  );
-}
-
-/** Cadastro em duas etapas do iFood: localizar o endereço e depois confirmar o local com os detalhes. */
-function NewAddressForm({
-  busy,
-  disabled,
-  onGeocode,
-  onCreate,
-}: {
-  busy: boolean;
-  disabled: boolean;
-  onGeocode: (address: string) => Promise<GeocodeResult | undefined>;
-  onCreate: (payload: NewAddress) => Promise<boolean>;
-}) {
-  const [open, setOpen] = useState(false);
-  const [text, setText] = useState("");
-  const [result, setResult] = useState<GeocodeResult | null>(null);
-  const [candidateId, setCandidateId] = useState("");
-  const [neighborhood, setNeighborhood] = useState("");
-  const [complement, setComplement] = useState("");
-  const [reference, setReference] = useState("");
-  const [alias, setAlias] = useState<NewAddress["alias"]>("");
-
-  function reset() {
-    setOpen(false);
+  async function send(message: string) {
+    if (!session || busy || loading || !message.trim()) return;
+    const value = message.trim();
     setText("");
-    setResult(null);
-    setCandidateId("");
-    setNeighborhood("");
-    setComplement("");
-    setReference("");
-    setAlias("");
+    if (confirmsOrder(value)) {
+      if (phase === "confirm") await confirmOrder();
+      else { say("user", value); say("assistant", "Antes de confirmar, precisamos escolher o prato, a entrega e o pagamento e revisar o total."); }
+      return;
+    }
+    say("user", value);
+    if (wantsNewOrder(value)) { await startNewOrder(); return; }
+    if (phase === "ordered" && /^avalia[cç][aã]o\s*:/i.test(value)) {
+      const comment = value.replace(/^avalia[cç][aã]o\s*:\s*/i, "");
+      if (comment.length > 200 || !comment) say("assistant", "Escreva uma avaliação com até 200 caracteres depois de “avaliação:”.");
+      else await saveOrderReview({ rating: null, comment });
+      return;
+    }
+    if (reportsContext(value)) { await search(value); return; }
+    if (phase === "address") {
+      const option = matchChoice(value, addresses, a => a.label);
+      if (option) await selectAddress(option, false);
+      else say("assistant", "Escolha um dos endereços já cadastrados no iFood. O cadastro de endereços continua no aplicativo.");
+      return;
+    }
+    if (phase === "customize" && detail) {
+      const amount = requestedQuantity(value);
+      if (amount) { setQuantity(amount); say("assistant", `Quantidade ajustada para ${amount}. Confira os complementos e diga “continuar”.`); return; }
+      if (normalize(value) === 'sem adicionais') {
+        setOptions(current => current.filter(o => !!detail.option_groups.find(g => g.id === o.group_id)?.min_selections));
+        say('assistant', 'Removi os adicionais opcionais. Confira as escolhas obrigatórias e diga “continuar”.');
+        return;
+      }
+      if (["continuar", "pronto"].includes(normalize(value))) {
+        if (validOptions) await continueWithDish(false);
+        else say("assistant", "Ainda falta escolher os complementos obrigatórios indicados abaixo.");
+        return;
+      }
+      const allOptions = detail.option_groups.flatMap(group => group.options.map(option => ({ group, option })));
+      const found = matchChoice(value, allOptions, o => o.option.name);
+      if (found) {
+        const count = options.find(o => o.group_id === found.group.id && o.option_id === found.option.id)?.quantity ?? 0;
+        if (optionCount(found.group.id) - count + 1 > found.group.max_selections) {
+          say("assistant", `O grupo ${found.group.name} já atingiu o limite. Remova uma opção antes de trocar.`);
+        } else { updateOption(found.group.id, found.option.id, count ? 0 : 1); say("assistant", `${found.option.name}: ${count ? "removido" : "selecionado"}.`); }
+      } else say("assistant", "Escolha um complemento pelo nome, ajuste a quantidade ou diga “continuar”. Para trocar de refeição, escreva “nova busca”.");
+      return;
+    }
+    if (phase === "delivery" || phase === "payment") {
+      if (!choices) { say("assistant", "A compra real ainda não está disponível neste ambiente. Você pode iniciar uma nova busca."); return; }
+      if (phase === "delivery") {
+        const option = matchChoice(value, choices.delivery, d => d.label);
+        if (option) chooseDelivery(option.id, false); else say("assistant", "Escolha a entrega pelo nome ou número da opção.");
+      } else {
+        const option = matchChoice(value, choices.payment, p => p.label);
+        if (option) await choosePayment(option.id, false); else say("assistant", "Escolha o pagamento pelo nome ou número da opção.");
+      }
+      return;
+    }
+    if (phase === "confirm") { say("assistant", "Confira os valores antes de decidir. Para finalizar, escreva “confirmar pedido”. Você também pode alterar a entrega ou o pagamento abaixo."); return; }
+    if (phase === "ordered") {
+      if (/^(quero|buscar|recomende|estou|preciso)\b/.test(normalize(value))) {
+        if (await startNewOrder()) await search(value);
+      } else say("assistant", "Para avaliar, escreva “avaliação: chegou rápido e estava muito bom”. Para outra refeição, diga “novo pedido”.");
+      return;
+    }
+    const recommendation = matchChoice(value, session.recommendations, r => r.candidate.name);
+    if (recommendation) await choose(recommendation.candidate, false);
+    else await search(value);
   }
-  function pick(id: string, found: GeocodeResult) {
-    setCandidateId(id);
-    setNeighborhood(
-      found.candidates.find((c) => c.candidate_id === id)?.neighborhood || "",
-    );
-  }
-  async function search(e: FormEvent) {
-    e.preventDefault();
-    if (text.trim().length < 5) return;
-    const found = await onGeocode(text.trim());
-    if (!found) return;
-    setResult(found);
-    if (found.candidates.length) pick(found.candidates[0].candidate_id, found);
-  }
-  async function save(e: FormEvent) {
-    e.preventDefault();
-    if (!candidateId || !neighborhood.trim()) return;
-    const ok = await onCreate({
-      address: text.trim(),
-      candidate_id: candidateId,
-      neighborhood: neighborhood.trim(),
-      complement: complement.trim(),
-      reference: reference.trim(),
-      alias,
-    });
-    if (ok) reset();
-  }
+  function submit(event: FormEvent) { event.preventDefault(); void send(text); }
+  const placeholder = phase === "customize" ? "Ex.: arroz integral, 2 unidades, continuar…" : phase === "delivery" ? "Qual entrega você prefere?" : phase === "payment" ? "Qual forma de pagamento?" : phase === "confirm" ? "Escreva “confirmar pedido” para finalizar…" : phase === "ordered" ? "Avaliação: conte como foi, ou diga “novo pedido”…" : "Conte sua fome, seu objetivo ou o que quer comer…";
+  const disabled = busy || loading || !session;
 
-  if (!open)
-    return (
-      <button
-        className="secondary-button new-address-toggle"
-        disabled={disabled}
-        onClick={() => setOpen(true)}
-      >
-        <Plus size={15} />
-        Adicionar novo endereço
-      </button>
-    );
+  return <div className="chat-app">
+    <a className="skip-link" href="#conversation">Ir para a conversa</a>
+    <header className="chat-header"><div className="chat-header-inner">
+      <div className="chat-brand"><Brand /><span className="ifood-context">Seu assistente no iFood</span></div>
+      <div className="chat-header-actions">
+        <span className="host-address" title={session?.address?.formatted}><MapPin size={15} /><span>{session?.address?.label ?? "Endereço do iFood"}</span></span>
+        <button className="context-button" aria-label="Preferências da conversa" aria-expanded={preferencesOpen} aria-controls="chat-preferences" disabled={!session}
+          onClick={() => setPreferencesOpen(open => !open)}><Settings2 size={17} /><span>Preferências</span><ChevronDown size={13} /></button>
+      </div>
+    </div></header>
+    <main id="conversation" className="chat-main">
+      {session?.mode === "mock" && <p className="demo-note">Demonstração: pratos, preços e pedidos fictícios. Sem cobrança.</p>}
+      {preferencesOpen && session && <div id="chat-preferences"><ChatPreferences profile={session.profile} busy={busy} onClose={() => setPreferencesOpen(false)}
+        onSave={async profile => {
+          const next = await perform(() => api.profile(profile));
+          if (!next) return false;
+          setSession(next); setPreferencesOpen(false); say("assistant", "Preferências salvas. Vou usar esse contexto nas próximas sugestões."); return true;
+        }} /></div>}
+      <div className="conversation-title"><MessageCircle size={17} /><h1>{phaseLabels[phase]}</h1><span>Macro</span></div>
+      {loading && <div className="boot-state"><Spinner text="Preparando sua conversa…" /></div>}
+      <div className="chat-transcript" role="log" aria-label="Conversa com o Macro" aria-live="polite" aria-relevant="additions">
+        {messages.map((message, index) => <div key={message.id} ref={index === messages.length - 1 ? latestTurn : undefined} className={`chat-turn ${message.role}`}>
+          {message.role === "assistant" && <span className="assistant-avatar" aria-hidden="true"><Sparkles size={17} /></span>}
+          <div className="turn-content"><div className="message-bubble"><span className="sr-only">{message.role === "assistant" ? "Macro: " : "Você: "}</span>{message.text}</div>
+            {!!message.recommendations?.length && <div className="chat-recommendations" aria-label="Pratos recomendados">
+              {message.recommendations.map((recommendation, index) => <MealCard key={`${recommendation.candidate.merchant_id}:${recommendation.candidate.item_id}`}
+                recommendation={recommendation} index={index} disabled={disabled || phase !== "discover" || activeSearch !== message.id || !!session?.order}
+                onSelect={() => void choose(recommendation.candidate)} />)}
+            </div>}
+          </div>
+        </div>)}
+      </div>
+      {!loading && messages.length === 1 && phase === "discover" && <div className="starter-prompts" aria-label="Exemplos para começar">{prompts.map(prompt =>
+        <button key={prompt} disabled={disabled} onClick={() => void send(prompt)}>{prompt}</button>)}</div>}
+      {phase === "address" && !loading && <section className="chat-action" aria-label="Endereço do iFood"><h2>Qual endereço do iFood vamos usar?</h2>
+        {addresses.map((address, index) => <button className="choice-button" key={address.id} disabled={disabled} onClick={() => void selectAddress(address)}>
+          <span>{index + 1}. {address.label}</span><small>{address.formatted}</small></button>)}
+        {!addresses.length && <p>Escolha ou cadastre seu endereço no iFood e atualize esta conversa.</p>}
+      </section>}
+      {phase === "customize" && detail && <section className="chat-action" aria-label="Montar prato">
+        <span className="action-caption">Vamos montar seu pedido</span><h2>{detail.name}</h2><p className="muted">{detail.description}</p>
+        {detail.option_groups.map(group => <fieldset className="option-group" key={group.id}><legend>{group.name}</legend>
+          <p>{group.min_selections ? `Escolha de ${group.min_selections} a ${group.max_selections}` : `Opcional · até ${group.max_selections}`} · {optionCount(group.id)} selecionado(s)</p>
+          {group.options.map(option => {
+            const count = options.find(o => o.group_id === group.id && o.option_id === option.id)?.quantity ?? 0;
+            return <div className="option-row" key={option.id}><span>{option.name}<small>{option.price_cents ? `+ ${money(option.price_cents)}` : "Incluído"}</small></span>
+              <Stepper value={count} min={0} max={Math.min(option.max_quantity, count + group.max_selections - optionCount(group.id))}
+                label={option.name} onChange={value => updateOption(group.id, option.id, value)} /></div>;
+          })}</fieldset>)}
+        <div className="quantity-row"><span>Quantidade</span><Stepper value={quantity} label="quantidade de pratos" onChange={setQuantity} /></div>
+        <div className="action-footer"><span><strong>{money(selectionTotal)}</strong><small>Entrega calculada na próxima etapa</small></span>
+          <button className="primary-button" disabled={disabled || !validOptions} onClick={() => void continueWithDish()}>Continuar com este prato</button></div>
+      </section>}
+      {phase === "delivery" && choices && <section className="chat-action" aria-label="Escolher entrega"><h2>Qual entrega combina com você?</h2>
+        {choices.delivery.map((choice, index) => <button className="choice-button" key={choice.id} disabled={disabled} onClick={() => chooseDelivery(choice.id)}>
+          <span>{index + 1}. {choice.label}</span><strong>{money(choice.fee_cents)}</strong></button>)}</section>}
+      {phase === "payment" && choices && <section className="chat-action" aria-label="Escolher pagamento"><h2>Como você prefere pagar?</h2>
+        {choices.payment.map((choice, index) => <button className="choice-button" key={choice.id} disabled={disabled} onClick={() => void choosePayment(choice.id)}>
+          <span>{index + 1}. {choice.label}</span></button>)}</section>}
+      {phase === "confirm" && session?.summary && <section className="chat-action" aria-label="Revisão e confirmação do pedido">
+        <div className="panel-title"><h2>Vamos conferir?</h2><ShoppingBag size={20} /></div>
+        {session.summary.items.map(item => <div key={item.candidate.item_id} className="summary-item"><strong>{item.quantity} × {item.candidate.name}</strong>
+          {item.option_labels.length > 0 && <p>{item.option_labels.join(", ")}</p>}
+          <SelectedNutrition nutrition={item.nutrition} quantity={item.quantity} /></div>)}
+        <dl className="order-details"><div><dt>Entregar em</dt><dd>{session.summary.address.formatted}</dd></div>
+          <div><dt>Entrega</dt><dd>{session.summary.delivery.label}</dd></div><div><dt>Pagamento</dt><dd>{session.summary.payment.label}</dd></div>
+          <div><dt>Pratos e complementos</dt><dd>{money(session.summary.subtotal_cents)}</dd></div>
+          <div><dt>Taxa de entrega</dt><dd>{money(session.summary.delivery.fee_cents)}</dd></div>
+          <div className="order-total"><dt>Total</dt><dd>{money(session.summary.total_cents)}</dd></div></dl>
+        <div className="summary-adjustments"><button disabled={disabled} onClick={() => setPhase("delivery")}>Alterar entrega</button>
+          <button disabled={disabled} onClick={() => setPhase("payment")}>Alterar pagamento</button></div>
+        <p className="small muted">Pedido de demonstração. Confirme somente depois de conferir os itens e o total.</p>
+        <button className="primary-button confirm-order" disabled={disabled || session.mode !== "mock"} onClick={() => void confirmOrder()}>
+          Confirmar pedido · {money(session.summary.total_cents)}</button>
+      </section>}
+      {phase === "ordered" && session?.order && <section className="chat-action order-receipt" aria-label="Pedido confirmado">
+        <div className="receipt-heading"><CheckCircle2 size={25} /><div><h2>Pedido confirmado</h2><p>Demonstração · sem cobrança</p></div></div>
+        {session.selected && <p>{session.selected.quantity} × {session.selected.candidate.name}</p>}
+        {session.summary && <p className="receipt-total">Total: {money(session.summary.total_cents)}</p>}
+        {session.order.review ? <OrderReviewCard review={session.order.review} busy={busy} onSave={async (rating, aspects) => {
+          const next = await perform(() => api.editOrderReview(rating, aspects));
+          if (!next) return false; setSession(next); say("assistant", "Avaliação ajustada. Sua correção prevalece nas próximas sugestões."); return true;
+        }} /> : <QuickReview busy={busy} onSave={saveOrderReview} />}
+        <button className="secondary-button" disabled={disabled || reviewPending} onClick={() => void startNewOrder()}>Buscar outra refeição</button>
+      </section>}
+      {busy && <div className="assistant-working"><Spinner text={phase === "discover" ? "Entendendo seu pedido…" : "Só um instante…"} /></div>}
+      {error && <div className="chat-error" role="alert"><p>{error}</p><button disabled={busy} onClick={() => void boot()}>Atualizar conversa</button></div>}
+      <div ref={bottom} className="conversation-end" />
+    </main>
+    <footer className="composer-dock"><form className="chat-composer" onSubmit={submit}>
+      <label className="sr-only" htmlFor="chat-message">Mensagem para o Macro</label>
+      <textarea ref={composer} id="chat-message" value={text} maxLength={2000} rows={2} disabled={disabled} placeholder={placeholder}
+        onChange={event => setText(event.target.value)} onKeyDown={event => {
+          if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(text); }
+        }} />
+      <button className="send-message" type="submit" aria-label="Enviar mensagem" disabled={disabled || !text.trim()}><ArrowUp size={21} /></button>
+    </form><p>Você escolhe o prato. O pedido só é enviado depois da sua confirmação.</p></footer>
+  </div>;
+}
 
-  return (
-    <div className="new-address">
-      <form onSubmit={(e) => void search(e)}>
-        <label className="form-field">
-          Novo endereço
-          <input
-            autoFocus
-            maxLength={300}
-            value={text}
-            onChange={(e) => {
-              setText(e.target.value);
-              setResult(null);
-              setCandidateId("");
-            }}
-            placeholder="Rua, número, cidade e estado"
-            disabled={busy}
-          />
-          <small>Ex.: Avenida Paulista, 1578, São Paulo, SP</small>
-        </label>
-        {!result && (
-          <div className="new-address-actions">
-            <button type="button" className="secondary-button" onClick={reset}>
-              Cancelar
-            </button>
-            <button
-              className="primary-button"
-              disabled={disabled || text.trim().length < 5}
-            >
-              {busy ? <Spinner text="Procurando…" /> : "Buscar endereço"}
-            </button>
-          </div>
-        )}
-      </form>
-      {result && (
-        <form onSubmit={(e) => void save(e)}>
-          <p className="small muted">
-            {result.match === "MULTIPLE"
-              ? "Encontramos mais de um local. Escolha o certo:"
-              : "Confira o local encontrado:"}
-          </p>
-          <div className="address-list">
-            {result.candidates.map((c) => (
-              <label
-                key={c.candidate_id}
-                className={`address-choice ${candidateId === c.candidate_id ? "selected" : ""}`}
-              >
-                <input
-                  type="radio"
-                  name="address-candidate"
-                  checked={candidateId === c.candidate_id}
-                  onChange={() => pick(c.candidate_id, result)}
-                />
-                <MapPin size={22} />
-                <span>
-                  <strong>{c.formatted}</strong>
-                </span>
-              </label>
-            ))}
-          </div>
-          <div className="form-columns">
-            <label className="form-field">
-              Bairro
-              <input
-                required
-                maxLength={200}
-                value={neighborhood}
-                onChange={(e) => setNeighborhood(e.target.value)}
-                placeholder="Obrigatório"
-              />
-            </label>
-            <label className="form-field">
-              Complemento
-              <input
-                maxLength={200}
-                value={complement}
-                onChange={(e) => setComplement(e.target.value)}
-                placeholder="Apto, bloco, sala…"
-              />
-            </label>
-            <label className="form-field">
-              Ponto de referência
-              <input
-                maxLength={200}
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
-                placeholder="Portão azul, perto da padaria…"
-              />
-            </label>
-            <label className="form-field">
-              Apelido
-              <select
-                value={alias}
-                onChange={(e) => setAlias(e.target.value as NewAddress["alias"])}
-              >
-                <option value="">Sem apelido</option>
-                <option value="CASA">Casa</option>
-                <option value="TRABALHO">Trabalho</option>
-              </select>
-            </label>
-          </div>
-          <p className="small muted">
-            O endereço fica salvo na sua conta do iFood. Algumas regiões exigem
-            complemento e ponto de referência.
-          </p>
-          <div className="new-address-actions">
-            <button type="button" className="secondary-button" onClick={reset}>
-              Cancelar
-            </button>
-            <button
-              className="primary-button"
-              disabled={disabled || !candidateId || !neighborhood.trim()}
-            >
-              {busy ? <Spinner text="Salvando…" /> : "Salvar e entregar aqui"}
-            </button>
-          </div>
-        </form>
-      )}
-    </div>
-  );
+function QuickReview({ busy, onSave }: { busy: boolean; onSave: (review: OrderReviewInput) => Promise<boolean> }) {
+  const [rating, setRating] = useState<number | null>(null);
+  const [comment, setComment] = useState("");
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (rating != null || comment.trim()) await onSave({ rating, comment: comment.trim() });
+  }
+  return <form className="quick-review" onSubmit={event => void submit(event)}>
+    <h3>Quer deixar uma avaliação?</h3><p>Escreva do seu jeito. Você pode corrigir o que entendermos depois.</p>
+    <div className="order-review-stars" role="radiogroup" aria-label="Nota do pedido">{[1, 2, 3, 4, 5].map(n =>
+      <button key={n} type="button" role="radio" aria-checked={rating === n} aria-label={`${n} de 5`} disabled={busy}
+        className={rating != null && n <= rating ? "filled" : ""} onClick={() => setRating(rating === n ? null : n)}>★</button>)}</div>
+    <label className="form-field">Conte como foi <span className="optional">Opcional</span><textarea maxLength={200} rows={3} value={comment}
+      onChange={event => setComment(event.target.value)} placeholder="Ex.: demorou um pouco, mas o sabor estava ótimo" disabled={busy} /></label>
+    <div className="review-form-footer"><small>{comment.length}/200 · Sua nota escolhida prevalece.</small>
+      <button className="primary-button" type="submit" disabled={busy || (rating == null && !comment.trim())}>Salvar avaliação</button></div>
+  </form>;
 }
