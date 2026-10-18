@@ -172,6 +172,7 @@ class MealIntent(Model):
     cuisine: str | None = None  # ex.: "japonesa"; usada para achar restaurantes quando os itens não aparecem
     avoid_repeats: bool = False  # "diferente", "outro", "variado": não repetir pratos já mostrados e variar os tipos
     pesquisar_na_web: str = ""  # termo que o modelo não conhece bem: a busca pesquisa na web antes de consultar o iFood
+    montar_pedido: bool = False  # o usuário pediu para o assistente montar o pedido (escolher complementos e quantidade)
     budget_cents: Cents | None = None
     labels: list[str] = Field(default_factory=list)
     interpretation_source: Literal["rules", "llm"] = "rules"
@@ -451,7 +452,28 @@ class NutritionSearchProgress(Model):
     reason: str | None = None
 
 
+class AssemblyLimits(Model):
+    """O que o cliente exigiu do pedido montado (valores numéricos ditos por ele; o resto só orienta a escolha)."""
+    max_price_cents: Cents | None = None
+    nutrition: NutritionPreferences = Field(default_factory=NutritionPreferences)
+
+
+class Assembly(Model):
+    """Montagem do pedido pelo assistente, em segundo plano. A UI acompanha `events` e, no fim, replica a montagem."""
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    state: Literal["running", "ready", "impossible", "failed"] = "running"
+    candidate: MealCandidate | None = None
+    options: list[SelectedOption] = Field(default_factory=list)
+    quantity: Quantity = 1
+    limits: AssemblyLimits = Field(default_factory=AssemblyLimits)
+    attempt: int = 0
+    events: list[str] = Field(default_factory=list, max_length=60)
+    nutrition: NutritionResult | None = None
+    message: str | None = None
+
+
 class Session(Model):
+    assembly: Assembly | None = None
     nutrition_search: NutritionSearchProgress | None = None
     id: str = Field(default_factory=lambda: str(uuid4()))
     mode: Literal["mock", "live"]
@@ -461,7 +483,7 @@ class Session(Model):
     recommendations: list[Recommendation] = Field(default_factory=list)
     recent_recommendations: list[tuple[str, str]] = Field(default_factory=list, max_length=18)
     request_intent: MealIntent | None = None
-    last_chat_action: Literal['search', 'context'] | None = None
+    last_chat_action: Literal['search', 'context', 'assembly'] | None = None
     selected: SelectedItem | None = None
     summary: CheckoutSummary | None = None
     order: OrderRecord | None = None

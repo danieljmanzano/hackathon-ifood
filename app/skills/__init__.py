@@ -20,10 +20,11 @@ Busca:
   busca_identificar      não sabe o que é o produto/nome pedido: pesquisar na web e gerar consultas
   busca_replanejar       a busca não achou nada: tentar outra estratégia ou explicar ao usuário
   busca_mcp              as tools de leitura do MCP que o planejador pode chamar para explorar (modo live)
+  montar_pedido          o cliente pediu para montar o pedido: escolher complementos dentro dos limites
 Agente:
   agente_pedidos         papel do agente · agente_ifood_mcp  como usar o MCP do iFood
 """
-from . import (agente_nutricao, agente_ifood_mcp, agente_pedidos, busca_identificar, busca_intencao, busca_mcp, busca_replanejar, item_pedido, nutricao_bases, nutricao_classificar, nutricao_estimativa,
+from . import (agente_nutricao, agente_ifood_mcp, agente_pedidos, busca_identificar, busca_intencao, busca_mcp, busca_replanejar, item_pedido, montar_pedido, nutricao_bases, nutricao_classificar, nutricao_estimativa,
                nutricao_ingredientes, nutricao_juiz_web, nutricao_web, nutricao_complementos)
 
 SKILLS = {
@@ -40,6 +41,7 @@ SKILLS = {
     "busca_identificar": busca_identificar,
     "busca_replanejar": busca_replanejar,
     "busca_mcp": busca_mcp,
+    "montar_pedido": montar_pedido,
     "agente_pedidos": agente_pedidos,
     "agente_ifood_mcp": agente_ifood_mcp,
 }

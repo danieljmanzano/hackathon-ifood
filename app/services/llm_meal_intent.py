@@ -32,6 +32,7 @@ class LLMIntent(Model):
     cuisine: str = Field(default='', max_length=40, pattern=r'^[\w\s\-]*$')
     avoid_repeats: bool = False
     pesquisar_na_web: str = Field(default='', max_length=80, pattern=r'^[\w\s\-]*$')
+    montar_pedido: bool = False
     context_summary: str = Field(min_length=1, max_length=400)
     inferences: list[str] = Field(default_factory=list, max_length=5)
     budget_cents: Cents | None = None
@@ -125,6 +126,7 @@ def merge_intent(base: MealIntent, result: LLMIntent, message: str = "", *, grou
         'search_queries': _consultas(result, query, provider_query), 'cuisine': result.cuisine.strip() or None,
         'avoid_repeats': base.avoid_repeats or result.avoid_repeats,
         'pesquisar_na_web': result.pesquisar_na_web.strip(),
+        'montar_pedido': result.montar_pedido,
     })
 
 

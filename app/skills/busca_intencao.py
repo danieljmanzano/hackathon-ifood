@@ -79,6 +79,9 @@ Além de classificar, prepare a BUSCA no app de delivery (o buscador casa com no
   certeza do que é (ex.: "bolo dona maria", "aquele chiclete azul", "pão de queijo do Bob"), escreva aqui o termo exato
   para o sistema pesquisar na web antes de buscar. Se você conhece bem o que é (pizza, sushi, coxinha, marmita), deixe
   vazio. Na dúvida entre saber e não saber, pesquise.
+- montar_pedido: true SOMENTE quando o usuário pede para VOCÊ montar/escolher o pedido por ele ("monte meu pedido",
+  "monta pra mim", "escolhe os complementos", "faz o pedido com até 600 kcal"). Pedir sugestões ou só dizer o que quer
+  comer NÃO é montar. Os limites que ele citar (preço, kcal, proteína) seguem nos campos de orçamento e de nutrição.
 Se não houver relação clara com comida, use goals vazio e resumo neutro.
 Schema JSON:
 """

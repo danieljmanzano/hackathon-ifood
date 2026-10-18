@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     # Quando a busca não acha nada, um modelo replaneja (outras consultas, relaxar o orçamento padrão) ou explica.
     busca_replanejar: bool = True
     busca_web_timeout_seconds: float = Field(default=10, gt=0, le=20)
+    montagem_max_tentativas: int = Field(default=3, ge=1, le=5)  # propostas avaliadas antes de pedir que o cliente monte
+    montagem_timeout_seconds: float = Field(default=240, gt=0, le=900)
     busca_web_identificar: bool = True  # pesquisar na web o que é um produto/nome que o pedido cita e o sistema não conhece
     busca_max_replanejamentos: int = Field(default=1, ge=0, le=2)
     busca_prazo_total_segundos: float = Field(default=28, gt=0, le=29)  # o frontend desiste aos 30 s
