@@ -14,7 +14,9 @@ FOTO = (b"\x89PNG-foto", "image/png")
 def resposta_json(**campos):
     dados = {"tipo_item": "industrializado", "encontrado": True, "produto_na_fonte": "Pizza Margherita 35cm",
              "calorias": 1800, "faixa_min": 1700, "faixa_max": 1900, "proteina_g": 70, "carbo_g": 220,
-             "gordura_g": 60, "porcao_g": 700, "porcao_base": "pizza inteira", "confianca": "alta",
+             "gordura_g": 60, "porcao_g": 700, "tabela_base_g": None, "tabela_kcal": None,
+             "tabela_proteina_g": None, "tabela_carbo_g": None, "tabela_gordura_g": None,
+             "porcao_base": "pizza inteira", "confianca": "alta",
              "fonte_nome": "Pizza Express", "fonte_url": "https://www.pizzaexpress.com.br/nutri",
              "trecho_fonte": "Margherita: 1800 kcal", "ingredientes": [], "itens_na_foto": [], "suposicoes": [],
              "justificativa": "Tabela do site."}
@@ -66,6 +68,35 @@ def test_descartes_por_falta_de_base(tmp_path):
 def test_faixa_incoerente_da_tabela_e_ignorada(tmp_path):
     info, _, _ = _buscar(tmp_path, _resposta(faixa_min=1900, faixa_max=2000), ["pizzaexpress.com.br"])
     assert info.faixa is None
+
+
+def _tabela(**campos):
+    base = dict(calorias=999, porcao_g=70, tabela_base_g=60, tabela_kcal=233, tabela_proteina_g=2.9,
+                tabela_carbo_g=33, tabela_gordura_g=11, faixa_min=None, faixa_max=None)
+    base.update(campos)
+    return _resposta(**base)
+
+
+def test_o_codigo_converte_a_tabela_para_o_peso_do_item_e_ignora_a_conta_do_modelo(tmp_path):
+    info, _, _ = _buscar(tmp_path, _tabela(), ["pizzaexpress.com.br"])
+    assert round(info.macros.kcal, 1) == 271.8 and round(info.macros.carbo_g, 1) == 38.5
+    assert round(info.macros.proteina_g, 2) == 3.38 and info.faixa is None
+
+
+def test_tabela_com_rotulo_errado_vira_por_100g(tmp_path):
+    """"Porção de 3 g" com 60 g de carboidrato: o rótulo da fonte errou, os valores são por 100 g."""
+    info, _, _ = _buscar(tmp_path, _tabela(porcao_g=8, tabela_base_g=3, tabela_kcal=167, tabela_proteina_g=0.7,
+                                           tabela_carbo_g=60, tabela_gordura_g=1.1), ["pizzaexpress.com.br"])
+    assert round(info.macros.kcal, 1) == 13.4 and round(info.macros.carbo_g, 1) == 4.8
+
+
+def test_tabela_copiada_sem_peso_do_item_e_descartada(tmp_path):
+    assert _buscar(tmp_path, _tabela(porcao_g=None), ["pizzaexpress.com.br"])[0] is None
+
+
+def test_sem_base_na_tabela_vale_a_conversao_do_modelo(tmp_path):
+    info, _, _ = _buscar(tmp_path, _tabela(tabela_base_g=None), ["pizzaexpress.com.br"])
+    assert info.macros.kcal == 999
 
 
 # ---------- prato: estimativa pesquisada ----------

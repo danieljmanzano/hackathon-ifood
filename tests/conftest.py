@@ -8,6 +8,8 @@ for chave in ("OPENROUTER_API_KEY", "OPENAI_API_KEY"):
 os.environ["NUTRITION_PROVIDER"] = "openrouter"
 os.environ["IFOOD_MODE"] = "mock"  # os testes usam o catálogo fictício, qualquer que seja o .env
 os.environ["CALORIAS_LOG"] = "off"
+os.environ["BUSCA_LOG_CONTEUDO"] = "false"  # o .env de desenvolvimento liga; os testes verificam o padrão privado
+os.environ["BUSCA_WEB_IDENTIFICAR"] = "false"  # sem rede nos testes; os testes da pesquisa ligam e trocam a busca por um dublê
 os.environ["BUSCA_LOG"] = "off"
 
 

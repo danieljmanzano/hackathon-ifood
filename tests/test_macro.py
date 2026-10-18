@@ -62,3 +62,30 @@ def test_api_session_lifecycle():
     assert search_resp.status_code == 200
     search_data = search_resp.json()
     assert len(search_data["recommendations"]) > 0
+
+
+def test_mock_address_registration_and_selection():
+    cookie = {"macro_session": client.get("/api/session").json()["id"]}
+    other = {"macro_session": TestClient(app).get("/api/session").json()["id"]}
+
+    found = client.post("/api/addresses/geocode", json={"address": "Avenida São Carlos, 400"}, cookies=cookie)
+    assert found.status_code == 200
+    candidate = found.json()["candidates"][0]
+
+    created = client.post("/api/addresses", json={
+        "address": "Avenida São Carlos, 400", "candidate_id": candidate["candidate_id"],
+        "neighborhood": "Centro", "complement": "Apto 12", "alias": "TRABALHO",
+    }, cookies=cookie)
+    assert created.status_code == 200
+    body = created.json()
+    new_address = body["session"]["address"]
+    assert new_address["label"] == "Trabalho"
+    assert "Avenida São Carlos, 400" in new_address["formatted"]
+    assert [a["id"] for a in body["addresses"]][-1] == new_address["id"]
+
+    # O cadastro fica disponível para trocar de endereço depois, só para o mesmo usuário.
+    listed = client.get("/api/addresses", cookies=cookie).json()
+    assert len(listed) == 2 and new_address["id"] in {a["id"] for a in listed}
+    assert new_address["id"] not in {a["id"] for a in client.get("/api/addresses", cookies=other).json()}
+    assert client.put("/api/session/address", json={"address_id": listed[0]["id"]}, cookies=cookie).json()["address"]["id"] == listed[0]["id"]
+    assert client.put("/api/session/address", json={"address_id": new_address["id"]}, cookies=other).status_code == 422

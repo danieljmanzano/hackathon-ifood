@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     openrouter_timeout: float = 60.0
     # Quando a busca não acha nada, um modelo replaneja (outras consultas, relaxar o orçamento padrão) ou explica.
     busca_replanejar: bool = True
+    busca_web_timeout_seconds: float = Field(default=10, gt=0, le=20)
+    busca_web_identificar: bool = True  # pesquisar na web o que é um produto/nome que o pedido cita e o sistema não conhece
     busca_max_replanejamentos: int = Field(default=1, ge=0, le=2)
     busca_prazo_total_segundos: float = Field(default=28, gt=0, le=29)  # o frontend desiste aos 30 s
     busca_replanejar_timeout_seconds: float = Field(default=10, gt=0, le=20)
@@ -100,11 +102,23 @@ class Settings(BaseSettings):
     # Um prazo curto ainda entrega na hora o que já está em cache ou é muito rápido.
     nutrition_search_budget_seconds: float = Field(default=1, ge=0, le=28)
     nutrition_concurrency: int = Field(default=3, ge=1, le=10)
+    # Catálogo real: enriquecimento incremental e orçamento persistido (independente da busca).
+    catalog_enrichment_enabled: bool = True
+    catalog_products_per_search: int = Field(default=3, ge=0, le=10)
+    catalog_products_per_day: int = Field(default=20, ge=0)
+    catalog_calls_per_product: int = Field(default=8, ge=0, le=30)
+    catalog_calls_per_day: int = Field(default=60, ge=0)
+    catalog_max_output_tokens: int = Field(default=1800, ge=256, le=8000)
+    catalog_max_input_chars: int = Field(default=24000, ge=1000, le=100000)
+    catalog_retry_seconds: int = Field(default=900, ge=1)
+    catalog_max_attempts: int = Field(default=2, ge=1, le=5)
+    live_mock_reviews: bool = True
 
     # Cascata de calorias (ver pipeline_calorias_v2.dot).
     calorias_estimar_sempre: bool = False  # True: estima mesmo se bases ou web acharem (mede divergência, gasta mais)
     calorias_buscar_bases: bool = True
-    calorias_busca_web: bool = True  # OpenAI web_search; só roda se as bases não acharem
+    calorias_classificar: bool = True  # produto de marca: tabela oficial na web ANTES das bases genéricas
+    calorias_busca_web: bool = True  # OpenAI web_search ou Gemini+Google Search; só roda se as bases não acharem
     calorias_log: Literal["off", "resumo", "detalhe"] = "resumo"  # ver app/core/logs.py
     calorias_amostras: int = Field(default=1, ge=1, le=5)
     calorias_limiar_confianca: float = Field(default=0.55, ge=0, le=1)
@@ -141,6 +155,7 @@ class Settings(BaseSettings):
             "mode": self.ifood_mode,
             "simulated": self.ifood_mode == "mock",
             "live_orders_enabled": False,
+            "reviews_simulated": self.ifood_mode == "mock" or self.live_mock_reviews,
             "nutrition": "enabled" if self.nutrition_enabled else "unavailable",
             "intent_interpretation": "llm_configured" if self.intent_llm_enabled and self.llm_api_key else "rules",
             "timezone": self.timezone,

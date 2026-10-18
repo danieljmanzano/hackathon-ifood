@@ -2,7 +2,7 @@
 
 Notas são centradas em 3. Afinidade por cozinha usa prior neutro de duas
 avaliações. A comunidade exclui o próprio usuário e usa prior 3,5 com peso 3.
-Reviews simuladas nunca entram no contexto live.
+Reviews simuladas no catálogo real exigem overlay explícito e sinalização.
 """
 from dataclasses import dataclass, field
 
@@ -19,6 +19,7 @@ class ReviewContext:
     community: list[Review] = field(default_factory=list)
     cuisines: dict[str, list[str]] = field(default_factory=dict)
     simulated: bool = False
+    synthetic_catalog: bool = False
     processed: dict[str, ProcessedReview] = field(default_factory=dict)
     tastes: UserTastes | None = None
 
@@ -127,8 +128,11 @@ def review_signal(candidate: MealCandidate, context: ReviewContext) -> tuple[Rev
     if not personalized:
         reasons.append('Sem histórico relacionado a esta opção; usamos as avaliações disponíveis.'
                        if public else 'Sem avaliações relacionadas; usamos sua busca e preferências.')
+    simulated_signal = any(r.simulated for r in public + own)
+    if context.synthetic_catalog and simulated_signal:
+        reasons = ['Demonstração com avaliações simuladas: ' + reason for reason in reasons]
     return ReviewSignal(
-        source='personalized' if personalized else 'community' if public else 'unavailable',
+        simulated=simulated_signal,        source='personalized' if personalized else 'community' if public else 'unavailable',
         score=round(score, 4), history_count=len(context.history), review_count=len(public),
         community_rating=round(average, 2) if average is not None else None,
         cuisine_affinity=round(affinity, 4), personal_rating=latest.rating if latest else None,

@@ -31,7 +31,7 @@ from app.core.exceptions import AppError, MacroError
 from app.core.search_logs import elapsed_ms, event
 from app.domain import rank
 from app.schemas.macro import MealCandidate, MealIntent, MealRequest, Recommendation, Session
-from app.services import busca_mcp, horario
+from app.services import busca_mcp, busca_web, horario
 from app.services.llm_texto import chat_completion_fallback as chat_completion
 from app.services.mensagens_busca import sem_resultado
 from app.services.nutrition.entrada import extrair_json
@@ -172,6 +172,13 @@ async def _usar_ferramentas(provider, plano: dict, address, settings: Settings, 
     return observacoes, achados
 
 
+async def _pesquisar_termo(settings: Settings, termo: str, agora: dict, inicio: float) -> list[str] | None:
+    """Pesquisa na web o que o termo é (busca_web.identificar), dentro do prazo total da busca."""
+    restante = settings.busca_prazo_total_segundos - (time.monotonic() - inicio)
+    return await busca_web.identificar(settings, termo, agora,
+                                       min(settings.busca_web_timeout_seconds, restante - TEMPO_MINIMO_PARA_REPLANEJAR))
+
+
 def _mensagem_valida(texto: str | None) -> str | None:
     texto = (texto or "").strip()
     return texto if 20 <= len(texto) <= 600 else None
@@ -179,7 +186,8 @@ def _mensagem_valida(texto: str | None) -> str | None:
 
 async def buscar(payload: MealRequest, session: Session, provider, settings: Settings, intent: MealIntent,
                  context, inicio: float, *, texto_pedido: str | None = None, conversa: dict | None = None, trace=None,
-                 rank_extra: Callable[[list[MealCandidate]], dict] | None = None) -> ResultadoBusca:
+                 rank_extra: Callable[[list[MealCandidate]], dict] | None = None,
+                 catalog_search=None) -> ResultadoBusca:
     """`inicio`: time.monotonic() de quando a requisição começou (para respeitar o prazo total).
 
     `context`: contexto de avaliações, ou uma função que o calcula (chamada depois da busca no catálogo).
@@ -205,6 +213,17 @@ async def buscar(payload: MealRequest, session: Session, provider, settings: Set
     refinamentos: dict = {}
     pular_catalogo = False
 
+    web_feita = False
+    if intent.pesquisar_na_web and busca_web.possivel(settings):
+        # O modelo não tem certeza do que o usuário pediu: pesquisa na web antes de consultar o iFood.
+        web_feita = True
+        _conteudo(settings, f"o modelo não conhece “{intent.pesquisar_na_web}”: pesquisando na web")
+        achadas = busca_web.sem_repetir(await _pesquisar_termo(settings, intent.pesquisar_na_web, agora, inicio) or [],
+                                        tentadas)
+        if achadas:
+            queries = list(dict.fromkeys([queries[0], *achadas, *queries[1:]]))[:busca_web.MAX_CONSULTAS + 1]
+            tentadas.update(normalized(q) for q in queries)
+
     maximo = settings.busca_max_replanejamentos if settings.busca_replanejar else 0
     for rodada in range(1 + maximo):
         if trace is not None:
@@ -213,8 +232,8 @@ async def buscar(payload: MealRequest, session: Session, provider, settings: Set
         _conteudo(settings, f"rodada {rodada + 1}: consultas ao iFood {queries}"
                             + (f" · culinária: {cuisine}" if cuisine else "")
                             + (f" · refinamentos: {refinamentos}" if refinamentos else ""))
-        encontrados = [] if pular_catalogo else await _consultar_catalogo(provider, queries, session.address, budget,
-                                                                          cuisine, refinamentos)
+        encontrados = [] if pular_catalogo else await (catalog_search(queries, session.address, budget, cuisine, refinamentos)
+                                                     if catalog_search else _consultar_catalogo(provider, queries, session.address, budget, cuisine, refinamentos))
         candidates = _mesclar(encontrados, achados_mcp)
         conhecidos["restaurantes"] |= {c.merchant_id for c in candidates}
         event("catalog.completed", provider=type(provider).__name__, candidate_count=len(candidates),
@@ -235,6 +254,16 @@ async def buscar(payload: MealRequest, session: Session, provider, settings: Set
                                   tentativas=tentativas, extra=extra)
         if rodada >= maximo:
             break
+
+        # Nada achado e o termo nunca foi pesquisado: antes de replanejar, descobre na web o que ele é.
+        if not web_feita and busca_web.possivel(settings):
+            web_feita = True
+            termo = intent.food_query or queries[0]
+            novas_web = busca_web.sem_repetir(await _pesquisar_termo(settings, termo, agora, inicio) or [], tentadas)
+            if novas_web:
+                tentadas.update(normalized(q) for q in novas_web)
+                queries, adaptou = novas_web, False
+                continue
 
         # O planejador decide; se pedir exploração (só no modo live), o código executa e ele decide de novo.
         plano, antes = None, len(achados_mcp)

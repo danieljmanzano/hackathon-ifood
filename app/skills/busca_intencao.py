@@ -75,6 +75,10 @@ Além de classificar, prepare a BUSCA no app de delivery (o buscador casa com no
 - "quero comer japonês, tô com fome": goals=["large_portion"], food_query="comida japonesa",
   search_queries=["sushi", "combinado japonês", "temaki", "yakisoba"], cuisine="japonesa".
 - "quero uma pizza": food_query="pizza", search_queries=["pizza", "pizza de calabresa", "pizza margherita"], cuisine="pizzaria".
+- pesquisar_na_web: se o pedido cita uma MARCA, produto de mercado, nome regional, apelido ou prato que você NÃO tem
+  certeza do que é (ex.: "bolo dona maria", "aquele chiclete azul", "pão de queijo do Bob"), escreva aqui o termo exato
+  para o sistema pesquisar na web antes de buscar. Se você conhece bem o que é (pizza, sushi, coxinha, marmita), deixe
+  vazio. Na dúvida entre saber e não saber, pesquise.
 Se não houver relação clara com comida, use goals vazio e resumo neutro.
 Schema JSON:
 """

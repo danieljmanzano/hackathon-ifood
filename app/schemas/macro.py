@@ -171,6 +171,7 @@ class MealIntent(Model):
     search_queries: list[str] = Field(default_factory=list, max_length=6)
     cuisine: str | None = None  # ex.: "japonesa"; usada para achar restaurantes quando os itens não aparecem
     avoid_repeats: bool = False  # "diferente", "outro", "variado": não repetir pratos já mostrados e variar os tipos
+    pesquisar_na_web: str = ""  # termo que o modelo não conhece bem: a busca pesquisa na web antes de consultar o iFood
     budget_cents: Cents | None = None
     labels: list[str] = Field(default_factory=list)
     interpretation_source: Literal["rules", "llm"] = "rules"
@@ -274,6 +275,7 @@ class MerchantSummary(Model):
 
 
 class ReviewSignal(Model):
+    simulated: bool = False
     source: Literal["personalized", "community", "unavailable"]
     score: float
     history_count: int = Field(ge=0)
@@ -287,6 +289,8 @@ class ReviewSignal(Model):
 
 
 class Recommendation(Model):
+    approximate_match: bool = False
+    match_confidence: Literal["normal", "low"] = "normal"
     candidate: MealCandidate
     nutrition: NutritionResult = Field(default_factory=NutritionResult)
     reasons: list[str]
@@ -437,7 +441,18 @@ class AddressCreated(Model):
     addresses: list[Address]
 
 
+class NutritionSearchProgress(Model):
+    id: str
+    state: Literal["pending", "complete"] = "pending"
+    tested: int = Field(default=0, ge=0, le=15)
+    accepted: int = Field(default=0, ge=0, le=3)
+    approximate: int = Field(default=0, ge=0, le=3)
+    batches: int = Field(default=0, ge=0, le=5)
+    reason: str | None = None
+
+
 class Session(Model):
+    nutrition_search: NutritionSearchProgress | None = None
     id: str = Field(default_factory=lambda: str(uuid4()))
     mode: Literal["mock", "live"]
     profile: UserProfile

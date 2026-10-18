@@ -1,3 +1,6 @@
+import asyncio
+from contextlib import asynccontextmanager, suppress
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -17,7 +20,20 @@ def create_app() -> FastAPI:
     settings = get_settings()
     configurar_logs(settings.calorias_log)
     configurar_busca_logs(settings.busca_log)
+    @asynccontextmanager
+    async def lifespan(app):
+        task = None
+        if settings.catalog_enrichment_enabled and settings.ifood_mode == "live":
+            from app.services.catalog_enrichment import worker
+            task = asyncio.create_task(worker(settings))
+        yield
+        if task:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
+
     app = FastAPI(
+        lifespan=lifespan,
         title=settings.app_name,
         version=settings.version,
         debug=settings.debug,

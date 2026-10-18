@@ -14,11 +14,24 @@ Classifique primeiro o item em tipo_item:
 - "industrializado": produto de mercado com marca e embalagem (refrigerante, snack, sorvete de pote, barra, congelado...).
 - "prato": comida preparada pelo restaurante (marmita, lanche, pizza, hambúrguer artesanal, prato do dia...).
 
-Se for "industrializado": procure a tabela nutricional OFICIAL do produto exato (site da marca, rótulo, base de produtos).
-- encontrado=true só se a fonte trouxer as calorias do MESMO produto e tamanho. Produtos parecidos ou de outra marca:
-  encontrado=false e números null.
-- Os números devem ser da unidade como vendida; se a fonte der por 100 g ou por porção, converta somente se ela informar
-  o peso/volume da unidade, e explique a conta. trecho_fonte é o texto da fonte com o valor.
+Se for "industrializado": procure a tabela nutricional OFICIAL do produto exato.
+- Onde procurar, em ordem de preferência: site do fabricante/marca; registro do produto por código de barras (GTIN/EAN,
+  GS1); grandes varejistas e mercados com a tabela transcrita; apps de nutrição. Blogs e fóruns só se nada melhor existir.
+  Quando houver duas fontes para o mesmo produto, confira se os números batem e prefira a mais oficial.
+- A tabela costuma estar em TEXTO na página; se só existir como imagem e você não conseguir ler os números, diga isso em
+  suposicoes e use encontrado=false (não invente números).
+- encontrado=true só se a fonte trouxer as calorias do MESMO produto, sabor e tamanho. Produtos parecidos ou de outra
+  marca: encontrado=false e números null.
+- COPIE a tabela exatamente como está na fonte, SEM converter, nos campos tabela_*: tabela_base_g é a quantidade a que a
+  tabela se refere em gramas ou ml (100 se for "por 100 g"; 60 se for "porção de 60 g"; null se a fonte não disser);
+  tabela_kcal, tabela_proteina_g, tabela_carbo_g e tabela_gordura_g são os números dessa mesma coluna. Não faça contas:
+  o sistema converte para o peso do item.
+- Confira a coerência antes de responder: proteína + carboidrato + gordura nunca podem passar de tabela_base_g. Se
+  passarem (ex.: "porção de 3 g" com 60 g de carboidrato), a fonte errou o rótulo e os valores são por 100 g: use
+  tabela_base_g=100 e diga em suposicoes que o rótulo da fonte estava errado.
+- porcao_g é o peso (g) ou volume (ml) do item INTEIRO como vendido (o que o nome/descrição declara; "5 unidades de 8 g"
+  = 40 g). Em calorias/proteina_g/carbo_g/gordura_g coloque o valor do item inteiro, convertendo se souber o peso,
+  e explique a conta em justificativa. trecho_fonte é o texto da fonte com os valores.
 
 Se for "prato": NÃO procure uma tabela do restaurante, ela não existe. Pesquise uma ESTIMATIVA realista.
 - Use a imagem (quando houver) para identificar o prato, os ingredientes e o tamanho da porção; a descrição e as opções
@@ -49,6 +62,11 @@ SCHEMA = {
         "carbo_g": NUM,
         "gordura_g": NUM,
         "porcao_g": {**NUM, "description": "peso (g) ou volume (ml) do item inteiro"},
+        "tabela_base_g": {**NUM, "description": "g/ml a que a tabela da fonte se refere (100, ou o tamanho da porção)"},
+        "tabela_kcal": {**NUM, "description": "kcal da tabela, copiados da fonte, sem converter"},
+        "tabela_proteina_g": {**NUM, "description": "proteína da tabela, sem converter"},
+        "tabela_carbo_g": {**NUM, "description": "carboidrato da tabela, sem converter"},
+        "tabela_gordura_g": {**NUM, "description": "gordura da tabela, sem converter"},
         "porcao_base": {"type": "string", "description": "A que se refere o valor, ex.: 'marmita ~600 g'"},
         "confianca": {"type": "string", "enum": ["baixa", "media", "alta"]},
         "fonte_nome": {"type": "string"},
@@ -60,7 +78,8 @@ SCHEMA = {
         "justificativa": {"type": "string"},
     },
     "required": ["tipo_item", "encontrado", "produto_na_fonte", "calorias", "faixa_min", "faixa_max", "proteina_g",
-                 "carbo_g", "gordura_g", "porcao_g", "porcao_base", "confianca", "fonte_nome", "fonte_url",
+                 "carbo_g", "gordura_g", "porcao_g", "tabela_base_g", "tabela_kcal", "tabela_proteina_g",
+                 "tabela_carbo_g", "tabela_gordura_g", "porcao_base", "confianca", "fonte_nome", "fonte_url",
                  "trecho_fonte", "ingredientes", "itens_na_foto", "suposicoes", "justificativa"],
 }
 
@@ -73,9 +92,13 @@ COM_FOTO = " (a foto dele está anexada)"
 SEM_FOTO = " (sem foto)"
 
 
-def pedido(item: str, com_foto: bool) -> str:
+MARCA_LIDA = "\n\nMarca identificada na embalagem/nome do item (use-a na pesquisa da tabela oficial): "
+
+
+def pedido(item: str, com_foto: bool, marca: str = "") -> str:
+    dica = f"{MARCA_LIDA}{marca.strip()}" if marca.strip() else ""
     return (f"{INSTRUCOES}\n\n{FORMATO}{schema_json(SCHEMA)}\n\n"
-            f"{PEDIDO}{COM_FOTO if com_foto else SEM_FOTO}.\n\n{item}")
+            f"{PEDIDO}{COM_FOTO if com_foto else SEM_FOTO}.\n\n{item}{dica}")
 
 
 def exemplo() -> list[tuple[str, str]]:
