@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     openrouter_timeout: float = 60.0
     intent_llm_enabled: bool = True
     intent_llm_timeout_seconds: float = Field(default=18, gt=0, le=20)
+    # Interpretação da avaliação livre do pedido; roda em segundo plano, então tolera mais tempo.
+    review_llm_enabled: bool = True
+    review_llm_timeout_seconds: float = Field(default=30, gt=0, le=60)
 
     # OpenAI (usada quando NUTRITION_PROVIDER=openai; a chave e o modelo ficam na seção de nutrição abaixo)
     openai_base_url: str = "https://api.openai.com/v1"

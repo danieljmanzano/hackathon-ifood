@@ -47,7 +47,7 @@ import {
   Spinner,
   Stepper,
 } from "./components";
-import { ReviewEditor, ReviewHistory, TasteSummary } from "./Reviews";
+import { effectiveReview, OrderReviewCard, ReviewEditor, ReviewHistory, TasteSummary } from "./Reviews";
 import { loadConsumption, saveConsumption } from "./storage";
 import type {
   Address,
@@ -63,6 +63,7 @@ import type {
   SelectedOption,
   Session,
   View,
+  OrderAspects,
   UserReview,
   UserTastes,
 } from "./types";
@@ -138,6 +139,8 @@ export default function App() {
   const [delivery, setDelivery] = useState("");
   const [payment, setPayment] = useState("");
   const [accepted, setAccepted] = useState(false);
+  const [orderRating, setOrderRating] = useState<number | null>(null);
+  const [reviewText, setReviewText] = useState("");
   const [entries, setEntries] = useState<Consumption[]>([]);
   const [fraction, setFraction] = useState("1");
   const [feedback, setFeedback] = useState("");
@@ -314,6 +317,28 @@ export default function App() {
     return () => clearInterval(timer);
   }, [selectedNutritionState, session?.selected?.candidate.item_id]);
 
+  // A interpretação da avaliação roda em segundo plano depois da confirmação.
+  const reviewState = session?.order?.review?.interpretation_state;
+  useEffect(() => {
+    if (reviewState !== "pending") return;
+    let tries = 0;
+    const timer = window.setInterval(async () => {
+      tries += 1;
+      try {
+        const next = await api.order();
+        if (next.order?.review?.interpretation_state !== "pending") {
+          setSession(next);
+          clearInterval(timer);
+          void api.myReviews().then(setReviews).catch(() => undefined);
+        }
+      } catch {
+        // Tenta de novo no próximo ciclo; o pedido já está confirmado.
+      }
+      if (tries >= 20) clearInterval(timer);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [reviewState, session?.order?.id]);
+
   // A busca responde antes das calorias: consulta até todas as recomendações ficarem prontas.
   const pendingRecommendations =
     session?.recommendations
@@ -438,6 +463,8 @@ export default function App() {
       );
       setPayment(session.summary?.payment.id || available.payment[0]?.id || "");
       setAccepted(false);
+      setOrderRating(null);
+      setReviewText("");
       open("checkout");
     }
   }
@@ -457,15 +484,31 @@ export default function App() {
     )
       return;
     // Never retry a submission automatically. A refreshed summary requires a new checkbox event.
-    const next = await perform(() => api.confirm(session.summary!.version));
+    const comment = reviewText.trim();
+    const orderReview =
+      orderRating != null || comment ? { rating: orderRating, comment } : undefined;
+    const next = await perform(() =>
+      api.confirm(session.summary!.version, orderReview),
+    );
     if (next) {
       setSession(next);
+      // With a rating the backend also records a review, so tastes and history must reload.
+      if (next.order?.review && effectiveReview(next.order.review).rating != null)
+        void api.myReviews().then(setReviews).catch(() => undefined);
       setDialog(null);
       navigate("orders");
       setToast(
         "Pedido de demonstração confirmado. Nenhuma cobrança foi realizada.",
       );
     }
+  }
+  async function editOrderReview(rating: number, aspects: OrderAspects) {
+    const next = await perform(() => api.editOrderReview(rating, aspects));
+    if (!next) return false;
+    setSession(next);
+    void api.myReviews().then(setReviews).catch(() => undefined);
+    setToast("Avaliação ajustada. Suas próximas sugestões já consideram a correção.");
+    return true;
   }
   function openConsumption() {
     if (
@@ -1268,6 +1311,17 @@ export default function App() {
                             {entry.feedback && (
                               <small>Seu feedback: {entry.feedback}</small>
                             )}
+                            {session.order?.id === entry.order_id &&
+                              session.order.review && (
+                                <p className="review">
+                                  🗒️{" "}
+                                  {effectiveReview(session.order.review).rating != null &&
+                                    `★ ${effectiveReview(session.order.review).rating}/5 `}
+                                  {session.order.review.comment && (
+                                    <em>{session.order.review.comment}</em>
+                                  )}
+                                </p>
+                              )}
                           </div>
                           <button
                             className="icon-button"
@@ -1429,6 +1483,13 @@ export default function App() {
                             )}
                           </strong>
                         </div>
+                      )}
+                      {session.order.review && (
+                        <OrderReviewCard
+                          review={session.order.review}
+                          busy={busy}
+                          onSave={editOrderReview}
+                        />
                       )}
                       {session.summary && (
                         <div className="order-summary">
@@ -2205,6 +2266,43 @@ export default function App() {
                     confirmar este pedido de demonstração.
                   </span>
                 </label>
+                <fieldset className="order-review" disabled={busy}>
+                  <legend>
+                    Avalie o pedido <span className="optional">Opcional</span>
+                  </legend>
+                  <div className="order-review-stars" role="radiogroup" aria-label="Nota do pedido">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        role="radio"
+                        aria-checked={orderRating === n}
+                        aria-label={`${n} de 5`}
+                        className={orderRating != null && n <= orderRating ? "filled" : ""}
+                        onClick={() => setOrderRating(orderRating === n ? null : n)}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    maxLength={200}
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    placeholder="Deixe sua opinião sobre o pedido (opcional)"
+                    aria-label="Comentário sobre o pedido"
+                  />
+                  <div className="order-review-footer">
+                    <span
+                      className="order-review-hint"
+                      title="Escreva do seu jeito: o Macro interpreta o comentário em nota e aspectos (sabor, entrega, preço, porção), e você pode ajustar depois. Se escolher estrelas, sua nota prevalece. O iFood não recebe avaliações por esta integração; tudo fica salvo só no Macro."
+                    >
+                      <Info size={13} />
+                      Interpretamos seu texto. Fica só no Macro, não vai ao iFood.
+                    </span>
+                    <span>{reviewText.length}/200</span>
+                  </div>
+                </fieldset>
               </>
             ) : (
               <div className="info-box">
