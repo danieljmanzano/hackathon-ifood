@@ -61,10 +61,6 @@ Equipe "iFood Benefícios" · Hackathon SEMCOMP × iFood 2026
 
 ## Pipeline nutricional
 
-[Ver o diagrama horizontal da pipeline](diagramas/README.md#pipeline-nutricional),
-com consulta ao cache, fontes nutricionais, estimativas e validação.
-[Fonte editável em Mermaid](diagramas/pipeline-nutrientes.mmd).
-
 Para cada prato, fontes em cascata e em paralelo (`app/services/nutrition/pipeline.py`):
 
 1. **Base local de produtos** para itens industrializados conhecidos.
