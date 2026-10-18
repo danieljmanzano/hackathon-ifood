@@ -55,7 +55,16 @@ async def chat_completion(
                     continue
 
             errors.append(f"{current}: {response.status_code} {response.text[:150]}")
-            if response.status_code not in RETRYABLE_STATUS:
+            invalid_model = False
+            if response.status_code == 400:
+                try:
+                    message = str(response.json().get("error", {}).get("message", "")).lower()
+                    invalid_model = "model" in message and any(
+                        phrase in message for phrase in ("not a valid", "not valid", "invalid", "not found", "does not exist")
+                    )
+                except (ValueError, AttributeError):
+                    pass
+            if response.status_code not in RETRYABLE_STATUS and not invalid_model:
                 break
 
     raise OpenRouterError("Todos os modelos falharam:\n" + "\n".join(errors))

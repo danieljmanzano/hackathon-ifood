@@ -1,10 +1,13 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Request, Response
 
 from app.core.config import Settings, get_settings
 from app.core.exceptions import MacroError
-from app.domain import rank, search_terms, select
+from app.domain import rank, select
 from app.schemas.macro import (
     Address,
     AddressCreated,
@@ -24,9 +27,14 @@ from app.schemas.macro import (
     Session,
     UserProfile,
 )
-from app.services.ifood_live import MCPIFood
+if TYPE_CHECKING:
+    from app.services.ifood_live import MCPIFood
 from app.services.mock_ifood import MockIFood
 from app.services.nutrition import enrich_recommendations, estimate_selected
+from app.schemas.reviews import Review, ReviewInput, UserTastes
+from app.schemas.macro import now
+from app.services.review_recommendations import review_context
+from app.services.llm_meal_intent import interpret_intent
 
 router = APIRouter()
 _mock_provider = MockIFood()
@@ -39,6 +47,8 @@ def get_provider(settings: Settings = Depends(get_settings)):
     if settings.ifood_mode != "live":
         return _mock_provider
     if _live_provider is None:
+        from app.services.ifood_live import MCPIFood
+
         _live_provider = MCPIFood(settings)
     return _live_provider
 
@@ -95,6 +105,7 @@ def session(request: Request, response: Response, settings: Settings = Depends(g
     identity = str(uuid4())
     created = Session(id=identity, mode=settings.ifood_mode, profile=UserProfile(id=identity))
     db.save(created)
+    review_context(db, created.profile.id, created.mode == "mock", created.profile)
     response.set_cookie(
         "macro_session",
         identity,
@@ -195,7 +206,9 @@ def update_profile(
     def update(s: Session):
         s.profile = payload
 
-    return mutate_session(request, session, update)
+    updated = mutate_session(request, session, update)
+    review_context(request.app.state.db, updated.profile.id, updated.mode == "mock", updated.profile)
+    return updated
 
 
 @router.post("/search", response_model=Session)
@@ -209,23 +222,33 @@ async def search(
     editable(session)
     if session.address is None:
         raise MacroError("Selecione o endereço antes de buscar.", 422)
-    query, budget = search_terms(payload)
+    intent = await interpret_intent(payload, settings)
+    query, budget = intent.provider_query, intent.budget_cents
     if budget is None:
         budget = session.profile.default_budget_cents
     candidates = await provider.search(query, session.address, budget)
-    recommendations = rank(candidates, payload, session.profile, budget)
+    context = review_context(request.app.state.db, session.profile.id, session.mode == "mock", session.profile)
+    recommendations = rank(candidates, payload, session.profile, budget, context, session.recent_recommendations, intent=intent)
     recommendations = await enrich_recommendations(recommendations, settings)
 
     def update(s: Session):
         s.budget_cents = budget
+        s.request_intent = intent
         s.recommendations = recommendations
+        s.recent_recommendations = (
+            s.recent_recommendations
+            + [(r.candidate.merchant_id, r.candidate.item_id) for r in recommendations]
+        )[-18:]
         s.selected = None
         s.summary = None
         message = (
-            "Encontrei estas opções. Escolha um prato para ver os complementos."
+            ("Busquei opções considerando: " + ", ".join(intent.labels) + ". Confira os detalhes de cada sugestão."
+             if intent.labels else "Encontrei estas opções. Escolha um prato para ver os complementos.")
             if recommendations
             else "Não encontrei opções com esses filtros. Ajuste o orçamento ou suas preferências e busque novamente."
         )
+        if recommendations and intent.context_summary:
+            message = intent.context_summary + " " + message
         s.messages = (
             s.messages
             + [
@@ -235,6 +258,47 @@ async def search(
         )[-40:]
 
     return mutate_session(request, session, update)
+
+
+@router.get("/reviews/me", response_model=list[Review])
+def my_reviews(request: Request, session: Session = Depends(current_session)):
+    return review_context(request.app.state.db, session.profile.id, session.mode == "mock", session.profile).history
+
+
+@router.get("/profile/tastes", response_model=UserTastes)
+def my_tastes(request: Request, session: Session = Depends(current_session)):
+    return review_context(request.app.state.db, session.profile.id, session.mode == "mock", session.profile).tastes
+
+
+@router.put("/reviews", response_model=Review)
+async def save_review(
+    payload: ReviewInput,
+    request: Request,
+    session: Session = Depends(current_session),
+    provider: MockIFood = Depends(get_provider),
+):
+    # Apenas itens conhecidos pela sessão podem receber avaliações. Não implica compra verificada.
+    selected = session.selected
+    history = review_context(request.app.state.db, session.profile.id, session.mode == "mock").history
+    previously_reviewed = any(
+        (r.merchant_id, r.item_id) == (payload.merchant_id, payload.item_id) for r in history
+    )
+    if not previously_reviewed and not offered(session, payload.merchant_id, payload.item_id) and not (
+        selected and (selected.candidate.merchant_id, selected.candidate.item_id)
+        == (payload.merchant_id, payload.item_id)
+    ):
+        raise MacroError("Escolha um item da busca ou do cardápio para avaliar.", 422)
+    if session.address is None:
+        raise MacroError("Selecione um endereço antes de avaliar.", 422)
+    candidate = await provider.item(payload.merchant_id, payload.item_id, session.address)
+    review = Review(
+        **payload.model_dump(), id=str(uuid4()), user_id=session.profile.id,
+        created_at=now(), simulated=session.mode == "mock",
+        merchant_name=candidate.merchant_name, item_name=candidate.name,
+    )
+    request.app.state.db.save_review(review)
+    review_context(request.app.state.db, session.profile.id, session.mode == "mock", session.profile)
+    return review
 
 
 @router.get("/merchants", response_model=list[MerchantSummary])

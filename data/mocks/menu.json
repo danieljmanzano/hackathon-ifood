@@ -1,0 +1,2490 @@
+[
+  {
+    "merchant_id": "demo-cozinha",
+    "merchant_name": "Cozinha do treino (demo)",
+    "item_id": "demo-frango",
+    "name": "Frango grelhado da casa",
+    "description": "Frango grelhado, salada fresca e a base que você escolher.",
+    "image_url": null,
+    "price_cents": 2790,
+    "currency": "BRL",
+    "option_groups": [
+      {
+        "id": "demo-base",
+        "name": "Escolha a base",
+        "min_selections": 1,
+        "max_selections": 1,
+        "options": [
+          {
+            "id": "demo-arroz",
+            "name": "Arroz integral",
+            "price_cents": 0,
+            "max_quantity": 1
+          },
+          {
+            "id": "demo-pure",
+            "name": "Purê de batata",
+            "price_cents": 200,
+            "max_quantity": 1
+          }
+        ]
+      },
+      {
+        "id": "demo-extra",
+        "name": "Complemente seu prato",
+        "min_selections": 0,
+        "max_selections": 2,
+        "options": [
+          {
+            "id": "demo-legumes",
+            "name": "Legumes assados",
+            "price_cents": 400,
+            "max_quantity": 1
+          },
+          {
+            "id": "demo-feijao",
+            "name": "Feijão",
+            "price_cents": 300,
+            "max_quantity": 1
+          }
+        ]
+      }
+    ],
+    "available": true,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-cozinha",
+    "merchant_name": "Cozinha do treino (demo)",
+    "item_id": "demo-vegetal",
+    "name": "Prato de grão-de-bico",
+    "description": "Grão-de-bico refogado, abóbora assada, couve e sua escolha de base.",
+    "image_url": null,
+    "price_cents": 2590,
+    "currency": "BRL",
+    "option_groups": [
+      {
+        "id": "demo-base",
+        "name": "Escolha a base",
+        "min_selections": 1,
+        "max_selections": 1,
+        "options": [
+          {
+            "id": "demo-arroz",
+            "name": "Arroz integral",
+            "price_cents": 0,
+            "max_quantity": 1
+          },
+          {
+            "id": "demo-pure",
+            "name": "Purê de batata",
+            "price_cents": 200,
+            "max_quantity": 1
+          }
+        ]
+      },
+      {
+        "id": "demo-extra",
+        "name": "Complemente seu prato",
+        "min_selections": 0,
+        "max_selections": 2,
+        "options": [
+          {
+            "id": "demo-legumes",
+            "name": "Legumes assados",
+            "price_cents": 400,
+            "max_quantity": 1
+          },
+          {
+            "id": "demo-feijao",
+            "name": "Feijão",
+            "price_cents": 300,
+            "max_quantity": 1
+          }
+        ]
+      }
+    ],
+    "available": true,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "comfort"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-cozinha",
+    "merchant_name": "Cozinha do treino (demo)",
+    "item_id": "demo-carne",
+    "name": "Carne de panela",
+    "description": "Carne de panela com cenoura, salada e sua escolha de base.",
+    "image_url": null,
+    "price_cents": 3290,
+    "currency": "BRL",
+    "option_groups": [
+      {
+        "id": "demo-base",
+        "name": "Escolha a base",
+        "min_selections": 1,
+        "max_selections": 1,
+        "options": [
+          {
+            "id": "demo-arroz",
+            "name": "Arroz integral",
+            "price_cents": 0,
+            "max_quantity": 1
+          },
+          {
+            "id": "demo-pure",
+            "name": "Purê de batata",
+            "price_cents": 200,
+            "max_quantity": 1
+          }
+        ]
+      },
+      {
+        "id": "demo-extra",
+        "name": "Complemente seu prato",
+        "min_selections": 0,
+        "max_selections": 2,
+        "options": [
+          {
+            "id": "demo-legumes",
+            "name": "Legumes assados",
+            "price_cents": 400,
+            "max_quantity": 1
+          },
+          {
+            "id": "demo-feijao",
+            "name": "Feijão",
+            "price_cents": 300,
+            "max_quantity": 1
+          }
+        ]
+      }
+    ],
+    "available": true,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-verde",
+    "merchant_name": "Verde no Prato (demo)",
+    "item_id": "demo-bowl",
+    "name": "Bowl de vegetais",
+    "description": "Bowl vegano com quinoa, vegetais frescos e molho separado.",
+    "image_url": null,
+    "price_cents": 2990,
+    "currency": "BRL",
+    "option_groups": [],
+    "available": true,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "vegetarian",
+        "light"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-verde",
+    "merchant_name": "Verde no Prato (demo)",
+    "item_id": "demo-falafel",
+    "name": "Falafel com salada",
+    "description": "Falafel de grão-de-bico com salada e homus.",
+    "image_url": null,
+    "price_cents": 2990,
+    "currency": "BRL",
+    "option_groups": [],
+    "available": true,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-burger",
+    "merchant_name": "Burger da Praça (demo)",
+    "item_id": "demo-burger-classico",
+    "name": "Hambúrguer clássico",
+    "description": "Pão, hambúrguer de carne, queijo e cebola com batata.",
+    "image_url": null,
+    "price_cents": 3290,
+    "currency": "BRL",
+    "option_groups": [],
+    "available": true,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "indulgent"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-burger",
+    "merchant_name": "Burger da Praça (demo)",
+    "item_id": "demo-burger-veggie",
+    "name": "Hambúrguer de lentilha",
+    "description": "Hambúrguer de lentilha com salada e molho da casa.",
+    "image_url": null,
+    "price_cents": 3290,
+    "currency": "BRL",
+    "option_groups": [],
+    "available": true,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "indulgent"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-japa",
+    "merchant_name": "Sakura Delivery (demo)",
+    "item_id": "demo-poke",
+    "name": "Poke de salmão",
+    "description": "Salmão, arroz, pepino e manga com molho separado.",
+    "image_url": null,
+    "price_cents": 4590,
+    "currency": "BRL",
+    "option_groups": [],
+    "available": true,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-japa",
+    "merchant_name": "Sakura Delivery (demo)",
+    "item_id": "demo-sushi",
+    "name": "Combinado de sushi",
+    "description": "Sushi de salmão com arroz e alga nori.",
+    "image_url": null,
+    "price_cents": 4590,
+    "currency": "BRL",
+    "option_groups": [],
+    "available": true,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-pizza",
+    "merchant_name": "Forno da Vila (demo)",
+    "item_id": "demo-margherita",
+    "name": "Pizza margherita",
+    "description": "Massa fina com queijo, tomate e manjericão.",
+    "image_url": null,
+    "price_cents": 4990,
+    "currency": "BRL",
+    "option_groups": [],
+    "available": true,
+    "simulated": true,
+    "features": {
+      "portion_size": "sharing",
+      "serves": 3,
+      "weight_grams": 900,
+      "tags": [
+        "vegetarian",
+        "indulgent"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-pizza",
+    "merchant_name": "Forno da Vila (demo)",
+    "item_id": "demo-calabresa",
+    "name": "Pizza de calabresa",
+    "description": "Massa fina com calabresa, queijo e cebola.",
+    "image_url": null,
+    "price_cents": 4990,
+    "currency": "BRL",
+    "option_groups": [],
+    "available": true,
+    "simulated": true,
+    "features": {
+      "portion_size": "sharing",
+      "serves": 3,
+      "weight_grams": 900,
+      "tags": [
+        "indulgent"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-caseira",
+    "merchant_name": "Tempero de Casa (demo)",
+    "item_id": "demo-feijoada",
+    "name": "Feijoada da casa",
+    "description": "Feijão preto com carne suína, arroz, couve e farofa.",
+    "image_url": null,
+    "price_cents": 2490,
+    "currency": "BRL",
+    "option_groups": [],
+    "available": true,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 650,
+      "tags": [
+        "protein",
+        "comfort"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-caseira",
+    "merchant_name": "Tempero de Casa (demo)",
+    "item_id": "demo-marmita",
+    "name": "Marmita caseira",
+    "description": "Arroz, feijão, carne de panela e salada fresca.",
+    "image_url": null,
+    "price_cents": 2490,
+    "currency": "BRL",
+    "option_groups": [],
+    "available": true,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-cozinha",
+    "merchant_name": "Cozinha do treino (demo)",
+    "item_id": "demo-tilapia",
+    "name": "Tilápia grelhada",
+    "description": "Tilápia grelhada com arroz integral, brócolis e cenoura.",
+    "price_cents": 3490,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-verde",
+    "merchant_name": "Verde no Prato (demo)",
+    "item_id": "demo-escondidinho",
+    "name": "Escondidinho de lentilha",
+    "description": "Purê de mandioca com lentilha, abóbora e salada vegana.",
+    "price_cents": 3190,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 650,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-burger",
+    "merchant_name": "Burger da Praça (demo)",
+    "item_id": "demo-burger-frango",
+    "name": "Hambúrguer de frango",
+    "description": "Pão, hambúrguer de frango grelhado, alface e tomate.",
+    "price_cents": 2890,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "indulgent"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-japa",
+    "merchant_name": "Sakura Delivery (demo)",
+    "item_id": "demo-yakisoba",
+    "name": "Yakisoba de legumes",
+    "description": "Macarrão oriental com brócolis, cenoura, repolho e molho shoyu.",
+    "price_cents": 3290,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "light"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-pizza",
+    "merchant_name": "Forno da Vila (demo)",
+    "item_id": "demo-pizza-cogumelos",
+    "name": "Pizza de cogumelos",
+    "description": "Massa fina com cogumelos, queijo e molho de tomate.",
+    "price_cents": 5490,
+    "simulated": true,
+    "features": {
+      "portion_size": "sharing",
+      "serves": 3,
+      "weight_grams": 900,
+      "tags": [
+        "vegetarian",
+        "indulgent"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-caseira",
+    "merchant_name": "Tempero de Casa (demo)",
+    "item_id": "demo-omelete",
+    "name": "Omelete da casa",
+    "description": "Omelete de queijo com arroz, feijão e salada.",
+    "price_cents": 2290,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-horta",
+    "merchant_name": "Horta Urbana (demo)",
+    "item_id": "demo-horta-bowl",
+    "name": "Bowl de quinoa e tofu",
+    "description": "Quinoa com tofu grelhado, abacate e vegetais frescos.",
+    "price_cents": 2890,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-horta",
+    "merchant_name": "Horta Urbana (demo)",
+    "item_id": "demo-horta-curry",
+    "name": "Curry de grão-de-bico",
+    "description": "Grão-de-bico ao curry com leite de coco, arroz e abóbora.",
+    "price_cents": 3090,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "protein"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-horta",
+    "merchant_name": "Horta Urbana (demo)",
+    "item_id": "demo-horta-salada",
+    "name": "Salada de lentilhas",
+    "description": "Lentilhas com folhas, tomate, cenoura e molho separado.",
+    "price_cents": 2490,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-quintal",
+    "merchant_name": "Quintal da Vó (demo)",
+    "item_id": "demo-quintal-frango",
+    "name": "Frango com quiabo",
+    "description": "Frango ensopado com quiabo, arroz, feijão e farofa.",
+    "price_cents": 2790,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-quintal",
+    "merchant_name": "Quintal da Vó (demo)",
+    "item_id": "demo-quintal-picadinho",
+    "name": "Picadinho com legumes",
+    "description": "Carne em cubos com legumes, arroz e feijão.",
+    "price_cents": 2990,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 650,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-quintal",
+    "merchant_name": "Quintal da Vó (demo)",
+    "item_id": "demo-quintal-abobora",
+    "name": "Abóbora recheada",
+    "description": "Abóbora assada com carne desfiada e arroz.",
+    "price_cents": 3190,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "comfort"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-nori",
+    "merchant_name": "Nori Bowl (demo)",
+    "item_id": "demo-nori-atum",
+    "name": "Poke de atum",
+    "description": "Atum com arroz, pepino, manga e molho separado.",
+    "price_cents": 3990,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-nori",
+    "merchant_name": "Nori Bowl (demo)",
+    "item_id": "demo-nori-tofu",
+    "name": "Poke de tofu",
+    "description": "Tofu grelhado com arroz, edamame, cenoura e gergelim.",
+    "price_cents": 3190,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-nori",
+    "merchant_name": "Nori Bowl (demo)",
+    "item_id": "demo-nori-temaki",
+    "name": "Temaki de salmão",
+    "description": "Alga nori com salmão, arroz e cebolinha.",
+    "price_cents": 2590,
+    "simulated": true,
+    "features": {
+      "portion_size": "small",
+      "serves": 1,
+      "weight_grams": 220,
+      "tags": [
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-massa",
+    "merchant_name": "Pasta do Bairro (demo)",
+    "item_id": "demo-massa-nhoque",
+    "name": "Nhoque ao sugo",
+    "description": "Nhoque de batata com molho de tomate e manjericão.",
+    "price_cents": 3290,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-massa",
+    "merchant_name": "Pasta do Bairro (demo)",
+    "item_id": "demo-massa-penne",
+    "name": "Penne com frango",
+    "description": "Penne com frango grelhado e molho de tomate.",
+    "price_cents": 3590,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-massa",
+    "merchant_name": "Pasta do Bairro (demo)",
+    "item_id": "demo-massa-risoto",
+    "name": "Risoto de cogumelos",
+    "description": "Arroz arbóreo com cogumelos e queijo parmesão.",
+    "price_cents": 3890,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-brasa",
+    "merchant_name": "Brasa & Companhia (demo)",
+    "item_id": "demo-brasa-alcatra",
+    "name": "Alcatra na brasa",
+    "description": "Alcatra grelhada com arroz, farofa e vinagrete.",
+    "price_cents": 4290,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 650,
+      "tags": [
+        "vegetarian",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-brasa",
+    "merchant_name": "Brasa & Companhia (demo)",
+    "item_id": "demo-brasa-frango",
+    "name": "Espetinhos de frango",
+    "description": "Espetinhos de frango com arroz, feijão e salada.",
+    "price_cents": 2690,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-brasa",
+    "merchant_name": "Brasa & Companhia (demo)",
+    "item_id": "demo-brasa-legumes",
+    "name": "Legumes na brasa",
+    "description": "Abobrinha, berinjela e cenoura grelhadas com arroz.",
+    "price_cents": 2390,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-curry",
+    "merchant_name": "Casa do Curry (demo)",
+    "item_id": "demo-curry-dal",
+    "name": "Dal de lentilhas",
+    "description": "Lentilhas com cúrcuma, cominho e arroz basmati.",
+    "price_cents": 2890,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-curry",
+    "merchant_name": "Casa do Curry (demo)",
+    "item_id": "demo-curry-paneer",
+    "name": "Paneer com espinafre",
+    "description": "Queijo paneer com espinafre e arroz basmati.",
+    "price_cents": 3490,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-curry",
+    "merchant_name": "Casa do Curry (demo)",
+    "item_id": "demo-curry-frango",
+    "name": "Frango ao curry",
+    "description": "Frango com molho de curry, leite de coco e arroz.",
+    "price_cents": 3290,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "protein"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-cozinha",
+    "merchant_name": "Cozinha do treino (demo)",
+    "item_id": "demo-cozinha-opcao-1",
+    "name": "Salmão com batata-doce",
+    "description": "Salmão grelhado com batata-doce e brócolis.",
+    "price_cents": 4290,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-cozinha",
+    "merchant_name": "Cozinha do treino (demo)",
+    "item_id": "demo-cozinha-opcao-2",
+    "name": "Frango ao limão",
+    "description": "Frango grelhado ao limão com arroz integral e abobrinha.",
+    "price_cents": 2890,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-verde",
+    "merchant_name": "Verde no Prato (demo)",
+    "item_id": "demo-verde-opcao-1",
+    "name": "Tabule com homus",
+    "description": "Trigo para quibe, tomate, pepino, hortelã e homus.",
+    "price_cents": 2590,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-verde",
+    "merchant_name": "Verde no Prato (demo)",
+    "item_id": "demo-verde-opcao-2",
+    "name": "Moqueca de banana",
+    "description": "Banana-da-terra com leite de coco, pimentão e arroz.",
+    "price_cents": 3090,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-burger",
+    "merchant_name": "Burger da Praça (demo)",
+    "item_id": "demo-burger-opcao-1",
+    "name": "Smash da casa",
+    "description": "Pão, carne bovina, queijo, picles e molho da casa.",
+    "price_cents": 2490,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "indulgent"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-burger",
+    "merchant_name": "Burger da Praça (demo)",
+    "item_id": "demo-burger-opcao-2",
+    "name": "Burger duplo",
+    "description": "Dois hambúrgueres de carne, queijo e cebola no pão.",
+    "price_cents": 3890,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 650,
+      "tags": [
+        "protein",
+        "indulgent"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-japa",
+    "merchant_name": "Sakura Delivery (demo)",
+    "item_id": "demo-japa-opcao-1",
+    "name": "Hot roll de salmão",
+    "description": "Rolinho empanado de arroz, salmão, alga e cream cheese.",
+    "price_cents": 2890,
+    "simulated": true,
+    "features": {
+      "portion_size": "small",
+      "serves": 1,
+      "weight_grams": 220,
+      "tags": [
+        "protein",
+        "indulgent"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-japa",
+    "merchant_name": "Sakura Delivery (demo)",
+    "item_id": "demo-japa-opcao-2",
+    "name": "Shimeji na manteiga",
+    "description": "Shimeji com manteiga, shoyu e cebolinha.",
+    "price_cents": 2590,
+    "simulated": true,
+    "features": {
+      "portion_size": "small",
+      "serves": 1,
+      "weight_grams": 220,
+      "tags": [
+        "vegetarian"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-pizza",
+    "merchant_name": "Forno da Vila (demo)",
+    "item_id": "demo-pizza-opcao-1",
+    "name": "Pizza portuguesa",
+    "description": "Massa com queijo, presunto, ovo, ervilha e cebola.",
+    "price_cents": 5290,
+    "simulated": true,
+    "features": {
+      "portion_size": "sharing",
+      "serves": 3,
+      "weight_grams": 900,
+      "tags": [
+        "protein",
+        "indulgent"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-pizza",
+    "merchant_name": "Forno da Vila (demo)",
+    "item_id": "demo-pizza-opcao-2",
+    "name": "Pizza de vegetais",
+    "description": "Massa com abobrinha, berinjela, tomate e queijo.",
+    "price_cents": 4990,
+    "simulated": true,
+    "features": {
+      "portion_size": "sharing",
+      "serves": 3,
+      "weight_grams": 900,
+      "tags": [
+        "vegetarian",
+        "indulgent"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-caseira",
+    "merchant_name": "Tempero de Casa (demo)",
+    "item_id": "demo-caseira-opcao-1",
+    "name": "Strogonoff de frango",
+    "description": "Frango com molho cremoso, arroz e batata palha.",
+    "price_cents": 2790,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "protein",
+        "comfort"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-caseira",
+    "merchant_name": "Tempero de Casa (demo)",
+    "item_id": "demo-caseira-opcao-2",
+    "name": "Bife acebolado",
+    "description": "Bife com cebola, arroz, feijão e salada.",
+    "price_cents": 2990,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-horta",
+    "merchant_name": "Horta Urbana (demo)",
+    "item_id": "demo-horta-opcao-1",
+    "name": "Tofu com lentilhas",
+    "description": "Tofu assado, lentilhas, arroz integral e cenoura.",
+    "price_cents": 2990,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-horta",
+    "merchant_name": "Horta Urbana (demo)",
+    "item_id": "demo-horta-opcao-2",
+    "name": "Salada de abacate",
+    "description": "Folhas, abacate, tomate, grão-de-bico e sementes.",
+    "price_cents": 2690,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-quintal",
+    "merchant_name": "Quintal da Vó (demo)",
+    "item_id": "demo-quintal-opcao-1",
+    "name": "Pernil assado",
+    "description": "Pernil suíno com arroz, feijão e couve.",
+    "price_cents": 3290,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "protein",
+        "comfort"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-quintal",
+    "merchant_name": "Quintal da Vó (demo)",
+    "item_id": "demo-quintal-opcao-2",
+    "name": "Panqueca de carne",
+    "description": "Panqueca recheada de carne com molho de tomate.",
+    "price_cents": 2690,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "comfort"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-nori",
+    "merchant_name": "Nori Bowl (demo)",
+    "item_id": "demo-nori-opcao-1",
+    "name": "Poke de frango",
+    "description": "Frango grelhado com arroz, pepino, cenoura e manga.",
+    "price_cents": 2990,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-nori",
+    "merchant_name": "Nori Bowl (demo)",
+    "item_id": "demo-nori-opcao-2",
+    "name": "Poke de cogumelos",
+    "description": "Cogumelos salteados com arroz, edamame e gergelim.",
+    "price_cents": 3090,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "light"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-massa",
+    "merchant_name": "Pasta do Bairro (demo)",
+    "item_id": "demo-massa-opcao-1",
+    "name": "Lasanha bolonhesa",
+    "description": "Massa em camadas com carne moída, queijo e tomate.",
+    "price_cents": 3690,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 650,
+      "tags": [
+        "protein"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-massa",
+    "merchant_name": "Pasta do Bairro (demo)",
+    "item_id": "demo-massa-opcao-2",
+    "name": "Espaguete ao pesto",
+    "description": "Espaguete com manjericão, azeite, castanhas e parmesão.",
+    "price_cents": 3290,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-brasa",
+    "merchant_name": "Brasa & Companhia (demo)",
+    "item_id": "demo-brasa-opcao-1",
+    "name": "Costela na brasa",
+    "description": "Costela bovina com mandioca, farofa e vinagrete.",
+    "price_cents": 4590,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 650,
+      "tags": [
+        "comfort"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-brasa",
+    "merchant_name": "Brasa & Companhia (demo)",
+    "item_id": "demo-brasa-opcao-2",
+    "name": "Linguiça com mandioca",
+    "description": "Linguiça grelhada, mandioca e vinagrete.",
+    "price_cents": 2890,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "comfort"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-curry",
+    "merchant_name": "Casa do Curry (demo)",
+    "item_id": "demo-curry-opcao-1",
+    "name": "Biryani de vegetais",
+    "description": "Arroz basmati com vegetais, especiarias e castanhas.",
+    "price_cents": 2990,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 650,
+      "tags": [
+        "vegetarian"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-curry",
+    "merchant_name": "Casa do Curry (demo)",
+    "item_id": "demo-curry-opcao-2",
+    "name": "Aloo gobi",
+    "description": "Batata e couve-flor com especiarias e arroz basmati.",
+    "price_cents": 2790,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-mex",
+    "merchant_name": "Pimenta Mexicana (demo)",
+    "item_id": "demo-mex-opcao-1",
+    "name": "Burrito de frango",
+    "description": "Tortilha com frango, arroz, feijão e guacamole.",
+    "price_cents": 2790,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "protein"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-mex",
+    "merchant_name": "Pimenta Mexicana (demo)",
+    "item_id": "demo-mex-opcao-2",
+    "name": "Tacos de carne",
+    "description": "Tortilhas com carne bovina, tomate e coentro.",
+    "price_cents": 2990,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-mex",
+    "merchant_name": "Pimenta Mexicana (demo)",
+    "item_id": "demo-mex-opcao-3",
+    "name": "Burrito de feijão",
+    "description": "Tortilha com feijão, milho, arroz e guacamole.",
+    "price_cents": 2490,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "vegetarian",
+        "protein"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-mex",
+    "merchant_name": "Pimenta Mexicana (demo)",
+    "item_id": "demo-mex-opcao-4",
+    "name": "Quesadilla de queijo",
+    "description": "Tortilha com queijo derretido e pico de gallo.",
+    "price_cents": 2290,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-mex",
+    "merchant_name": "Pimenta Mexicana (demo)",
+    "item_id": "demo-mex-opcao-5",
+    "name": "Nachos completos",
+    "description": "Milho crocante com carne, feijão, queijo e guacamole.",
+    "price_cents": 3490,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "indulgent"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-arabe",
+    "merchant_name": "Cedro Árabe (demo)",
+    "item_id": "demo-arabe-opcao-1",
+    "name": "Shawarma de frango",
+    "description": "Pão sírio com frango, salada e molho de alho.",
+    "price_cents": 2590,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-arabe",
+    "merchant_name": "Cedro Árabe (demo)",
+    "item_id": "demo-arabe-opcao-2",
+    "name": "Kafta com arroz",
+    "description": "Kafta bovina grelhada com arroz e tabule.",
+    "price_cents": 2990,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "light"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-arabe",
+    "merchant_name": "Cedro Árabe (demo)",
+    "item_id": "demo-arabe-opcao-3",
+    "name": "Falafel no pão",
+    "description": "Pão sírio com falafel, homus e salada.",
+    "price_cents": 2390,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "light"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-arabe",
+    "merchant_name": "Cedro Árabe (demo)",
+    "item_id": "demo-arabe-opcao-4",
+    "name": "Quibe assado",
+    "description": "Trigo, carne bovina, hortelã e salada.",
+    "price_cents": 2690,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-arabe",
+    "merchant_name": "Cedro Árabe (demo)",
+    "item_id": "demo-arabe-opcao-5",
+    "name": "Prato de homus",
+    "description": "Homus com tabule, falafel e pão sírio.",
+    "price_cents": 2890,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-thai",
+    "merchant_name": "Bangkok Express (demo)",
+    "item_id": "demo-thai-opcao-1",
+    "name": "Pad thai de frango",
+    "description": "Macarrão de arroz com frango, amendoim e brotos.",
+    "price_cents": 3590,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "protein"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-thai",
+    "merchant_name": "Bangkok Express (demo)",
+    "item_id": "demo-thai-opcao-2",
+    "name": "Curry verde de tofu",
+    "description": "Tofu com curry verde, leite de coco e arroz.",
+    "price_cents": 3290,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-thai",
+    "merchant_name": "Bangkok Express (demo)",
+    "item_id": "demo-thai-opcao-3",
+    "name": "Arroz com camarão",
+    "description": "Arroz salteado com camarão e legumes.",
+    "price_cents": 3990,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-thai",
+    "merchant_name": "Bangkok Express (demo)",
+    "item_id": "demo-thai-opcao-4",
+    "name": "Frango com manjericão",
+    "description": "Frango salteado com manjericão e arroz.",
+    "price_cents": 3190,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "protein"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-thai",
+    "merchant_name": "Bangkok Express (demo)",
+    "item_id": "demo-thai-opcao-5",
+    "name": "Legumes ao curry",
+    "description": "Legumes com curry vermelho e arroz de jasmim.",
+    "price_cents": 2990,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "light"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-mar",
+    "merchant_name": "Sabor do Mar (demo)",
+    "item_id": "demo-mar-opcao-1",
+    "name": "Tilápia com purê",
+    "description": "Tilápia grelhada com purê de batata e salada.",
+    "price_cents": 3290,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-mar",
+    "merchant_name": "Sabor do Mar (demo)",
+    "item_id": "demo-mar-opcao-2",
+    "name": "Moqueca de peixe",
+    "description": "Peixe com leite de coco, pimentão e arroz.",
+    "price_cents": 4290,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "comfort"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-mar",
+    "merchant_name": "Sabor do Mar (demo)",
+    "item_id": "demo-mar-opcao-3",
+    "name": "Camarão com arroz",
+    "description": "Camarão salteado com arroz e legumes.",
+    "price_cents": 4590,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-mar",
+    "merchant_name": "Sabor do Mar (demo)",
+    "item_id": "demo-mar-opcao-4",
+    "name": "Peixe empanado",
+    "description": "Peixe empanado com arroz, feijão e salada.",
+    "price_cents": 2990,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "protein",
+        "comfort"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-mar",
+    "merchant_name": "Sabor do Mar (demo)",
+    "item_id": "demo-mar-opcao-5",
+    "name": "Salmão com quinoa",
+    "description": "Salmão grelhado com quinoa e vegetais.",
+    "price_cents": 4690,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-sertao",
+    "merchant_name": "Sertão na Mesa (demo)",
+    "item_id": "demo-sertao-opcao-1",
+    "name": "Baião de dois",
+    "description": "Arroz, feijão, queijo coalho e carne-seca.",
+    "price_cents": 2990,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 650,
+      "tags": [
+        "protein",
+        "comfort"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-sertao",
+    "merchant_name": "Sertão na Mesa (demo)",
+    "item_id": "demo-sertao-opcao-2",
+    "name": "Escondidinho de carne-seca",
+    "description": "Purê de mandioca com carne-seca e queijo.",
+    "price_cents": 3290,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 650,
+      "tags": [
+        "protein",
+        "comfort"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-sertao",
+    "merchant_name": "Sertão na Mesa (demo)",
+    "item_id": "demo-sertao-opcao-3",
+    "name": "Cuscuz com ovo",
+    "description": "Cuscuz de milho com ovo e queijo coalho.",
+    "price_cents": 1890,
+    "simulated": true,
+    "features": {
+      "portion_size": "small",
+      "serves": 1,
+      "weight_grams": 220,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "comfort"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-sertao",
+    "merchant_name": "Sertão na Mesa (demo)",
+    "item_id": "demo-sertao-opcao-4",
+    "name": "Carne de sol",
+    "description": "Carne de sol com mandioca, feijão e vinagrete.",
+    "price_cents": 3990,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "comfort"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-sertao",
+    "merchant_name": "Sertão na Mesa (demo)",
+    "item_id": "demo-sertao-opcao-5",
+    "name": "Tapioca de frango",
+    "description": "Tapioca recheada com frango desfiado e queijo.",
+    "price_cents": 2190,
+    "simulated": true,
+    "features": {
+      "portion_size": "small",
+      "serves": 1,
+      "weight_grams": 220,
+      "tags": [
+        "protein",
+        "comfort"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-sopas",
+    "merchant_name": "Panela Quente (demo)",
+    "item_id": "demo-sopas-opcao-1",
+    "name": "Sopa de legumes",
+    "description": "Caldo com batata, cenoura, abóbora e abobrinha.",
+    "price_cents": 1990,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-sopas",
+    "merchant_name": "Panela Quente (demo)",
+    "item_id": "demo-sopas-opcao-2",
+    "name": "Canja de frango",
+    "description": "Caldo com frango desfiado, arroz e cenoura.",
+    "price_cents": 2290,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-sopas",
+    "merchant_name": "Panela Quente (demo)",
+    "item_id": "demo-sopas-opcao-3",
+    "name": "Creme de abóbora",
+    "description": "Abóbora com gengibre e sementes tostadas.",
+    "price_cents": 2090,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "comfort"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-sopas",
+    "merchant_name": "Panela Quente (demo)",
+    "item_id": "demo-sopas-opcao-4",
+    "name": "Caldo de feijão",
+    "description": "Feijão com bacon, couve e torradas.",
+    "price_cents": 2390,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "comfort"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-sopas",
+    "merchant_name": "Panela Quente (demo)",
+    "item_id": "demo-sopas-opcao-5",
+    "name": "Sopa de lentilhas",
+    "description": "Lentilhas com cenoura, tomate e ervas.",
+    "price_cents": 2190,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-salada",
+    "merchant_name": "Folha & Grão (demo)",
+    "item_id": "demo-salada-opcao-1",
+    "name": "Bowl de falafel",
+    "description": "Falafel, arroz integral, pepino e homus.",
+    "price_cents": 2790,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "vegetarian",
+        "light"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-salada",
+    "merchant_name": "Folha & Grão (demo)",
+    "item_id": "demo-salada-opcao-2",
+    "name": "Salada de quinoa",
+    "description": "Quinoa, folhas, tomate e grão-de-bico.",
+    "price_cents": 2590,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-salada",
+    "merchant_name": "Folha & Grão (demo)",
+    "item_id": "demo-salada-opcao-3",
+    "name": "Bowl de batata-doce",
+    "description": "Batata-doce assada, lentilhas, brócolis e tahine.",
+    "price_cents": 2690,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-salada",
+    "merchant_name": "Folha & Grão (demo)",
+    "item_id": "demo-salada-opcao-4",
+    "name": "Wrap de vegetais",
+    "description": "Tortilha com vegetais grelhados e homus.",
+    "price_cents": 2390,
+    "simulated": true,
+    "features": {
+      "portion_size": "small",
+      "serves": 1,
+      "weight_grams": 220,
+      "tags": [
+        "vegetarian",
+        "light"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-salada",
+    "merchant_name": "Folha & Grão (demo)",
+    "item_id": "demo-salada-opcao-5",
+    "name": "Arroz com cogumelos",
+    "description": "Arroz integral com cogumelos e ervilhas.",
+    "price_cents": 2890,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-grelha",
+    "merchant_name": "Grelha Leve (demo)",
+    "item_id": "demo-grelha-opcao-1",
+    "name": "Frango com quinoa",
+    "description": "Frango grelhado com quinoa, brócolis e cenoura.",
+    "price_cents": 3090,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-grelha",
+    "merchant_name": "Grelha Leve (demo)",
+    "item_id": "demo-grelha-opcao-2",
+    "name": "Frango com batata-doce",
+    "description": "Frango grelhado com batata-doce e salada.",
+    "price_cents": 2790,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-grelha",
+    "merchant_name": "Grelha Leve (demo)",
+    "item_id": "demo-grelha-opcao-3",
+    "name": "Patinho com arroz",
+    "description": "Carne bovina moída com arroz integral e feijão.",
+    "price_cents": 2890,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "protein",
+        "comfort"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-grelha",
+    "merchant_name": "Grelha Leve (demo)",
+    "item_id": "demo-grelha-opcao-4",
+    "name": "Tilápia com legumes",
+    "description": "Tilápia grelhada com legumes e arroz integral.",
+    "price_cents": 3290,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-grelha",
+    "merchant_name": "Grelha Leve (demo)",
+    "item_id": "demo-grelha-opcao-5",
+    "name": "Omelete de espinafre",
+    "description": "Omelete com espinafre, queijo e salada.",
+    "price_cents": 2490,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian",
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 45
+    }
+  },
+  {
+    "merchant_id": "demo-forneria",
+    "merchant_name": "Forneria Central (demo)",
+    "item_id": "demo-forneria-opcao-1",
+    "name": "Pizza de rúcula",
+    "description": "Massa fina com queijo, rúcula e tomate seco.",
+    "price_cents": 4990,
+    "simulated": true,
+    "features": {
+      "portion_size": "sharing",
+      "serves": 3,
+      "weight_grams": 900,
+      "tags": [
+        "vegetarian",
+        "indulgent"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-forneria",
+    "merchant_name": "Forneria Central (demo)",
+    "item_id": "demo-forneria-opcao-2",
+    "name": "Pizza de frango",
+    "description": "Massa com frango desfiado, milho e requeijão.",
+    "price_cents": 5290,
+    "simulated": true,
+    "features": {
+      "portion_size": "sharing",
+      "serves": 3,
+      "weight_grams": 900,
+      "tags": [
+        "protein",
+        "indulgent"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-forneria",
+    "merchant_name": "Forneria Central (demo)",
+    "item_id": "demo-forneria-opcao-3",
+    "name": "Pizza napolitana",
+    "description": "Massa com tomate, queijo e alho.",
+    "price_cents": 4590,
+    "simulated": true,
+    "features": {
+      "portion_size": "sharing",
+      "serves": 3,
+      "weight_grams": 900,
+      "tags": [
+        "vegetarian",
+        "indulgent"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-forneria",
+    "merchant_name": "Forneria Central (demo)",
+    "item_id": "demo-forneria-opcao-4",
+    "name": "Calzone de queijo",
+    "description": "Massa fechada com queijo e molho de tomate.",
+    "price_cents": 3290,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-forneria",
+    "merchant_name": "Forneria Central (demo)",
+    "item_id": "demo-forneria-opcao-5",
+    "name": "Pizza de abobrinha",
+    "description": "Massa com abobrinha, queijo e manjericão.",
+    "price_cents": 4790,
+    "simulated": true,
+    "features": {
+      "portion_size": "sharing",
+      "serves": 3,
+      "weight_grams": 900,
+      "tags": [
+        "vegetarian",
+        "indulgent"
+      ],
+      "eta_max_minutes": 25
+    }
+  },
+  {
+    "merchant_id": "demo-sushi",
+    "merchant_name": "Sushi Jardim (demo)",
+    "item_id": "demo-sushi-opcao-1",
+    "name": "Sashimi de salmão",
+    "description": "Fatias de salmão com gengibre e wasabi.",
+    "price_cents": 4290,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-sushi",
+    "merchant_name": "Sushi Jardim (demo)",
+    "item_id": "demo-sushi-opcao-2",
+    "name": "Poke tropical",
+    "description": "Salmão, arroz, manga, pepino e gergelim.",
+    "price_cents": 3790,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-sushi",
+    "merchant_name": "Sushi Jardim (demo)",
+    "item_id": "demo-sushi-opcao-3",
+    "name": "Uramaki de pepino",
+    "description": "Arroz, alga, pepino e gergelim.",
+    "price_cents": 2290,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "vegetarian"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-sushi",
+    "merchant_name": "Sushi Jardim (demo)",
+    "item_id": "demo-sushi-opcao-4",
+    "name": "Temaki de atum",
+    "description": "Alga com arroz, atum e cebolinha.",
+    "price_cents": 2790,
+    "simulated": true,
+    "features": {
+      "portion_size": "small",
+      "serves": 1,
+      "weight_grams": 220,
+      "tags": [
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-sushi",
+    "merchant_name": "Sushi Jardim (demo)",
+    "item_id": "demo-sushi-opcao-5",
+    "name": "Yakisoba de frango",
+    "description": "Macarrão oriental com frango e legumes.",
+    "price_cents": 3190,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 30
+    }
+  },
+  {
+    "merchant_id": "demo-sanduiche",
+    "merchant_name": "Pão da Esquina (demo)",
+    "item_id": "demo-sanduiche-opcao-1",
+    "name": "Sanduíche de frango",
+    "description": "Pão integral com frango, alface e tomate.",
+    "price_cents": 1990,
+    "simulated": true,
+    "features": {
+      "portion_size": "small",
+      "serves": 1,
+      "weight_grams": 220,
+      "tags": [
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-sanduiche",
+    "merchant_name": "Pão da Esquina (demo)",
+    "item_id": "demo-sanduiche-opcao-2",
+    "name": "Sanduíche de atum",
+    "description": "Pão integral com atum, cenoura e folhas.",
+    "price_cents": 2290,
+    "simulated": true,
+    "features": {
+      "portion_size": "small",
+      "serves": 1,
+      "weight_grams": 220,
+      "tags": [
+        "protein",
+        "light"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-sanduiche",
+    "merchant_name": "Pão da Esquina (demo)",
+    "item_id": "demo-sanduiche-opcao-3",
+    "name": "Wrap de queijo",
+    "description": "Tortilha com queijo branco, tomate e rúcula.",
+    "price_cents": 2090,
+    "simulated": true,
+    "features": {
+      "portion_size": "small",
+      "serves": 1,
+      "weight_grams": 220,
+      "tags": [
+        "vegetarian"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-sanduiche",
+    "merchant_name": "Pão da Esquina (demo)",
+    "item_id": "demo-sanduiche-opcao-4",
+    "name": "Sanduíche de carne",
+    "description": "Pão com carne desfiada, queijo e cebola.",
+    "price_cents": 2490,
+    "simulated": true,
+    "features": {
+      "portion_size": "small",
+      "serves": 1,
+      "weight_grams": 220,
+      "tags": [
+        "protein"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-sanduiche",
+    "merchant_name": "Pão da Esquina (demo)",
+    "item_id": "demo-sanduiche-opcao-5",
+    "name": "Torrada de abacate",
+    "description": "Pão tostado com abacate, ovo e tomate.",
+    "price_cents": 2190,
+    "simulated": true,
+    "features": {
+      "portion_size": "small",
+      "serves": 1,
+      "weight_grams": 220,
+      "tags": [
+        "vegetarian",
+        "protein"
+      ],
+      "eta_max_minutes": 35
+    }
+  },
+  {
+    "merchant_id": "demo-mineira",
+    "merchant_name": "Fogão Mineiro (demo)",
+    "item_id": "demo-mineira-opcao-1",
+    "name": "Frango com angu",
+    "description": "Frango ensopado com angu e couve.",
+    "price_cents": 2790,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-mineira",
+    "merchant_name": "Fogão Mineiro (demo)",
+    "item_id": "demo-mineira-opcao-2",
+    "name": "Tutu com bisteca",
+    "description": "Tutu de feijão com bisteca suína e arroz.",
+    "price_cents": 3190,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "protein",
+        "comfort"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-mineira",
+    "merchant_name": "Fogão Mineiro (demo)",
+    "item_id": "demo-mineira-opcao-3",
+    "name": "Vaca atolada",
+    "description": "Costela bovina cozida com mandioca e arroz.",
+    "price_cents": 3590,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 650,
+      "tags": [
+        "comfort"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-mineira",
+    "merchant_name": "Fogão Mineiro (demo)",
+    "item_id": "demo-mineira-opcao-4",
+    "name": "Arroz com pequi",
+    "description": "Arroz com pequi, frango e salada.",
+    "price_cents": 2890,
+    "simulated": true,
+    "features": {
+      "portion_size": "large",
+      "serves": 1,
+      "weight_grams": 600,
+      "tags": [
+        "protein",
+        "comfort",
+        "light"
+      ],
+      "eta_max_minutes": 40
+    }
+  },
+  {
+    "merchant_id": "demo-mineira",
+    "merchant_name": "Fogão Mineiro (demo)",
+    "item_id": "demo-mineira-opcao-5",
+    "name": "Tropeiro da casa",
+    "description": "Feijão tropeiro com ovo, couve e linguiça.",
+    "price_cents": 2690,
+    "simulated": true,
+    "features": {
+      "portion_size": "regular",
+      "serves": 1,
+      "weight_grams": 420,
+      "tags": [
+        "protein",
+        "comfort"
+      ],
+      "eta_max_minutes": 40
+    }
+  }
+]

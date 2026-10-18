@@ -1,67 +1,21 @@
+import json
+from pathlib import Path
+
 from app.core.exceptions import MacroError
 from app.schemas.macro import (
     Address,
     DeliveryChoice,
     MealCandidate,
-    Option,
-    OptionGroup,
+    MerchantSummary,
     PaymentChoice,
 )
 
+from app.services.mock_reviews import review_dataset
+
 
 def catalog() -> list[MealCandidate]:
-    base = OptionGroup(
-        id="demo-base",
-        name="Escolha a base",
-        min_selections=1,
-        max_selections=1,
-        options=[
-            Option(id="demo-arroz", name="Arroz integral"),
-            Option(id="demo-pure", name="Purê de batata", price_cents=200),
-        ],
-    )
-    extras = OptionGroup(
-        id="demo-extra",
-        name="Complemente seu prato",
-        min_selections=0,
-        max_selections=2,
-        options=[
-            Option(id="demo-legumes", name="Legumes assados", price_cents=400),
-            Option(id="demo-feijao", name="Feijão", price_cents=300),
-        ],
-    )
-    return [
-        MealCandidate(
-            merchant_id="demo-cozinha",
-            merchant_name="Cozinha do treino (demo)",
-            item_id=item_id,
-            name=name,
-            description=description,
-            price_cents=price,
-            simulated=True,
-            option_groups=[base, extras],
-        )
-        for item_id, name, description, price in [
-            (
-                "demo-frango",
-                "Frango grelhado da casa",
-                "Frango grelhado, salada fresca e a base que você escolher.",
-                2790,
-            ),
-            (
-                "demo-vegetal",
-                "Prato de grão-de-bico",
-                "Grão-de-bico refogado, abóbora assada, couve e sua escolha de base.",
-                2590,
-            ),
-            (
-                "demo-carne",
-                "Carne de panela",
-                "Carne de panela com cenoura, salada e sua escolha de base.",
-                3290,
-            ),
-        ]
-    ]
+    path = Path(__file__).resolve().parents[2] / 'data' / 'mocks' / 'menu.json'
+    return [MealCandidate.model_validate(item) for item in json.loads(path.read_text(encoding='utf-8'))]
 
 
 class MockIFood:
@@ -90,6 +44,19 @@ class MockIFood:
             if (it.merchant_id, it.item_id) == (merchant_id, item_id):
                 return it
         raise MacroError("Item indisponível. Faça outra busca.", 404)
+
+    async def merchants(self, address: Address) -> list[MerchantSummary]:
+        return [MerchantSummary(
+            merchant_id=m.merchant_id, name=m.name, rating=m.rating,
+            rating_count=m.rating_count, eta_min=m.eta_min, eta_max=m.eta_max,
+            delivery_fee_cents=m.delivery_fee_cents, simulated=True,
+        ) for m in review_dataset().establishments]
+
+    async def menu(self, merchant_id: str, address: Address) -> list[MealCandidate]:
+        items = [item for item in catalog() if item.merchant_id == merchant_id]
+        if not items:
+            raise MacroError("Estabelecimento fictício não encontrado.", 404)
+        return items
 
     async def diagnostic(self) -> dict:
         return {
