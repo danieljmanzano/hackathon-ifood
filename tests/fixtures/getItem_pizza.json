@@ -1,0 +1,38 @@
+{
+  "itemId": "a1b2c3d4-0001-4000-8000-000000004592",
+  "itemName": "Pizza Margherita",
+  "merchantId": "b8f3c1e2-a456-7890-1234-567890abcdef",
+  "merchantName": "Pizza Express",
+  "unitPrice": 32.90,
+  "itemDescription": "Classic margherita with fresh mozzarella, San Marzano tomato sauce, and basil. 35cm, serves 1-2.",
+  "itemImageUrl": "https://cdn.ifood.com.br/items/4592.jpg",
+  "appDeeplink": "ifood://dish-details/98aa765a-11f3-481b-b595-7b1b5f93a35c/9341b742-270c-4d26-bd37-41875b65f722",
+  "optionGroups": [
+    {
+      "optionGroupId": "c8a1f3d2-4e5f-4000-8a00-000000000001",
+      "name": "Borda",
+      "minSelections": 0,
+      "maxSelections": 1,
+      "options": [
+        { "optionId": "f6a7b8c9-0001-4000-e000-000000000001", "name": "Catupiry", "description": "Borda recheada com catupiry", "additionalPrice": 5.00 },
+        { "optionId": "f6a7b8c9-0001-4000-e000-000000000002", "name": "Cheddar", "description": "Borda recheada com cheddar", "additionalPrice": 5.00 },
+        { "optionId": "f6a7b8c9-0001-4000-e000-000000000003", "name": "Sem borda", "description": "Sem recheio na borda", "additionalPrice": 0.00 }
+      ]
+    },
+    {
+      "optionGroupId": "c8a1f3d2-4e5f-4000-8a00-000000000002",
+      "name": "Ingredientes extras",
+      "minSelections": 0,
+      "maxSelections": 3,
+      "options": [
+        { "optionId": "f6a7b8c9-0001-4000-e000-000000000010", "name": "Pepperoni", "description": "Fatias de pepperoni", "additionalPrice": 6.00 },
+        { "optionId": "f6a7b8c9-0001-4000-e000-000000000011", "name": "Cebola caramelizada", "description": "Cebola caramelizada na brasa", "additionalPrice": 4.00 },
+        { "optionId": "f6a7b8c9-0001-4000-e000-000000000012", "name": "Azeitona preta", "description": "Azeitonas pretas fatiadas", "additionalPrice": 3.00 }
+      ]
+    }
+  ],
+  "promotionalUnitPrice": 27.97,
+  "agentHints": {
+    "nextStep": "Add this item to the active cart with the chosen quantity and any selected options."
+  }
+}

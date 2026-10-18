@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 import httpx
@@ -6,6 +7,7 @@ from app.core.config import Settings, get_settings
 from app.core.exceptions import AppError
 
 Message = dict[str, Any]
+log = logging.getLogger(__name__)
 
 # Erros em que vale tentar o próximo modelo (limite, modelo removido, falha do provedor).
 RETRYABLE_STATUS = {404, 408, 429, 500, 502, 503, 504}
@@ -22,6 +24,7 @@ async def chat_completion(
     model: str | None = None,
     temperature: float = 0.2,
     max_tokens: int | None = None,
+    json_mode: bool = False,
     settings: Settings | None = None,
 ) -> str:
     """Chama o OpenRouter (API compatível com OpenAI), com fallback entre modelos. Retorna o texto."""
@@ -37,6 +40,8 @@ async def chat_completion(
             payload: dict[str, Any] = {"model": current, "messages": messages, "temperature": temperature}
             if max_tokens is not None:
                 payload["max_tokens"] = max_tokens
+            if json_mode:
+                payload["response_format"] = {"type": "json_object"}
             try:
                 response = await client.post(
                     "/chat/completions",
@@ -55,6 +60,7 @@ async def chat_completion(
                     continue
 
             errors.append(f"{current}: {response.status_code} {response.text[:150]}")
+            log.warning("OpenRouter: %s", errors[-1])
             if response.status_code not in RETRYABLE_STATUS:
                 break
 
