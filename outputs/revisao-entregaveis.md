@@ -3,6 +3,20 @@
 Revisão em 18/10/2026, na branch `codex/clean-code`, sobre a árvore de trabalho
 atual, baseada no commit `d00a1fa`. Os documentos submetidos não foram alterados.
 
+## Organização posterior à revisão
+
+Após esta análise, os entregáveis foram separados em seis arquivos numerados.
+Consulte o [índice atual](../entregaveis/README.md). As referências a `macro.md`
+e aos números de linha abaixo registram a versão analisada antes da separação:
+
+- Seção 01 → [Proposta de Negócio](../entregaveis/01-proposta-de-negocio.md).
+- Seção 02 → [Desenho de Solução](../entregaveis/02-desenho-de-solucao.md).
+- Seção 03 → [Racional da Experiência](../entregaveis/03-racional-da-experiencia.md).
+- Seção 05 → [Documento Técnico Resumido](../entregaveis/05-documento-tecnico-resumido.md).
+
+O link do repositório foi corrigido no novo índice. A separação não resolve por
+si só as demais pendências de conteúdo identificadas nesta revisão.
+
 ## Parecer
 
 Os seis entregáveis estão presentes e cobrem os assuntos pedidos na especificação

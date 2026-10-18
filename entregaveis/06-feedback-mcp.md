@@ -1,6 +1,10 @@
-# 06 · Feedback sobre os MCPs do iFood
+# 06 · Feedback sobre os MCPs
 
 Equipe "iFood Benefícios" · Hackathon SEMCOMP × iFood 2026
+
+**Item exigido:** Dificuldades e dores reais sentidas ao usar o MCP do iFood.
+
+[Índice dos entregáveis](README.md)
 
 Este documento reúne as dificuldades que encontramos ao construir o Macro sobre o MCP do iFood (`consumer-mcp.ifood.com.br/marketplace`). Cada ponto traz o que aconteceu, o impacto no agente, a evidência (no código ou na documentação) e uma sugestão. A ordem vai do que mais nos custou para o que menos custou.
 

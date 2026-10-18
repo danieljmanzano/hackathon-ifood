@@ -2,7 +2,11 @@
 
 Equipe "iFood Benefícios" · Hackathon SEMCOMP × iFood 2026
 
-Telas reais do Macro, capturadas do aplicativo rodando no modo de demonstração (catálogo, endereço e pedidos fictícios, sem cobrança). As telas de celular estão em 390 px de largura. O racional de cada decisão está na seção 03 de [`macro.md`](macro.md#03--racional-da-experiência).
+**Item exigido:** Telas, protótipo ou interface que representa a experiência final.
+
+[Índice dos entregáveis](README.md)
+
+Telas reais do Macro, capturadas do aplicativo rodando no modo de demonstração (catálogo, endereço e pedidos fictícios, sem cobrança). As telas de celular estão em 390 px de largura. O racional de cada decisão está no [entregável 03 · Racional da Experiência](03-racional-da-experiencia.md).
 
 > ⚠️ Equipe: adicionar o link da demo ou do vídeo, se houver.
 
