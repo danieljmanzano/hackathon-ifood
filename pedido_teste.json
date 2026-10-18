@@ -1,15 +1,52 @@
 {
-  "itemName": "Bolo de Pote Chocolatudo",
-  "itemId": "f290804c-ddf2-401a-b242-c85aada42ca2",
-  "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/f136aa6e-7a41-4d80-803d-8daec4bc4f49/202210181101_3242_i.jpg",
-  "itemDescription": "Três camadas de bolo de chocolate Dois Frades, três camadas de ganache meio amargo e uma camada de brigadeiro Nestlé. Massa molhadinha e muuuuito recheio.\n*Foto ilustrativa*\n*Produto refrigerado*",
+  "itemName": "Pizza Grande",
+  "itemId": "ce44c408-ac0c-46a2-aea8-b25641f96b41",
+  "itemImageUrl": "https://static.ifood-static.com.br/image/upload/t_medium/pratos/94dbe494-0fe5-42c0-85fd-261c33785c3c/202605141258_52JL_i.jpg",
+  "itemDescription": "Pizza Grande (35 cm) com 8 fatias. Massa saborosa, recheio caprichado e ingredientes de qualidade para tornar cada fatia irresistível. Perfeita para compartilhar!",
   "price": {
-    "unitPrice": 14.99,
-    "promotionalUnitPrice": 14.99,
+    "unitPrice": 104.9,
+    "promotionalUnitPrice": 104.9,
     "currency": "BRL"
   },
-  "merchantMinimumOrderAmount": 30,
+  "merchantMinimumOrderAmount": 49,
   "productInformation": {
-    "optionGroups": []
+    "optionGroups": [
+      {
+        "optionGroupName": "Escolha sua massa",
+        "optionGroupId": "134fbb6d-6aff-4941-b4fd-d637466009cb",
+        "minSelections": 1,
+        "maxSelections": 1,
+        "selected": {
+          "optionName": "Massa Tradicional",
+          "optionId": "4ac5283a-ea99-43ed-adc4-0ea53c57dd98",
+          "additionalPrice": 0,
+          "currency": "BRL"
+        }
+      },
+      {
+        "optionGroupName": "Escolha o primeiro sabor",
+        "optionGroupId": "bd2704f1-3b01-4f81-b6e7-37f76c3e556d",
+        "minSelections": 1,
+        "maxSelections": 1,
+        "selected": {
+          "optionName": "Cheddar & Bacon",
+          "optionId": "715116d6-b731-4883-847a-1390bb64f279",
+          "additionalPrice": 4.5,
+          "currency": "BRL"
+        }
+      },
+      {
+        "optionGroupName": "Escolha o segundo sabor",
+        "optionGroupId": "493bfd77-4184-444a-aef8-43b009d0546f",
+        "minSelections": 1,
+        "maxSelections": 1,
+        "selected": {
+          "optionName": "Pepperoni",
+          "optionId": "35f5c1f9-ffc8-445b-ad13-bc2cfe6e3758",
+          "additionalPrice": 0,
+          "currency": "BRL"
+        }
+      }
+    ]
   }
 }

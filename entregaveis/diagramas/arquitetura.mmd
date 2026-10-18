@@ -1,0 +1,27 @@
+flowchart LR
+    subgraph Navegador
+        UI[React + TypeScript + Vite<br/>conversa e etapas da compra]
+    end
+    subgraph Backend[FastAPI]
+        API[API /api<br/>sessão por cookie]
+        INT[Intenção<br/>LLM + regras]
+        AG[Agente de busca<br/>laço de replanejamento]
+        RK[Ranking<br/>avaliações, gostos, variedade]
+        NUT[Pipeline nutricional]
+        REV[Interpretação de avaliações]
+        PROV{Provedor}
+    end
+    DB[(SQLite<br/>sessões, avaliações, gostos)]
+    MCP[MCP do iFood<br/>OAuth 2.1 + PKCE]
+    MOCK[Catálogo fictício]
+    LLM[OpenRouter / OpenAI / Gemini]
+
+    UI -->|HTTP /api| API
+    API --> INT --> AG --> RK
+    AG --> PROV
+    PROV -->|IFOOD_MODE=live| MCP
+    PROV -->|IFOOD_MODE=mock| MOCK
+    API --> NUT
+    API --> REV
+    INT & AG & NUT & REV --> LLM
+    API --> DB
