@@ -1,7 +1,7 @@
 """Pipeline nutricional como serviço.
 
 Fachada usada pela API: base local de produtos → pipeline (bases, web, estimativas, validação).
-Gemini vê a imagem; o OpenRouter faz o texto. Veja pipeline.py e pipeline_calorias_v2.dot.
+A OpenAI faz o texto, lê a imagem e busca na web. Veja pipeline.py e pipeline_calorias_v2.dot.
 
 Sempre devolve um NutritionResult: falhas viram state="error" para não derrubar a busca.
 """
@@ -19,7 +19,7 @@ from app.core.config import Settings
 from app.core.exceptions import AppError
 from app.schemas.macro import MealCandidate, NutritionResult, Recommendation, SelectedItem
 from .etapas.estimar import EstimativaInvalida
-from .pipeline import PIPELINE_VERSION, calcular
+from .pipeline import PIPELINE_VERSION, VERSOES_SEM_OPCOES, calcular
 from .produtos import chave_produto, repositorio
 
 LIMITACAO_SEM_NUTRICAO = "Informação nutricional indisponível"
@@ -66,7 +66,7 @@ def pipeline_disponivel(settings: Settings) -> bool:
 def cached_candidates(candidates: list[MealCandidate], settings: Settings) -> dict[tuple[str, str], NutritionResult]:
     """Dados já disponíveis para o ranking; nunca inicia cálculos de todo o catálogo."""
     saved = repositorio(str(settings.calorias_base_path)).get_many(
-        [chave_produto(c) for c in candidates], PIPELINE_VERSION
+        [chave_produto(c) for c in candidates], VERSOES_SEM_OPCOES  # catálogo: sempre sem opções
     )
     result = {}
     for candidate in candidates:
@@ -86,7 +86,7 @@ async def estimate_nutrition(item: MealCandidate | SelectedItem, settings: Setti
         return _cache[chave]
 
     base = repositorio(str(settings.calorias_base_path))
-    salvo = base.get(chave_produto(item), PIPELINE_VERSION)
+    salvo = base.get(chave_produto(item), PIPELINE_VERSION if opcoes else VERSOES_SEM_OPCOES)
     if salvo is not None:
         _cache[chave] = salvo
         logs.info("base local", f"HIT ({chave_produto(item)}) → {salvo.calories:.0f} kcal, método {salvo.method}; "
@@ -94,7 +94,7 @@ async def estimate_nutrition(item: MealCandidate | SelectedItem, settings: Setti
         return salvo
     if not pipeline_disponivel(settings):
         return _resultado("unavailable",
-                          evidence="Pipeline nutricional não configurada (sem chave do provedor de texto nem do Gemini).")
+                          evidence="Pipeline nutricional não configurada (sem chave do provedor de texto).")
     logs.info("base local", f"MISS ({chave_produto(item)}) → calculando")
 
     try:

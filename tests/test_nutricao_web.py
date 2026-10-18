@@ -27,7 +27,7 @@ def _resposta(**campos):
 
 
 def _buscar(tmp_path, texto, consultados, juiz=True, imagem=None):
-    with patch.object(web, "search_web", AsyncMock(return_value=(texto, consultados))) as busca, \
+    with patch.object(web, "responder", AsyncMock(return_value=(texto, consultados))) as busca, \
          patch.object(web, "perguntar_json", AsyncMock(return_value={"corresponde": juiz, "motivo": "m"})) as j:
         achado = asyncio.run(buscar_na_web(settings(tmp_path), candidato(), None, imagem))
     return achado, j, busca

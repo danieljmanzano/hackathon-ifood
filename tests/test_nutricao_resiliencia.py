@@ -6,7 +6,7 @@ import httpx
 import pytest
 
 from app.core.exceptions import AppError
-from app.services import gemini, openrouter
+from app.services import openrouter
 from app.services.nutrition import service
 from tests.nutricao_comum import candidato, leitura, settings
 from tests.test_nutricao_pipeline import rodar
@@ -33,10 +33,6 @@ def _com_respostas(modulo, respostas):
 
 def _ok_openrouter(texto="ok"):
     return httpx.Response(200, json={"choices": [{"message": {"content": texto}}]})
-
-
-def _ok_gemini(texto="ok"):
-    return httpx.Response(200, json={"candidates": [{"content": {"parts": [{"text": texto}]}}]})
 
 
 def _openrouter(tmp_path, respostas):
@@ -75,52 +71,17 @@ def test_openrouter_resposta_sem_conteudo_vai_para_o_proximo(tmp_path):
     assert texto == "ok"
 
 
-def _gemini(tmp_path, respostas):
-    patcher, chamadas = _com_respostas(gemini, respostas)
-    with patcher, patch.object(gemini.asyncio, "sleep", AsyncMock()):
-        try:
-            return asyncio.run(gemini.generate_text("x", settings=settings(tmp_path))), chamadas
-        except AppError as e:
-            return e, chamadas
-
-
-def test_gemini_repete_em_503_e_depois_responde(tmp_path):
-    texto, chamadas = _gemini(tmp_path, [httpx.Response(503), httpx.Response(503), _ok_gemini("veio")])
-    assert texto == "veio" and len(chamadas) == 3
-
-
-def test_gemini_modelo_aposentado_404_pula_para_o_reserva_sem_repetir(tmp_path):
-    texto, chamadas = _gemini(tmp_path, [httpx.Response(404, text="modelo removido"), _ok_gemini("reserva")])
-    assert texto == "reserva" and len(chamadas) == 2
-
-
-def test_gemini_chave_invalida_falha_na_hora(tmp_path):
-    erro, chamadas = _gemini(tmp_path, [httpx.Response(403, text="chave")])
-    assert isinstance(erro, AppError) and len(chamadas) == 1
-
-
-def test_gemini_bloqueio_de_conteudo_vira_erro_claro(tmp_path):
-    erro, _ = _gemini(tmp_path, [httpx.Response(200, json={"promptFeedback": {"blockReason": "SAFETY"}})])
-    assert isinstance(erro, AppError) and "bloqueio" in str(erro)
-
-
-def test_gemini_todos_fora(tmp_path):
-    erro, chamadas = _gemini(tmp_path, [httpx.Response(503)])
-    assert isinstance(erro, AppError) and "Todos os modelos falharam" in str(erro)
-    assert len(chamadas) == 3 * 2  # 3 tentativas x (modelo + reserva)
-
-
 # ---------- pipeline e serviço ----------
 
-def test_openrouter_fora_gemini_assume(tmp_path):
-    r, _ = rodar(settings(tmp_path), a=AppError("openrouter fora"), b=leitura("gemini", 800),
+def test_texto_fora_imagem_assume(tmp_path):
+    r, _ = rodar(settings(tmp_path), a=AppError("openrouter fora"), b=leitura("imagem", 800),
                  bases=None, web=None, imagem=(b"x", "image/jpeg"), casados=None)
     assert r.state == "ready" and r.method == "estimated"
     assert any("Apenas uma fonte" in x for x in r.assumptions)
 
 
-def test_gemini_fora_openrouter_assume(tmp_path):
-    r, _ = rodar(settings(tmp_path), a=leitura("openrouter", 800), b=AppError("gemini fora"),
+def test_imagem_fora_texto_assume(tmp_path):
+    r, _ = rodar(settings(tmp_path), a=leitura("openrouter", 800), b=AppError("imagem fora"),
                  imagem=(b"x", "image/jpeg"), casados=None)
     assert r.state == "ready" and r.method == "estimated"
 

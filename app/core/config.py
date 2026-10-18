@@ -54,7 +54,8 @@ class Settings(BaseSettings):
 
     # Se o provedor de texto falhar (cota, 429, fora do ar), tenta o outro, desde que a chave dele exista:
     # OpenRouter -> OpenAI (pago) e OpenAI -> OpenRouter. Vale para a busca, o agente e o pipeline de calorias.
-    llm_fallback: bool = True
+    # Desligado por padrão: tudo vai só para o provedor escolhido (OpenAI, NUTRITION_MODEL).
+    llm_fallback: bool = False
     # Quanto o provedor principal pode demorar antes de a reserva assumir. Sem isso, a cadeia de modelos
     # gratuitos do OpenRouter pode gastar todo o prazo da chamada e a reserva nunca chega a rodar.
     llm_fallback_apos_segundos: float = Field(default=20, gt=0, le=120)
@@ -62,13 +63,10 @@ class Settings(BaseSettings):
     # OpenAI (usada quando NUTRITION_PROVIDER=openai; a chave e o modelo ficam na seção de nutrição abaixo)
     openai_base_url: str = "https://api.openai.com/v1"
     openai_timeout: float = 60.0
-
-    gemini_api_key: str = ""
-    gemini_model: str = "gemini-3.8-flash"
-    gemini_fallback_models: list[str] = ["gemini-flash-latest"]
-    gemini_retries: int = 3
-    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
-    gemini_timeout: float = 60.0
+    # Raciocínio dos modelos GPT-5: é cobrado como saída e o padrão da OpenAI (medium) gasta muito.
+    # "minimal" não aceita web_search, então a busca na web usa OPENAI_REASONING_EFFORT_WEB.
+    openai_reasoning_effort: Literal["minimal", "low", "medium", "high"] = "minimal"
+    openai_reasoning_effort_web: Literal["low", "medium", "high"] = "low"
 
     ifood_mcp_url: str = "https://consumer-mcp.ifood.com.br/marketplace"
     ifood_client_id: str = ""
@@ -79,12 +77,11 @@ class Settings(BaseSettings):
     mcp_timeout_seconds: float = Field(default=20, gt=0, le=120)
 
     # Pipeline nutricional. Sem a chave do provedor escolhido, a nutrição fica "unavailable" e o resto funciona.
-    # openai: GPT pago (melhor qualidade, busca na web nativa). openrouter: modelos gratuitos
-    # (e a busca na web passa a ser do Gemini + Google Search). O Gemini lê as imagens nos dois casos.
-    # Escolha ao subir: python -m app.run --llm openai|openrouter
+    # openai: GPT pago (texto, imagens e busca na web nativa). openrouter: modelos gratuitos só para o texto
+    # (sem busca na web e sem leitura das imagens). Escolha ao subir: python -m app.run --llm openai|openrouter
     nutrition_provider: Literal["openai", "openrouter"] = "openai"
     openai_api_key: SecretStr = SecretStr("")
-    nutrition_model: str = "gpt-5.4-mini"
+    nutrition_model: str = "gpt-5-mini"
     # Modelo do OpenRouter e reservas, tentadas em ordem quando o anterior falha ou está no limite.
     # Para estimar com a foto, prefira modelos que aceitam imagem (gemma-4, nemotron-3.5-super-vl).
     nutrition_openrouter_model: str = "google/gemma-4-31b-it:free"
@@ -96,8 +93,6 @@ class Settings(BaseSettings):
     # O plugin de busca na web do OpenRouter é cobrado por uso, mesmo com modelo gratuito.
     nutrition_openrouter_web_search: bool = False
     nutrition_web_search: bool = True
-    # Pipeline nutricional (Gemini para imagem, OpenRouter para texto). Sem chaves, a nutrição fica
-    # "unavailable" e o resto funciona.
     nutrition_timeout_seconds: float = Field(default=60, gt=0, le=300)
     # O frontend aborta requisições em 30 s; o que passar disso volta "pending" e termina em segundo plano.
     nutrition_response_budget_seconds: float = Field(default=20, gt=0, le=28)
@@ -107,9 +102,9 @@ class Settings(BaseSettings):
     nutrition_concurrency: int = Field(default=3, ge=1, le=10)
 
     # Cascata de calorias (ver pipeline_calorias_v2.dot).
-    calorias_estimar_sempre: bool = True  # False: só estima se bases e web não acharem (poupa cota)
+    calorias_estimar_sempre: bool = False  # True: estima mesmo se bases ou web acharem (mede divergência, gasta mais)
     calorias_buscar_bases: bool = True
-    calorias_busca_web: bool = True  # Gemini com Google Search; só roda se as bases não acharem
+    calorias_busca_web: bool = True  # OpenAI web_search; só roda se as bases não acharem
     calorias_log: Literal["off", "resumo", "detalhe"] = "resumo"  # ver app/core/logs.py
     calorias_amostras: int = Field(default=1, ge=1, le=5)
     calorias_limiar_confianca: float = Field(default=0.55, ge=0, le=1)
@@ -125,13 +120,12 @@ class Settings(BaseSettings):
 
     @property
     def web_api_key(self) -> str:
-        """Chave de quem faz a busca na web: OpenAI (web_search) ou Gemini (Google Search)."""
-        return (self.openai_api_key.get_secret_value() if self.nutrition_provider == "openai"
-                else self.gemini_api_key)
+        """Chave da busca na web e da leitura das imagens: só a OpenAI faz as duas (vazio com openrouter)."""
+        return self.openai_api_key.get_secret_value() if self.nutrition_provider == "openai" else ""
 
     @property
     def nutrition_enabled(self) -> bool:
-        return bool(self.llm_api_key or self.gemini_api_key)
+        return bool(self.llm_api_key)
 
     @field_validator("timezone")
     @classmethod
@@ -148,7 +142,7 @@ class Settings(BaseSettings):
             "simulated": self.ifood_mode == "mock",
             "live_orders_enabled": False,
             "nutrition": "enabled" if self.nutrition_enabled else "unavailable",
-            "intent_interpretation": "llm_configured" if self.intent_llm_enabled and self.openrouter_api_key else "rules",
+            "intent_interpretation": "llm_configured" if self.intent_llm_enabled and self.llm_api_key else "rules",
             "timezone": self.timezone,
             "issues": (
                 ["Demonstração com catálogo, endereço, preços e pedidos fictícios."]

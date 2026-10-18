@@ -181,8 +181,7 @@ def test_llm_cannot_search_for_already_consumed_food_instead_of_current_request(
 def api(tmp_path, monkeypatch):
     import app.main as main
     settings = Settings(_env_file=None, ifood_mode='mock', intent_llm_enabled=False,
-                        openrouter_api_key='', openai_api_key='', gemini_api_key='',
-                        database_path=tmp_path / 'diet.sqlite3', calorias_base_path=tmp_path / 'nutrition.json')
+                        openrouter_api_key='', openai_api_key='', database_path=tmp_path / 'diet.sqlite3', calorias_base_path=tmp_path / 'nutrition.json')
     monkeypatch.setattr(main, 'get_settings', lambda: settings)
     application = main.create_app()
     application.dependency_overrides[get_settings] = lambda: settings

@@ -1,4 +1,4 @@
-"""Busca na web (OpenAI web_search ou Gemini + Google Search). Só roda quando as bases não acharam.
+"""Busca na web (OpenAI web_search). Só roda quando as bases não acharam.
 
 Dois resultados possíveis, conforme o tipo do item:
 - industrializado (produto de mercado): tabela nutricional oficial do produto exato -> InfoOnline (vence as estimativas).
@@ -13,7 +13,6 @@ from jsonschema import validate
 from app.core import logs
 from app.core.config import Settings
 from app.schemas.macro import MealCandidate
-from app.services.gemini import search_web
 from app.services.openai_client import responder
 from ..entrada import extrair_json, montar_prompt
 from ..modelos import InfoOnline, Ingrediente, Leitura, Macros
@@ -36,11 +35,9 @@ CONFIANCA_WEB = {"baixa": 0.35, "media": 0.5, "alta": 0.65}  # estimativa pesqui
 
 
 async def _pesquisar(settings: Settings, prompt: str, imagem: tuple[bytes, str] | None) -> tuple[str, list[str]]:
-    """Texto da resposta e as fontes realmente consultadas, pelo provedor escolhido (com a foto, se houver)."""
-    if settings.nutrition_provider == "openai":
-        return await responder(prompt, instrucoes=nutricao_web.INSTRUCAO_CURTA_OPENAI, web=True,
-                               schema=nutricao_web.SCHEMA, imagem=imagem, settings=settings)
-    return await search_web(prompt, imagem=imagem, settings=settings)
+    """Texto da resposta e as fontes realmente consultadas (com a foto, se houver)."""
+    return await responder(prompt, instrucoes=nutricao_web.INSTRUCAO_CURTA_OPENAI, web=True,
+                           schema=nutricao_web.SCHEMA, imagem=imagem, settings=settings)
 
 
 def _opcional(v) -> float | None:
@@ -50,8 +47,7 @@ def _opcional(v) -> float | None:
 async def buscar_na_web(settings: Settings, candidate: MealCandidate, opcoes: list[str] | None,
                         imagem: tuple[bytes, str] | None = None) -> InfoOnline | Leitura | None:
     prompt = nutricao_web.pedido(montar_prompt(candidate, opcoes), com_foto=bool(imagem))
-    fornecedor = "OpenAI web_search" if settings.nutrition_provider == "openai" else "Gemini + Google Search"
-    logs.info("web", f"pesquisando \"{candidate.name}\" de {candidate.merchant_name} via {fornecedor}"
+    logs.info("web", f"pesquisando \"{candidate.name}\" de {candidate.merchant_name} via OpenAI web_search"
                      f"{' com a foto' if imagem else ' (sem foto)'}")
     with logs.Cronometro() as t:
         texto, consultados = await _pesquisar(settings, prompt, imagem)

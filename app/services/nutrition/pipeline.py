@@ -14,6 +14,7 @@ from app.core.exceptions import AppError
 from app.schemas.macro import MealCandidate, NutritionResult
 from .entrada import baixar_imagem, foto_ilustrativa, montar_prompt, restaurante_valido
 from .etapas.bases import carregar_taco, consultar_bases
+from .etapas.complementos import FOLGA_ADICIONAL, Separacao, separar_complementos
 from .etapas.consenso import consenso, fundir
 from .etapas.estimar import EstimativaInvalida, decompor_ingredientes, estimar_a, estimar_b
 from .etapas.ingredientes import casar_ingredientes, somar_ingredientes
@@ -22,7 +23,10 @@ from .etapas.validar import validar
 from .etapas.web import buscar_na_web
 from .modelos import Estimativa, InfoOnline, Leitura
 
-PIPELINE_VERSION = "calorias-v3"
+# v4: complementos escolhidos são somados ao item base (antes uma fonte do item puro os apagava).
+PIPELINE_VERSION = "calorias-v4"
+# A v4 só mudou o cálculo de itens COM opções escolhidas; sem opções, o resultado da v3 continua valendo.
+VERSOES_SEM_OPCOES = (PIPELINE_VERSION, "calorias-v3")
 ERROS_ETAPA = (AppError, json.JSONDecodeError, SchemaError, KeyError, EstimativaInvalida)
 
 
@@ -60,12 +64,12 @@ async def _online(settings: Settings, candidate: MealCandidate, opcoes: list[str
     elif not settings.calorias_busca_web:
         logs.info("web", "desligada (CALORIAS_BUSCA_WEB=false)")
     elif not settings.web_api_key:
-        logs.info("web", "pulada: sem chave de busca "
-                         f"({'OPENAI_API_KEY' if settings.nutrition_provider == 'openai' else 'GEMINI_API_KEY'})")
+        logs.info("web", "pulada: busca na web só com NUTRITION_PROVIDER=openai e OPENAI_API_KEY")
     elif not restaurante_valido(candidate):
         logs.info("web", "pulada: restaurante simulado/inválido (modo demonstração)")
     else:
-        info = await _seguro(buscar_na_web(settings, candidate, opcoes, imagem), "web")
+        # Sem a foto: ela já vai para a estimativa B, e mandá-la de novo com o web_search dobra o custo da imagem.
+        info = await _seguro(buscar_na_web(settings, candidate, opcoes), "web")
     return info
 
 
@@ -78,13 +82,13 @@ def _descrever(l) -> str:
 
 async def _leituras(settings: Settings, candidate: MealCandidate, opcoes: list[str] | None,
                     peso_g: float | None, imagem) -> list[Leitura]:
-    """A (OpenRouter/OpenAI, texto) e B (Gemini, texto + imagem) em paralelo, mais a soma de ingredientes pela TACO."""
+    """A (OpenAI/OpenRouter, texto) e B (OpenAI, texto + imagem) em paralelo, mais a soma de ingredientes pela TACO."""
     if not settings.llm_api_key:
         logs.info("estimar A", f"pulada: sem chave do provedor de texto ({settings.nutrition_provider})")
     if imagem is None:
         logs.info("estimar B", "pulada: sem imagem")
-    elif not settings.gemini_api_key:
-        logs.info("estimar B", "pulada: sem GEMINI_API_KEY")
+    elif not settings.web_api_key:
+        logs.info("estimar B", "pulada: imagens só com NUTRITION_PROVIDER=openai e OPENAI_API_KEY")
 
     with logs.Cronometro() as t:
         a, b = await asyncio.gather(
@@ -163,7 +167,7 @@ def _modo(settings: Settings) -> str:
 async def calcular(settings: Settings, candidate: MealCandidate, opcoes: list[str] | None) -> NutritionResult:
     logs.iniciar_item(candidate.name)
     with logs.Cronometro() as total:
-        resultado = await _calcular(settings, candidate, opcoes)
+        resultado = await _com_complementos(settings, candidate, opcoes)
     r = resultado
     if r.state == "ready":
         macros = f" · P {r.protein_g} C {r.carbs_g} G {r.fat_g}" if r.protein_g is not None else ""
@@ -271,6 +275,65 @@ async def _calcular(settings: Settings, candidate: MealCandidate, opcoes: list[s
         motivo_revisao="; ".join(validacao.motivos) if validacao.revisar and validacao.motivos else None,
         pipeline_version=PIPELINE_VERSION, obtained_at=datetime.now(timezone.utc),
     )
+
+
+async def _com_complementos(settings: Settings, candidate: MealCandidate, opcoes: list[str] | None) -> NutritionResult:
+    """Item base (só com as opções que o definem) + adicionais estimados à parte, vezes a quantidade."""
+    if not opcoes:
+        return await _calcular(settings, candidate, opcoes)
+    separacao = await _seguro(separar_complementos(settings, candidate, opcoes), "complementos")
+    if separacao is None or not (separacao.adicionais or separacao.sem_estimativa):
+        # Sem adicionais (ou a separação falhou): o item com todas as opções, como antes.
+        return await _calcular(settings, candidate, opcoes)
+    base = await _calcular(settings, candidate, separacao.opcoes_base)
+    if base.state != "ready":
+        return base
+    return somar_complementos(base, separacao)
+
+
+_ORDEM_CONFIANCA = ["low", "medium", "high"]
+
+
+def _somar(a: float | None, b: float | None) -> float | None:
+    return None if a is None or b is None else a + b
+
+
+def somar_complementos(base: NutritionResult, separacao: Separacao) -> NutritionResult:
+    adicionais = separacao.adicionais
+    kcal = sum(a.macros.kcal for a in adicionais)
+    proteina, carbo, gordura = base.protein_g, base.carbs_g, base.fat_g
+    for a in adicionais:
+        proteina, carbo, gordura = (_somar(proteina, a.macros.proteina_g), _somar(carbo, a.macros.carbo_g),
+                                    _somar(gordura, a.macros.gordura_g))
+    gramas = base.portion_grams
+    for a in adicionais:
+        gramas = _somar(gramas, a.gramas)
+
+    detalhe = "; ".join(f"{a.quantidade}× {a.nome} ~{a.macros.kcal:.0f} kcal" for a in adicionais)
+    suposicoes = [*base.assumptions]
+    if adicionais:
+        suposicoes.append(f"Complementos estimados à parte e somados ao item base: {detalhe}.")
+    motivos = [base.motivo_revisao] if base.motivo_revisao else []
+    if separacao.sem_estimativa:
+        falta = ", ".join(separacao.sem_estimativa)
+        suposicoes.append(f"Sem estimativa para: {falta}. O total não inclui esses complementos.")
+        motivos.append(f"complementos sem estimativa: {falta}")
+    # Fonte do item base + estimativa dos complementos não é mais um valor publicado puro.
+    metodo = base.method if base.method in ("estimated", "consensus") else "consensus"
+    confianca = _ORDEM_CONFIANCA[min(_ORDEM_CONFIANCA.index(base.confidence or "medium"), 1)]
+    return base.model_copy(update={
+        "calories": round(base.calories + kcal),
+        "minimum": round(base.minimum + kcal * (1 - FOLGA_ADICIONAL)),
+        "maximum": round(base.maximum + kcal * (1 + FOLGA_ADICIONAL)),
+        "protein_g": _arred(proteina), "carbs_g": _arred(carbo), "fat_g": _arred(gordura),
+        "portion_grams": round(gramas) if gramas else None,
+        "portion_basis": f"{base.portion_basis} + {len(adicionais)} complemento(s)",
+        "method": metodo, "confidence": confianca,
+        "evidence": f"{base.evidence} Complementos: {detalhe}." if adicionais else base.evidence,
+        "assumptions": suposicoes,
+        "revisar": base.revisar or bool(separacao.sem_estimativa),
+        "motivo_revisao": "; ".join(motivos) or None,
+    })
 
 
 def _arred(valor: float | None) -> float | None:

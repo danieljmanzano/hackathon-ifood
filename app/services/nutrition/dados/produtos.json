@@ -1,5 +1,75 @@
 {
   "produtos": {
+    "039ac081824b": {
+      "calculado_em": "2026-10-18T11:33:45.263599+00:00",
+      "nome": "Açaí tradicional 500ml+Granola Tradicional+Banana+Leite Condensado",
+      "origem": "estimated",
+      "restaurante": "Açaí Concept - Lorena",
+      "resultado": {
+        "assumptions": [
+          "Estimativa pesquisada na web com base em “Açaí, polpa com xarope de guaraná e glucose (TACO) + granola (porção 30 g) + banana prata (100 g) + leite condensado (2 colheres de sopa ≈ 38 g)” — TACO (Tabela Brasileira de Composição de Alimentos) e bases nutricionais comerciais (granola, banana, leite condensado) (taco.codivatech.com).",
+          "500 ml de açaí ≈ 500 g (densidade próxima da água para polpa batida)",
+          "açaí vendido como \"tradicional\" é a polpa adoçada (polpa com xarope de guaraná e glucose) — usei os valores TACO para essa formulação (110 kcal/100 g)",
+          "granola como porção típica de cobertura: 30 g",
+          "banana usada: banana prata fresca, ~100 g (1 unidade média)",
+          "leite condensado adicionado em quantidade típica visualmente usada em açaiterias: 2 colheres de sopa ≈ 38 g",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 898.0,
+        "carbs_g": 170.5,
+        "confidence": "medium",
+        "evidence": "“\"Açaí, polpa, com xarope de guaraná e glucose tem 110 kcal a cada 100 gramas.\" (TACO).” Não há tabela do restaurante; usei a TACO para a polpa adoçada (110 kcal/100 g) como referência primária, convertendo para 500 g → 550 kcal. Somei valores de fontes de composição para toppings: granola ~30 g (~127 kcal), banana prata 100 g (~98 kcal, TACO), leite condensado 2 colheres (≈38 g ≈123 kcal). Macronutrientes calculados a partir dos valores por 100 g/porção das fontes (açaí TACO; granola e leite condensado tabelas comerciais; banana TACO). A faixa reflete variação possível nas porções e no nível de adoçamento (versão sem açúcar da polpa reduziria fortemente as calorias).",
+        "fat_g": 29.2,
+        "maximum": 1100.0,
+        "method": "estimated",
+        "minimum": 750.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T11:33:45.262384Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "açaí tradicional 500 ml (polpa adoçada) + granola 30 g + banana 100 g + leite condensado 2 colheres (≈38 g) (~500 g, peso declarada)",
+        "portion_grams": 500.0,
+        "protein_g": 11.9,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
+    },
+    "04f3a50f5f0c": {
+      "calculado_em": "2026-10-18T11:09:20.477716+00:00",
+      "nome": "Pizza Quadradona | Calabresa",
+      "origem": "estimated",
+      "restaurante": "Nema Padaria - Vila Mariana",
+      "resultado": {
+        "assumptions": [
+          "Considerei que a pizza é uma unidade individual inteira, conforme 'serve 1 pessoa'.",
+          "Assumi cobertura padrão de pizza de calabresa com queijo, sem ingredientes extras não citados.",
+          "Assumi peso total aproximado compatível com massa grossa de fermentação lenta e base crocante.",
+          "Não havia imagem disponível para ajustar a porção visualmente.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 1320.0,
+        "carbs_g": 145.0,
+        "confidence": "medium",
+        "evidence": "A descrição indica uma pizza individual de massa grossa, o que sugere maior quantidade de massa e carboidratos do que uma pizza fina. Estimei uma cobertura típica de calabresa com queijo, molho e massa, resultando em cerca de 520 g no total e calorias na faixa de uma pizza individual mais densa.",
+        "fat_g": 58.0,
+        "maximum": 1540.0,
+        "method": "estimated",
+        "minimum": 1120.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T11:09:20.476664Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "1 pizza quadradona individual de calabresa (serve 1 pessoa) (~520 g, peso estimada)",
+        "portion_grams": 520.0,
+        "protein_g": 54.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
+    },
     "06c3b8619625": {
       "calculado_em": "2026-10-18T07:54:31.498622+00:00",
       "nome": "Batata Frita com Cheddar e Bacon em Cubos da Ostentação",
@@ -138,6 +208,73 @@
         "portion_basis": "1 fatia/unidade de bolo de cenoura servida no café, ~120 g (~120 g, peso estimada)",
         "portion_grams": 120.0,
         "protein_g": 5.5,
+        "revisar": false,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "0e1c50b29585": {
+      "calculado_em": "2026-10-18T10:34:03.524922+00:00",
+      "nome": "Pizza de rúcula",
+      "origem": "estimated",
+      "restaurante": "Forneria Central (demo)",
+      "resultado": {
+        "assumptions": [
+          "Considerei uma pizza média inteira, não uma fatia.",
+          "Assumi que o queijo é muçarela ou mistura similar, em quantidade típica de pizza.",
+          "Assumi presença de um pouco de azeite/óleo no tomate seco e/ou finalização.",
+          "Não houve informação de peso real, então estimei uma pizza de massa fina padrão de restaurante.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 920.0,
+        "carbs_g": 98.0,
+        "confidence": "medium",
+        "evidence": "Estimativa baseada em uma pizza de massa fina com queijo, rúcula e tomate seco. A maior parte das calorias vem da massa, do queijo e do azeite/óleo que costuma acompanhar tomate seco e finalização da pizza. A rúcula contribui pouco para calorias e macros.",
+        "fat_g": 42.0,
+        "maximum": 1100.0,
+        "method": "estimated",
+        "minimum": 780.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T10:34:03.523914Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 pizza média de massa fina (aprox. 30 cm), como vendida (~520 g, peso estimada)",
+        "portion_grams": 520.0,
+        "protein_g": 34.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "0ff51071f69d": {
+      "calculado_em": "2026-10-18T10:36:58.542590+00:00",
+      "nome": "Tigela de Açaí com Banana e Granola",
+      "origem": "consensus",
+      "restaurante": "Padaria Amor in Pani 2",
+      "resultado": {
+        "assumptions": [
+          "O açaí é a versão tradicional adoçada com xarope de guaraná",
+          "A granola vem incluída (conforme título do item), seja enviada à parte ou disposta no fundo da tigela",
+          "A tigela tem capacidade média de aproximadamente 350 g de açaí",
+          "Soma pela TACO cobrindo 94% da massa: Creme de açaí tradicional (com xarope de guaraná)→Açaí, polpa, com xarope de guaraná e glucose, Banana prata fatiada→Banana, prata, crua."
+        ],
+        "calories": 558.0,
+        "carbs_g": 114.0,
+        "confidence": "medium",
+        "evidence": "Calculado considerando uma tigela média padrão de padaria contendo cerca de 350 g de creme de açaí com xarope de guaraná, decorada com 1 banana fatiada inteira (~100 g) e uma porção padrão de granola (~30 g).",
+        "fat_g": 12.5,
+        "maximum": 750.0,
+        "method": "consensus",
+        "minimum": 403.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T10:36:58.541481Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "tigela de ~480 g (~480 g, peso estimada)",
+        "portion_grams": 480.0,
+        "protein_g": 6.0,
         "revisar": false,
         "source_name": null,
         "source_url": null,
@@ -292,6 +429,34 @@
       },
       "versao_pipeline": "calorias-v3"
     },
+    "2152fd581bb0": {
+      "calculado_em": "2026-10-18T11:33:07.927026+00:00",
+      "nome": "Açaí na tigela 500ml com banana+morango+granola",
+      "origem": "database",
+      "restaurante": "Padaria Bella Buarque",
+      "resultado": {
+        "assumptions": [],
+        "calories": 550.0,
+        "carbs_g": 107.5,
+        "confidence": "medium",
+        "evidence": "“Açaí, polpa, com xarope de guaraná e glucose” (Frutas e derivados): 110 kcal por 100 g na Tabela TACO.",
+        "fat_g": 18.5,
+        "maximum": 688.0,
+        "method": "database",
+        "minimum": 412.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T11:33:07.925422Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "100 g (~500 g, peso declarada)",
+        "portion_grams": 500.0,
+        "protein_g": 3.5,
+        "revisar": false,
+        "source_name": "TACO",
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
+    },
     "23e153d6d0af": {
       "calculado_em": "2026-10-18T07:19:54.804717+00:00",
       "nome": "Pizza Brotinho + Borda Recheada Grátis",
@@ -401,6 +566,43 @@
       },
       "versao_pipeline": "calorias-v3"
     },
+    "272f0edfa4ec": {
+      "calculado_em": "2026-10-18T10:37:44.837367+00:00",
+      "nome": "Tigela de Açaí com Banana e Granola",
+      "origem": "consensus",
+      "restaurante": "Padaria Amor in Pani 2",
+      "resultado": {
+        "assumptions": [
+          "Considerei açaí sem adicionais como leite condensado, xarope ou mel.",
+          "Assumi uma porção de banana em rodelas e uma camada moderada de granola.",
+          "Não havia peso informado, então estimei uma tigela individual padrão de delivery.",
+          "O açaí é a versão comercial tradicional batida com xarope de guaraná",
+          "A granola descrita acompanha o pedido à parte ou em sachê/pote de cerca de 30 g",
+          "A porção total de açaí na tigela é de cerca de 300 g",
+          "Soma pela TACO cobrindo 93% da massa: Creme de açaí com xarope de guaraná→Açaí, polpa, com xarope de guaraná e glucose, Banana fresca fatiada→Banana, nanica, crua.",
+          "Estimativas divergem entre si (dispersão 34%)."
+        ],
+        "calories": 445.0,
+        "carbs_g": 92.5,
+        "confidence": "medium",
+        "evidence": "Estimativa baseada em uma tigela comum de açaí puro com cobertura de banana e granola. O açaí é o principal componente calórico, a banana adiciona carboidratos e a granola contribui com carboidratos e gordura.",
+        "fat_g": 12.1,
+        "maximum": 680.0,
+        "method": "consensus",
+        "minimum": 320.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T10:37:44.836381Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "tigela de ~270 g (~420 g, peso estimada)",
+        "portion_grams": 420.0,
+        "protein_g": 6.0,
+        "revisar": false,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
     "329daa6125c2": {
       "calculado_em": "2026-10-18T08:45:59.493612+00:00",
       "nome": "Bolos Caseiros Inteiros",
@@ -438,6 +640,39 @@
         "state": "ready"
       },
       "versao_pipeline": "calorias-v3"
+    },
+    "35cdb4ebddfe": {
+      "calculado_em": "2026-10-18T11:08:28.480885+00:00",
+      "nome": "Pizza Margherita 330g",
+      "origem": "estimated",
+      "restaurante": "Bread King - Moema",
+      "resultado": {
+        "assumptions": [
+          "A pizza é uma margherita padrão, sem ingredientes extras.",
+          "A maior parte do peso vem da massa e do queijo.",
+          "Não há foto disponível para ajustar aparência ou espessura da porção.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 825.0,
+        "carbs_g": 88.0,
+        "confidence": "medium",
+        "evidence": "Usei o peso informado como verdade e estimei uma pizza margherita padrão, com massa, molho de tomate, muçarela e um pouco de manjericão/azeite. Para 330 g, a densidade calórica típica de pizza margherita fica em torno de 250 kcal por 100 g, com variação conforme quantidade de queijo e espessura da massa.",
+        "fat_g": 34.0,
+        "maximum": 920.0,
+        "method": "estimated",
+        "minimum": 730.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T11:08:28.479909Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "1 pizza margherita inteira de 330 g (~330 g, peso declarada)",
+        "portion_grams": 330.0,
+        "protein_g": 34.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
     },
     "466dc94f4174": {
       "calculado_em": "2026-10-18T08:58:12.676954+00:00",
@@ -546,6 +781,38 @@
       },
       "versao_pipeline": "calorias-v3"
     },
+    "588abad3cf98": {
+      "calculado_em": "2026-10-18T10:37:01.479359+00:00",
+      "nome": "Açaí na tigela com fruta e granola",
+      "origem": "consensus",
+      "restaurante": "Padaria Charme",
+      "resultado": {
+        "assumptions": [
+          "O açaí é a versão tradicional batida com xarope de guaraná",
+          "As frutas e granola dispostas na mesa compõem os acompanhamentos padrão do item",
+          "Soma pela TACO cobrindo 93% da massa: Creme de açaí com xarope de guaraná→Açaí, polpa, com xarope de guaraná e glucose, Banana e/ou morango→Banana, ouro, crua."
+        ],
+        "calories": 536.0,
+        "carbs_g": 105.3,
+        "confidence": "medium",
+        "evidence": "A tigela aparenta ter porção padrão de açaí batido com xarope de guaraná de aproximadamente 350 g, acompanhada de porções típicas de fruta fresca (banana/morango) e granola.",
+        "fat_g": 13.5,
+        "maximum": 720.0,
+        "method": "consensus",
+        "minimum": 387.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T10:37:01.478414Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 tigela média (~350 g de açaí) com acompanhamento de fruta e granola (~450 g, peso estimada)",
+        "portion_grams": 450.0,
+        "protein_g": 5.4,
+        "revisar": false,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
     "60ba5db11ba1": {
       "calculado_em": "2026-10-18T08:05:25.147039+00:00",
       "nome": "Sanduiche natural",
@@ -575,6 +842,38 @@
         "portion_grams": 180.0,
         "protein_g": 20.0,
         "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "636db45889a5": {
+      "calculado_em": "2026-10-18T10:36:58.575565+00:00",
+      "nome": "Tigela de Açaí com Banana e Granola",
+      "origem": "consensus",
+      "restaurante": "Padaria Amor in Pani",
+      "resultado": {
+        "assumptions": [
+          "O açaí é batido com xarope de guaraná conforme padrão de lanchonetes e padarias brasileiras.",
+          "A granola vem à parte em porção individual de cerca de 30 g, já que não está visível montada na tigela.",
+          "Soma pela TACO cobrindo 93% da massa: Creme de açaí com xarope de guaraná→Açaí, polpa, com xarope de guaraná e glucose, Banana fatiada→Banana, nanica, crua."
+        ],
+        "calories": 492.0,
+        "carbs_g": 99.3,
+        "confidence": "medium",
+        "evidence": "A tigela aparenta conter porção padrão de aproximadamente 300 g de creme de açaí adoçado (xarope de guaraná), decorada com cerca de 1 banana média fatiada. Embora a granola não seja visível sobre a tigela, foi incluída uma porção padrão de 30 g por constar no nome do prato.",
+        "fat_g": 11.7,
+        "maximum": 680.0,
+        "method": "consensus",
+        "minimum": 346.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T10:36:58.574579Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "tigela de ~420 g (açaí com banana e porção de granola) (~420 g, peso estimada)",
+        "portion_grams": 420.0,
+        "protein_g": 6.1,
+        "revisar": false,
         "source_name": null,
         "source_url": null,
         "state": "ready"
@@ -686,6 +985,46 @@
       },
       "versao_pipeline": "calorias-v3"
     },
+    "77ba67f97777": {
+      "calculado_em": "2026-10-18T11:22:10.182498+00:00",
+      "nome": "Açaí na tigela 500ml",
+      "origem": "consensus",
+      "restaurante": "Padaria Bella Buarque",
+      "resultado": {
+        "assumptions": [
+          "açaí sem açúcar ou xarope de guaraná adicionado",
+          "densidade semelhante à polpa congelada",
+          "sem acompanhamentos como granola, frutas ou mel",
+          "Soma pela TACO cobrindo 100% da massa: açaí puro→Açaí, polpa, congelada.",
+          "Estimativa pesquisada na web com base em “Açaí, polpa com xarope de guaraná e glucose (TACO) — referência principal; comparado com polpa pura (TBCA)” — TACO (NEPA/UNICAMP) — principal; TBCA (TBCA.net.br) — comparação (taco.codivatech.com).",
+          "500 ml ≈ 500 g (densidade ~1 g/ml) e a tigela contém basicamente polpa/preparo do açaí (sem coberturas).",
+          "Padaria provavelmente usa polpa comercial já adoçada (xarope de guaraná + glucose) — prática comum em tigelas vendidas em lojas/ padarias.",
+          "Não há adição de banana, granola, leite condensado ou outros toppings (usuário disse 'nenhuma opção escolhida').",
+          "Não se usa a informação de rótulo específico da Padaria (não disponível); uso bases de composição (TACO/TBCA) para estimativa.",
+          "Estimativas muito diferentes entre si (dispersão 74%).",
+          "Complementos estimados à parte e somados ao item base: 1× Leite condensado ~64 kcal."
+        ],
+        "calories": 414.0,
+        "carbs_g": 42.1,
+        "confidence": "low",
+        "evidence": "Baseado em valores típicos de polpa de açaí unsweetened (~70 kcal/100g, 4g carbo, 5g gordura, 1g proteína). Multiplicado por 500g resulta nas estimativas. Complementos: 1× Leite condensado ~64 kcal.",
+        "fat_g": 21.1,
+        "maximum": 637.0,
+        "method": "consensus",
+        "minimum": 274.0,
+        "motivo_revisao": "Estimativas muito diferentes entre si (dispersão 74%).",
+        "obtained_at": "2026-10-18T11:22:10.181114Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "tigela de 500 g (~500 g, peso declarada) + 1 complemento(s)",
+        "portion_grams": 520.0,
+        "protein_g": 5.5,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
+    },
     "7cd12a74b57e": {
       "calculado_em": "2026-10-18T07:19:58.802407+00:00",
       "nome": "Pizzas Salgadas c/ 2 Sabores - 8 Pedaços",
@@ -761,6 +1100,40 @@
       },
       "versao_pipeline": "calorias-v3"
     },
+    "7ff3a2172762": {
+      "calculado_em": "2026-10-18T10:34:03.748057+00:00",
+      "nome": "Pizza margherita",
+      "origem": "estimated",
+      "restaurante": "Forno da Vila (demo)",
+      "resultado": {
+        "assumptions": [
+          "Assumi pizza inteira de tamanho médio, sem borda recheada.",
+          "Assumi distribuição padrão de queijo para uma margherita de delivery.",
+          "Assumi que o tomate é em rodelas ou pedaços e que há pequena finalização com azeite.",
+          "Não havia foto, então a estimativa se baseia apenas na descrição.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 920.0,
+        "carbs_g": 104.0,
+        "confidence": "medium",
+        "evidence": "Considerei uma pizza margherita típica de massa fina, com base de massa, molho leve, queijo e cobertura de tomate e manjericão. O principal determinante calórico é o queijo; a massa fina reduz um pouco o total em comparação com pizzas mais espessas, mas ainda assim é um item relativamente calórico.",
+        "fat_g": 38.0,
+        "maximum": 1080.0,
+        "method": "estimated",
+        "minimum": 780.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T10:34:03.747083Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 pizza margherita inteira de massa fina, como vendida (~470 g, peso estimada)",
+        "portion_grams": 470.0,
+        "protein_g": 39.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
     "8050a0a48b21": {
       "calculado_em": "2026-10-18T07:05:02.414027+00:00",
       "nome": "Coca-Cola Sem Açúcar Lata 350ml",
@@ -794,6 +1167,73 @@
         "state": "ready"
       },
       "versao_pipeline": "calorias-v3"
+    },
+    "84e45ed04f67": {
+      "calculado_em": "2026-10-18T11:08:29.981396+00:00",
+      "nome": "Pizza Quadradona | Calabresa",
+      "origem": "estimated",
+      "restaurante": "Nema Padaria - Vila Clementino",
+      "resultado": {
+        "assumptions": [
+          "A descrição não informa peso nem composição detalhada, então estimei uma pizza quadrada padrão de padaria.",
+          "Assumi cobertura simples de calabresa com queijo, sem borda recheada e sem adicionais.",
+          "Considerei que a unidade vendida é a pizza inteira, não uma fatia.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 960.0,
+        "carbs_g": 106.0,
+        "confidence": "medium",
+        "evidence": "Considerei uma pizza quadrada de massa de pão com molho, queijo e cobertura de calabresa, em tamanho individual/grande de padaria. A maior incerteza é o peso real da massa e a quantidade de queijo/calabresa, então usei uma faixa moderada.",
+        "fat_g": 39.0,
+        "maximum": 1120.0,
+        "method": "estimated",
+        "minimum": 820.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T11:08:29.980335Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "1 pizza quadradona de calabresa (unidade vendida inteira) (~420 g, peso estimada)",
+        "portion_grams": 420.0,
+        "protein_g": 41.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
+    },
+    "853ca8d9dce2": {
+      "calculado_em": "2026-10-18T11:15:34.362192+00:00",
+      "nome": "Açaí na tigela 500ml",
+      "origem": "consensus",
+      "restaurante": "Padaria Bella Buarque",
+      "resultado": {
+        "assumptions": [
+          "Não há foto disponível.",
+          "A descrição não informa composição; assumi um açaí tradicional servido em tigela de 500 g.",
+          "Considerei uma pequena fração de complemento, mas sem coberturas ricas em chocolate, leite condensado ou pasta de amendoim.",
+          "Soma pela TACO cobrindo 94% da massa: açaí base adoçado→Açaí, polpa, congelada, banana/fruta complementar→Banana, prata, crua.",
+          "Estimativas muito diferentes entre si (dispersão 56%)."
+        ],
+        "calories": 433.0,
+        "carbs_g": 68.3,
+        "confidence": "low",
+        "evidence": "Como o peso total foi informado como 500 g, usei esse valor como base. Para um açaí de padaria/tigela sem descrição detalhada, estimei uma composição típica de açaí adoçado com pequena quantidade de complementos simples, o que dá calorias majoritariamente de carboidratos e alguma gordura.",
+        "fat_g": 17.2,
+        "maximum": 700.0,
+        "method": "consensus",
+        "minimum": 243.0,
+        "motivo_revisao": "Estimativas muito diferentes entre si (dispersão 56%).",
+        "obtained_at": "2026-10-18T11:15:34.360807Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "1 tigela de 500 g de açaí servido na loja (~500 g, peso declarada)",
+        "portion_grams": 500.0,
+        "protein_g": 4.1,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
     },
     "879f2a8c610a": {
       "calculado_em": "2026-10-18T09:05:46.849519+00:00",
@@ -832,6 +1272,104 @@
         "state": "ready"
       },
       "versao_pipeline": "calorias-v3"
+    },
+    "89cb9cad69ce": {
+      "calculado_em": "2026-10-18T11:35:59.505273+00:00",
+      "nome": "Açaí na tigela 500ml com banana+morango+granola",
+      "origem": "consensus",
+      "restaurante": "Padaria Bella Buarque",
+      "resultado": {
+        "assumptions": [
+          "Complementos estimados à parte e somados ao item base: 1× Leite condensado ~100 kcal."
+        ],
+        "calories": 650.0,
+        "carbs_g": 125.5,
+        "confidence": "medium",
+        "evidence": "“Açaí, polpa, com xarope de guaraná e glucose” (Frutas e derivados): 110 kcal por 100 g na Tabela TACO. Complementos: 1× Leite condensado ~100 kcal.",
+        "fat_g": 21.3,
+        "maximum": 823.0,
+        "method": "consensus",
+        "minimum": 477.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T11:35:59.504014Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "100 g (~500 g, peso declarada) + 1 complemento(s)",
+        "portion_grams": 530.0,
+        "protein_g": 5.1,
+        "revisar": false,
+        "source_name": "TACO",
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
+    },
+    "9d72f59d28ed": {
+      "calculado_em": "2026-10-18T11:11:35.299738+00:00",
+      "nome": "Pizza Quadradona | Calabresa",
+      "origem": "estimated",
+      "restaurante": "Nema Padaria - Vila Mariana",
+      "resultado": {
+        "assumptions": [
+          "Assumi uma pizza quadrada individual com espessura média.",
+          "Assumi cobertura típica de calabresa com queijo e molho, sem ingredientes extras.",
+          "Como não há foto e a descrição é genérica, a estimativa tem incerteza moderada.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 820.0,
+        "carbs_g": 92.0,
+        "confidence": "medium",
+        "evidence": "Trata-se de uma pizza quadrada de calabresa, provavelmente em tamanho individual/medio pequeno, com massa, molho, queijo e calabresa. Sem peso informado nem imagem, usei composição típica de pizza de calabresa para estimar calorias e macros.",
+        "fat_g": 34.0,
+        "maximum": 980.0,
+        "method": "estimated",
+        "minimum": 700.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T11:11:35.298669Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "1 pizza quadrada individual de calabresa, conforme vendida (~430 g, peso estimada)",
+        "portion_grams": 430.0,
+        "protein_g": 34.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
+    },
+    "9eb88dd2eaab": {
+      "calculado_em": "2026-10-18T11:33:39.250819+00:00",
+      "nome": "Açaí Natural na Tigela 500ml",
+      "origem": "estimated",
+      "restaurante": "Padaria Aj M&m Pinheiros",
+      "resultado": {
+        "assumptions": [
+          "Estimativa pesquisada na web com base em “Açaí, polpa, congelada (TACO) / Açaí, polpa, com xarope de guaraná e glucose (TACO) — valores usados como referência” — Tabela Brasileira de Composição de Alimentos (TACO) — entrada para açaí (polpa, congelada) e açaí com xarope de guaraná e glucose (cfn.org.br).",
+          "500 ml ≈ 500 g (densidade próxima a 1 g/ml para polpa batida)",
+          "Padaria provavelmente serve a versão adoçada (polpa com xarope de guaraná) quando não há especificação — por isso usei como referência o registro TACO para 'polpa com xarope'",
+          "Nenhuma cobertura (banana, granola, leite condensado) foi informada ou escolhida — estimativas não incluem toppings",
+          "Faixa reflete incerteza entre polpa pura (TACO 58 kcal/100 g) e polpa adoçada/com xarope (TACO 110 kcal/100 g) e possíveis variações de preparo comercial",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 550.0,
+        "carbs_g": 107.5,
+        "confidence": "medium",
+        "evidence": "“Açaí, polpa, congelada — Valor energético 58 kcal por 100 g; proteína 0,8 g; gordura total 3,9 g; carboidrato 6,2 g. Açaí, polpa, com xarope de guaraná e glucose — Valor energético 110 kcal por 100 g; proteína 0,7 g; gordura total 3,7 g; carboidrato 21,5 g.” Não há tabela do restaurante; portanto estimei com base na Tabela Brasileira de Composição de Alimentos (TACO). A TACO lista duas entradas relevantes: polpa congelada pura (58 kcal/100 g) e polpa com xarope de guaraná e glucose (110 kcal/100 g). Como a maioria das “açaí na tigela” vendidas em padarias/lanchonetes é preparada a partir da polpa adoçada, usei o valor de 110 kcal/100 g como referência principal e escalei para 500 g → 110 × 5 = 550 kcal. Calculados macronutrientes também foram escalados a partir dos valores TACO (proteína 0,7 g/100 g → 3,5 g/500 g; carboidratos 21,5 g/100 g → 107,5 g/500 g; gorduras 3,7 g/100 g → 18,5 g/500 g). A faixa mínima (290 kcal) representa o cenário de polpa pura (58 kcal/100 g × 5); a máxima (650 kcal) acomoda variações comerciais (adoçantes extras, maior concentração de xarope ou pequenas coberturas) e incertezas no peso/volume. Confiança média porque a TACO é fonte sólida para composição, mas o preparo comercial varia bastante e não temos detalhes do estabelecimento.",
+        "fat_g": 18.5,
+        "maximum": 650.0,
+        "method": "estimated",
+        "minimum": 290.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T11:33:39.249557Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "tigela 500 ml (assumida densidade ≈1 g/ml) (~500 g, peso declarada)",
+        "portion_grams": 500.0,
+        "protein_g": 3.5,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
     },
     "a065ee1099d7": {
       "calculado_em": "2026-10-18T06:39:25.749523+00:00",
@@ -1063,6 +1601,39 @@
       },
       "versao_pipeline": "calorias-v3"
     },
+    "aef8ef1fa677": {
+      "calculado_em": "2026-10-18T11:17:02.660952+00:00",
+      "nome": "Açaí na tigela 500ml",
+      "origem": "estimated",
+      "restaurante": "Padaria Bella Buarque",
+      "resultado": {
+        "assumptions": [
+          "açaí sem açúcar ou outros adoçantes adicionados",
+          "sem granola, frutas ou outros toppings",
+          "Apenas uma fonte de estimativa.",
+          "Complementos estimados à parte e somados ao item base: 1× Leite em pó ~50 kcal."
+        ],
+        "calories": 400.0,
+        "carbs_g": 23.8,
+        "confidence": "medium",
+        "evidence": "Baseado na composição típica de polpa de açaí não adoçada (≈70 kcal, 2g proteína, 4g carboidratos, 5g gordura por 100g). Multiplicado pelos 500g informados. Complementos: 1× Leite em pó ~50 kcal.",
+        "fat_g": 27.7,
+        "maximum": 488.0,
+        "method": "estimated",
+        "minimum": 312.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T11:17:02.659638Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "tigela de 500 g (~500 g, peso declarada) + 1 complemento(s)",
+        "portion_grams": 510.0,
+        "protein_g": 12.6,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
+    },
     "b0b3f99e81b2": {
       "calculado_em": "2026-10-18T08:45:56.771349+00:00",
       "nome": "Bolo de Cenoura com Ganache de Chocolate Belga",
@@ -1137,6 +1708,41 @@
         "state": "ready"
       },
       "versao_pipeline": "calorias-v3"
+    },
+    "d6da6c72eb24": {
+      "calculado_em": "2026-10-18T11:32:38.290468+00:00",
+      "nome": "Açaí na Tigela",
+      "origem": "estimated",
+      "restaurante": "Alameda dos Pães Bakery",
+      "resultado": {
+        "assumptions": [
+          "Estimativa pesquisada na web com base em “Estimativa baseada em: polpa de açaí (Tabela TACO) e receitas / bases de composição de 'açaí na tigela' (polpa + xarope de guaraná + granola + banana)” — Guiadanutri (referenciando TACO) + Arise-app (exemplo de composição de tigela) (guiadanutri.com).",
+          "Descrição não forneceu ingredientes; assumi uma tigela típica vendida em padarias/lanchonetes com polpa batida com xarope de guaraná e coberturas (granola e banana).",
+          "Porção estimada de serviço ~300 g (200 g polpa + 100 g de calda/toppings).",
+          "Valores de composição da polpa seguem Tabela TACO (≈58 kcal/100 g para polpa pura); xarope e granola usam valores médios comerciais (xarope ≈300 kcal/100 g; granola ≈650 kcal/100 g).",
+          "Não considerei leite condensado, paçoca ou leite em pó (essas aumentariam bastante as calorias).",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 490.0,
+        "carbs_g": 58.0,
+        "confidence": "medium",
+        "evidence": "““100 g de polpa pura de açaí têm 58 kcal (Tabela TACO)… A versão 'polpa com xarope de guaraná' registrada na TACO sobe para 110 kcal por 100 g, e nas lanchonetes ele ainda vem batido com banana, granola e leite condensado, o que faz as calorias dispararem.” — Guiadanutri. / “Polpa de açaí com xarope de guaraná | 300 g | 330 kcal” — Arise-app (exemplo de composição de tigela com acompanhamentos).” Não existe tabela nutricional oficial do restaurante; usei a Tabela Brasileira de Composição de Alimentos (TACO) como referência para a polpa (≈58 kcal/100 g) e fontes de receitas/bancos de dados de alimentos que mostram composições típicas de 'açaí na tigela' quando preparado com xarope e toppings. A estimativa de 490 kcal para uma tigela ~300 g resulta de combinar: polpa 200 g (≈116 kcal) + xarope 50 g (≈150 kcal) + granola 35 g (≈228 kcal por 35 g ≈ 228) + banana 15 g (≈15 kcal) — total arredondado para 490 kcal. A faixa 330–700 kcal reflete variação comum nas porções e nos toppings (tigelas sem açúcar podem ficar perto de 170–200 kcal se só polpa; tigelas com leite condensado/paçoca/granola abundante frequentemente ultrapassam 600 kcal). Fontes principais: Guiadanutri (TACO) para polpa de açaí; exemplos de composição de tigela (Arise-app) e bases de dados que mostram variação por 100 g/porção.",
+        "fat_g": 22.0,
+        "maximum": 700.0,
+        "method": "estimated",
+        "minimum": 330.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T11:32:38.289349Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "tigela típica de açaí servida em lanchonete/padaria (~300 g total: polpa + xarope + toppings) (~300 g, peso estimada)",
+        "portion_grams": 300.0,
+        "protein_g": 6.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
     },
     "e3c0c2439a4a": {
       "calculado_em": "2026-10-18T06:39:06.181334+00:00",
@@ -1237,6 +1843,72 @@
         "state": "ready"
       },
       "versao_pipeline": "calorias-v3"
+    },
+    "ef053918abac": {
+      "calculado_em": "2026-10-18T10:34:03.663558+00:00",
+      "nome": "Pizza de calabresa",
+      "origem": "estimated",
+      "restaurante": "Forno da Vila (demo)",
+      "resultado": {
+        "assumptions": [
+          "Considerei pizza inteira de tamanho médio, pois não há peso informado.",
+          "Assumi proporção típica de pizzaria para cobertura de calabresa com queijo.",
+          "Não considerei borda recheada nem ingredientes extras além dos descritos.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 1100.0,
+        "carbs_g": 115.0,
+        "confidence": "medium",
+        "evidence": "Estimativa baseada em uma pizza de massa fina com cobertura típica de calabresa, queijo e cebola. Considerei uma pizza média inteira, com quantidade moderada de queijo e calabresa, o que eleva bastante as gorduras e as calorias.",
+        "fat_g": 50.0,
+        "maximum": 1300.0,
+        "method": "estimated",
+        "minimum": 950.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T10:34:03.662631Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 pizza média de massa fina (~650 g, peso estimada)",
+        "portion_grams": 650.0,
+        "protein_g": 45.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "efe75bb32e34": {
+      "calculado_em": "2026-10-18T11:15:45.814117+00:00",
+      "nome": "Açaí na tigela 360ml",
+      "origem": "estimated",
+      "restaurante": "Padaria Novo Millennium",
+      "resultado": {
+        "assumptions": [
+          "Não havia foto disponível para identificar cobertura ou acompanhamentos.",
+          "Assumi que o item é servido como açaí convencional em tigela, sem frutas, leite condensado ou sorvete adicionais.",
+          "Considerei que o peso informado de 360 g inclui todos os componentes da unidade vendida.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 302.0,
+        "carbs_g": 53.0,
+        "confidence": "medium",
+        "evidence": "Usei o peso informado de 360 g como base e assumi uma tigela de açaí tradicional, sem descrição detalhada de adicionais. A maior parte das calorias vem do açaí adoçado/base de açaí, com pequena contribuição de granola ou complementos mínimos não especificados.",
+        "fat_g": 9.5,
+        "maximum": 390.0,
+        "method": "estimated",
+        "minimum": 240.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T11:15:45.813005Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "1 tigela de 360 g de açaí com acompanhamento típico de padaria (~360 g, peso declarada)",
+        "portion_grams": 360.0,
+        "protein_g": 2.7,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
     },
     "f019de1b5944": {
       "calculado_em": "2026-10-18T06:18:04.712936+00:00",

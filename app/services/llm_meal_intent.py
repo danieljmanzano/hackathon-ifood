@@ -1,4 +1,4 @@
-"""Interpretação contextual via OpenRouter, validada e com fallback local limitado por tempo."""
+"""Interpretação contextual via LLM de texto (NUTRITION_PROVIDER), validada e com fallback local limitado por tempo."""
 import asyncio
 from collections import OrderedDict
 import json
@@ -133,7 +133,7 @@ async def interpret_intent(request: MealRequest, settings: Settings, *, diet_con
     if not settings.intent_llm_enabled:
         event('intent.fallback', reason='disabled', duration_ms=elapsed_ms(started))
         return base.model_copy(update={'fallback_reason': 'disabled'})
-    if not settings.openrouter_api_key and not (settings.llm_fallback and settings.openai_api_key.get_secret_value()):
+    if not settings.llm_api_key:
         event('intent.fallback', reason='not_configured', duration_ms=elapsed_ms(started))
         return base.model_copy(update={'fallback_reason': 'not_configured'})
     agora = horario.agora(settings)

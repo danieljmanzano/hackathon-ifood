@@ -198,7 +198,7 @@ def test_personalization_survives_background_nutrition_refresh(tmp_path, monkeyp
 
     configured = settings(database_path=tmp_path / 'combined.sqlite3', ifood_mode='mock',
                           nutrition_provider='openrouter', nutrition_search_budget_seconds=0,
-                          openai_api_key='', gemini_api_key='', calorias_log='off')
+                          openai_api_key='', calorias_log='off')
     calls = []
 
     async def complete(*args, **kwargs):
