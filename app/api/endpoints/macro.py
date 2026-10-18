@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import time
 from collections import Counter
 from datetime import date, timedelta
@@ -83,8 +84,8 @@ async def _com_descricoes(provider, recommendations, address):
 ORDINAIS = {"primeiro": 0, "primeira": 0, "1": 0, "segundo": 1, "segunda": 1, "2": 1, "terceiro": 2, "terceira": 2, "3": 2}
 
 
-def _alvo_da_montagem(recomendacoes, texto: str, so_se_citado: bool = False) -> MealCandidate | None:
-    """Prato que o cliente quer montar: o que ele cita (nome inteiro, posição ou o melhor casamento de palavras).
+def _escolher_alvo(recomendacoes, texto: str, so_se_citado: bool = False) -> tuple[MealCandidate | None, str]:
+    """Prato que o cliente quer montar e POR QUE (para o log): nome inteiro, posição, melhor casamento de palavras.
 
     Sem citação devolve o primeiro da lista, ou None com `so_se_citado` (aí a mensagem pede outra busca).
     """
@@ -92,15 +93,53 @@ def _alvo_da_montagem(recomendacoes, texto: str, so_se_citado: bool = False) -> 
     pedido = normalized(texto)
     for r in recomendacoes:
         if normalized(r.candidate.name) in pedido:
-            return r.candidate
-    for palavra in pedido.replace(",", " ").split():
+            return r.candidate, "o nome inteiro do prato aparece na mensagem"
+    palavras_do_pedido = re.findall(r"\w+", pedido)
+    for palavra in palavras_do_pedido:
         if palavra in ORDINAIS and ORDINAIS[palavra] < len(recomendacoes):
-            return recomendacoes[ORDINAIS[palavra]].candidate
-    palavras = {p for p in pedido.replace(",", " ").split() if len(p) > 3 and p not in {"pedido", "monte", "pegue", "coloque"}}
-    melhor = max(recomendacoes, key=lambda r: len(palavras & set(normalized(r.candidate.name).split())), default=None)
-    if melhor is not None and palavras & set(normalized(melhor.candidate.name).split()):
-        return melhor.candidate
-    return None if so_se_citado or not recomendacoes else recomendacoes[0].candidate
+            return recomendacoes[ORDINAIS[palavra]].candidate, f"posição citada (“{palavra}”)"
+    palavras = {p for p in palavras_do_pedido if len(p) > 3 and p not in {"pedido", "monte", "pegue", "coloque", "voce", "mostrou"}}
+    do_nome = lambda r: set(re.findall(r"\w+", normalized(r.candidate.name)))  # "(Footlong 30cm)" -> footlong, 30cm
+    melhor = max(recomendacoes, key=lambda r: len(palavras & do_nome(r)), default=None)
+    comuns = palavras & do_nome(melhor) if melhor is not None else set()
+    if comuns:
+        return melhor.candidate, f"palavras da mensagem no nome do prato: {sorted(comuns)}"
+    if so_se_citado or not recomendacoes:
+        return None, "nenhuma sugestão mostrada foi citada na mensagem"
+    return recomendacoes[0].candidate, "nada citado e sem comida nova: primeira sugestão"
+
+
+def _alvo_da_montagem(recomendacoes, texto: str, so_se_citado: bool = False) -> MealCandidate | None:
+    return _escolher_alvo(recomendacoes, texto, so_se_citado)[0]
+
+
+def _explicar_decisao(settings: Settings, intent, session: Session, texto: str) -> tuple[MealCandidate | None, str]:
+    """Decide entre MONTAR uma sugestão já mostrada e BUSCAR (e talvez montar), e registra o raciocínio no log."""
+    nomes = [r.candidate.name for r in session.recommendations]
+    conteudo = settings.busca_log_conteudo
+    logs.info("decisão", f"interpretação={intent.interpretation_source}"
+                         + (f" (caiu por: {intent.fallback_reason})" if intent.fallback_reason else "")
+                         + f" · montar_pedido={intent.montar_pedido} · sugestões na sessão={len(nomes)}"
+                         + (f" · comida pedida={intent.food_query!r}" if conteudo else "")
+                         + (f" · orçamento={intent.budget_cents / 100:.2f}" if intent.budget_cents is not None else "")
+                         + (f" · metas={intent.nutrition_preferences.model_dump(exclude_none=True)}"
+                            if intent.nutrition_preferences.active else ""))
+    if conteudo and nomes:
+        logs.info("decisão", f"sugestões mostradas: {nomes}")
+    if not intent.montar_pedido:
+        logs.info("decisão", "→ BUSCAR: a mensagem não foi lida como pedido de montagem"
+                             + (" (a interpretação por regras não reconheceu o verbo de montar)"
+                                if intent.interpretation_source == "rules" else ""))
+        return None, "buscar"
+    if not session.recommendations:
+        logs.info("decisão", "→ BUSCAR e depois MONTAR o primeiro resultado: não há sugestões anteriores para montar")
+        return None, "buscar_e_montar"
+    alvo, porque = _escolher_alvo(session.recommendations, texto, so_se_citado=bool(intent.food_query.strip()))
+    if alvo is None:
+        logs.info("decisão", f"→ BUSCAR e depois MONTAR o primeiro resultado: {porque}, e a mensagem pede comida nova")
+        return None, "buscar_e_montar"
+    logs.info("decisão", f"→ MONTAR sugestão já mostrada «{logs.curto(alvo.name, 60)}» ({alvo.merchant_name}): {porque}")
+    return alvo, "montar"
 
 
 def _limites_da_montagem(intent, session: Session, alvo: MealCandidate) -> AssemblyLimits:
@@ -143,7 +182,7 @@ async def _iniciar_montagem(request: Request, session: Session, provider, settin
 
     resultado = mutate_session(request, session, update)
     montagem.iniciar(request.app.state.db, settings, resultado.id, assembly.id, detalhe, limites, resultado.profile,
-                     payload.restrictions, lambda sel: estimate_nutrition(sel, settings))
+                     payload.restrictions, lambda sel: estimate_nutrition(sel, settings), payload.text)
     return resultado
 
 
@@ -396,12 +435,11 @@ async def search(
         intent = apply_profile_preferences(apply_diet_context(interpreted, diet_context, meal_text), session.profile)
         event("intent.ready", source=intent.interpretation_source, goals=intent.goals,
               fallback_reason=intent.fallback_reason, duration_ms=elapsed_ms(started))
-        if intent.montar_pedido and session.recommendations:
-            # "pegue o footlong de 30cm": se cita uma das sugestões já mostradas (ou não pede comida nova), monta ela
-            # sem nova busca; com comida nova, busca e monta o primeiro resultado.
-            alvo = _alvo_da_montagem(session.recommendations, payload.text, so_se_citado=bool(intent.food_query.strip()))
-            if alvo is not None:
-                return await _iniciar_montagem(request, session, provider, settings, intent, alvo, payload, True)
+        # "pegue o footlong de 30cm": se cita uma das sugestões já mostradas (ou não pede comida nova), monta ela
+        # sem nova busca; com comida nova, busca e monta o primeiro resultado. O raciocínio vai para o log.
+        alvo, caminho = _explicar_decisao(settings, intent, session, payload.text)
+        if alvo is not None:
+            return await _iniciar_montagem(request, session, provider, settings, intent, alvo, payload, True)
         nutritional = intent.nutrition_preferences.active
         batch_mode = nutritional and session.mode == "live" and settings.catalog_enrichment_enabled
         paging = {}

@@ -231,3 +231,39 @@ def test_meta_qualitativa_sem_numero_usa_a_referencia_do_motor(tmp_path):
     pesado = Calculo({("frango",): nutricao(900)})
     r, _ = rodar(tmp_path, pesado, Modelo(proposta("frango")), AssemblyLimits(nutrition=NutritionPreferences(goals=["low_calorie"])))
     assert r.state == "impossible" and "pouco calórico" in r.message
+
+
+def test_resposta_do_modelo_com_objetivo_nutricional_em_goals_nao_perde_o_resto():
+    """Bug real: "low_calorie" em `goals` derrubava a resposta inteira (e o pedido de montagem junto)."""
+    import json
+    from app.services.llm_meal_intent import LLMIntent, sanear_objetivos
+    bruto = json.dumps({"goals": ["low_calorie", "large_portion", "inventado"], "food_query": "footlong", "search_queries": [],
+                        "cuisine": "", "avoid_repeats": False, "pesquisar_na_web": "", "montar_pedido": True,
+                        "context_summary": "x", "inferences": [], "budget_cents": 6000,
+                        "nutrition_preferences": {"goals": [], "max_calories": None}})
+    r = LLMIntent.model_validate_json(sanear_objetivos(bruto))
+    assert r.montar_pedido and r.budget_cents == 6000 and r.goals == ["large_portion"]
+    assert r.nutrition_preferences.goals == ["low_calorie"]
+
+
+def test_log_da_decisao_explica_se_monta_a_sugestao_ou_busca(caplog):
+    import logging
+    from app.api.endpoints.macro import _explicar_decisao
+    recs = [Recommendation.model_construct(candidate=candidato(item_id=str(i), name=n)) for i, n in
+            enumerate(["Imperdíveis do Subway (Footlong 30cm)", "Combo Imperdíveis do Subway (15cm)"])]
+    sessao = Session.model_construct(recommendations=recs)
+    from tests.nutricao_comum import settings as cfgs
+    import pathlib
+    cfg = cfgs(pathlib.Path("/tmp"), busca_log_conteudo=True)
+    with caplog.at_level(logging.INFO, logger="app.nutricao"):
+        alvo, caminho = _explicar_decisao(cfg, MealIntent(montar_pedido=True, food_query="footlong 30cm"), sessao,
+                                          "monte o footlong 30cm que você me mostrou")
+        assert alvo.item_id == "0" and caminho == "montar"
+        alvo, caminho = _explicar_decisao(cfg, MealIntent(montar_pedido=True, food_query="pizza"), sessao, "monte uma pizza")
+        assert alvo is None and caminho == "buscar_e_montar"
+        _, caminho = _explicar_decisao(cfg, MealIntent(interpretation_source="rules", fallback_reason="invalid_response"),
+                                       sessao, "me mostre subways")
+        assert caminho == "buscar"
+    texto = "\n".join(caplog.messages)
+    assert "MONTAR sugestão já mostrada" in texto and "palavras da mensagem no nome do prato" in texto
+    assert "BUSCAR e depois MONTAR" in texto and "caiu por: invalid_response" in texto

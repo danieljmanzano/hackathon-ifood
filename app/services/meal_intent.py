@@ -37,8 +37,9 @@ VARIEDADE = (r'\b(?:diferentes?|outr[oa]s?|variad[oa]s?|variedade|novidades?|mai
 
 
 # Pediu para o assistente montar o pedido. Vale também quando o modelo da interpretação falha (as regras assumem).
-MONTAR_PEDIDO = (r'\b(?:mont(?:e|a|ar|o)|faca|faz|fazer)\b.{0,30}\b(?:pedido|prato|lanche|sanduiche|combo|marmita)\b'
-                 r'|\b(?:pegue|pega|escolha|escolhe)\b.{0,60}\b(?:coloque|ponha|bota|com muit[ao])\b|\bmont(?:e|a)\s+(?:pra|para)\s+mim\b')
+MONTAR_PEDIDO = (r'(?:^|\b(?:pode|poderia|consegue|por favor|quero que|voce)\W+(?:voce\W+)?)\W*mont(?:e|a|ar)\b(?!\s+(?:o\s+)?(?:seu|sua)\b)'
+                 r'|\b(?:faca|faz|fazer)\b.{0,30}\b(?:pedido|prato|lanche|sanduiche|combo|marmita)\b'
+                 r'|\b(?:pegue|pega|escolha|escolhe)\b.{0,60}\b(?:coloque|ponha|bota|com muit[ao])\b')
 
 
 def parse_intent(request: MealRequest) -> MealIntent:

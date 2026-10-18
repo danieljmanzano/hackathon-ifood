@@ -136,7 +136,7 @@ def _nutricao_para_o_modelo(n: NutritionResult) -> dict:
             "suposicoes": n.assumptions[:4], "evidencia": (n.evidence or "")[:300], "por_unidade": True}
 
 
-def _dados(candidate: MealCandidate, limites: AssemblyLimits, base: dict, tentativas: list[dict]):
+def _dados(candidate: MealCandidate, limites: AssemblyLimits, base: dict, tentativas: list[dict], pedido_texto: str = ""):
     n = limites.nutrition
     return {
         "prato": {"nome": candidate.name, "descricao": candidate.description[:300],
@@ -151,6 +151,7 @@ def _dados(candidate: MealCandidate, limites: AssemblyLimits, base: dict, tentat
             "carboidrato_maximo_g": n.max_carbs_g, "gordura_maxima_g": n.max_fat_g,
             "objetivos": list(n.goals) or None}.items() if v is not None},
         "preferencias": PREFERENCIAS_DO_CLIENTE,
+        "pedido_do_cliente": pedido_texto[:400],
         "quantidade_maxima": MAX_QUANTIDADE,
         "pedido_base": base,
         "tentativas": tentativas,
@@ -199,7 +200,7 @@ def _pronto(selecionado: SelectedItem, nutricao: NutritionResult, tentativa: int
 async def montar(settings: Settings, candidate: MealCandidate, limites: AssemblyLimits, profile: UserProfile,
                  extras_proibidos: list[str], emit: Callable[[str], None],
                  calcular: Callable[[SelectedItem], Awaitable[NutritionResult]],
-                 propor_fn=None) -> Resultado:
+                 propor_fn=None, pedido_texto: str = "") -> Resultado:
     propor_fn = propor_fn or propor  # resolvido na chamada (os testes trocam `propor`)
     proibidas = _proibidas(profile, extras_proibidos)
     base_opcoes = pedido_base(candidate, proibidas)
@@ -234,7 +235,7 @@ async def montar(settings: Settings, candidate: MealCandidate, limites: Assembly
         selecionado, erro = None, None
         for _ in range(2):  # uma correção se a proposta for inválida
             try:
-                resposta = await propor_fn(settings, _dados(candidate, limites, ref, tentativas), erro)
+                resposta = await propor_fn(settings, _dados(candidate, limites, ref, tentativas, pedido_texto), erro)
                 selecionado = _montar_selecao(candidate, resposta, proibidas)
                 break
             except (AppError, MacroError, ValueError, SchemaError, KeyError) as e:
@@ -282,7 +283,7 @@ def _atualizar(db, session_id: str, assembly_id: str, operacao) -> bool:
 
 
 def iniciar(db, settings: Settings, session_id: str, assembly_id: str, candidate: MealCandidate, limites: AssemblyLimits,
-            profile: UserProfile, extras: list[str], calcular) -> None:
+            profile: UserProfile, extras: list[str], calcular, pedido_texto: str = "") -> None:
     """Cria a tarefa em segundo plano; a UI acompanha por GET /api/assembly."""
     def emit(texto: str) -> None:
         logs.info("montagem", texto)
@@ -290,7 +291,8 @@ def iniciar(db, settings: Settings, session_id: str, assembly_id: str, candidate
 
     async def rodar() -> None:
         try:
-            r = await asyncio.wait_for(montar(settings, candidate, limites, profile, extras, emit, calcular),
+            r = await asyncio.wait_for(montar(settings, candidate, limites, profile, extras, emit, calcular,
+                                                pedido_texto=pedido_texto),
                                        settings.montagem_timeout_seconds)
         except asyncio.TimeoutError:
             r = Resultado("failed", "Demorei demais para montar. Monte o seu pedido pela tela.")

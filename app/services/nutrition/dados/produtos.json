@@ -354,6 +354,41 @@
       },
       "versao_pipeline": "calorias-v3"
     },
+    "145ca07533fb188b7c118a8e": {
+      "calculado_em": "2026-10-18T12:40:35.289022+00:00",
+      "nome": "Monte seu Hambúrguer",
+      "origem": "estimated",
+      "restaurante": "Dona Deôla Padaria - Higienopolis",
+      "resultado": {
+        "assumptions": [
+          "Estimativa pesquisada na web com base em “Hambúrguer simples de padaria (pão de hambúrguer + patty bovino), referência de composição padrão usada para estimativa” — USDA FoodData Central via CalorieInsight e NutritionFactLabel (calorieinsight.com).",
+          "O item é um prato montado (não industrializado) e não há composição detalhada no iFood.",
+          "Assumi um hambúrguer simples de padaria, sem queijo, molho, bacon ou fritas, porque nenhuma opção foi escolhida.",
+          "Usei 150 g de carne bovina como porção padrão de um sanduíche artesanal simples.",
+          "Usei valores de referência por 100 g de carne crua e do pão padrão de hambúrguer para estimar o total; o peso pode variar na montagem real.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 488.0,
+        "carbs_g": 22.0,
+        "confidence": "medium",
+        "evidence": "“Beef, ground, 80% lean meat / 20% fat, raw has 243 calories per 100 g, with 17.5 g protein, 0 g carbs and 19.4 g fat. ... Hamburger bun (1 roll 1 serving, 44 g) has 123 calories, 4.3 g protein, 22.1 g carbohydrate and 1.7 g fat, according to USDA FoodData Central. 100 g has 279 calories.” Como o prato não traz tabela do restaurante nem opções escolhidas, a melhor estimativa é um hambúrguer simples de padaria. Somei 44 g de pão (123 kcal, 4,3 g proteína, 22,1 g carboidrato, 1,7 g gordura) com 150 g de carne bovina 80/20 (243 kcal/100 g; 17,5 g proteína/100 g; 0 g carboidrato/100 g; 19,4 g gordura/100 g). Isso resulta em aproximadamente 488 kcal, 31 g de proteína, 22 g de carboidratos e 31 g de gordura para ~194 g totais.",
+        "fat_g": 31.0,
+        "maximum": 620.0,
+        "method": "estimated",
+        "minimum": 430.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T12:40:35.288292Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "1 hambúrguer estimado: pão de hambúrguer (44 g) + 1 hambúrguer bovino de 150 g (~194 g, peso estimada)",
+        "portion_grams": 194.0,
+        "protein_g": 31.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
+    },
     "195e7e017279": {
       "calculado_em": "2026-10-18T07:54:30.645645+00:00",
       "nome": "Combo Xtouro Burger + Batata + Bebida",
@@ -806,6 +841,42 @@
         "portion_basis": "1 pizza margherita inteira de 330 g (~330 g, peso declarada)",
         "portion_grams": 330.0,
         "protein_g": 34.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
+    },
+    "4097eeb8d0a83363c7b613ba": {
+      "calculado_em": "2026-10-18T12:38:48.085265+00:00",
+      "nome": "Imperdíveis do Subway (15cm)",
+      "origem": "estimated",
+      "restaurante": "Subway Maria Antônia Makenzie",
+      "resultado": {
+        "assumptions": [
+          "Estimativa pesquisada na web com base em “Subway 15 cm Frango Ranch (pão 9 grãos, alface, tomate, cebola, pimentão e pepino)” — Subway Brasil – Tabela Nutricional (PDF oficial) (subway.com).",
+          "A descrição não informa qual proteína foi escolhida; usei como referência principal o Subway 15 cm Frango Ranch da tabela oficial do Subway Brasil.",
+          "Como não há escolha de vegetais/molhos, assumi o conjunto padrão citado na tabela oficial (alface, tomate, cebola, pimentão e pepino).",
+          "Como o item é um prato montado no restaurante e não um industrializado embalado, tratei os valores como estimativa realista baseada em prato equivalente oficial.",
+          "Os valores foram arredondados a partir da referência oficial; a faixa reflete a variação entre as opções de proteína mencionadas na descrição.",
+          "Foto ilustrativa: não foi usada para medir a porção.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 404.0,
+        "carbs_g": 44.0,
+        "confidence": "medium",
+        "evidence": "“Valores nutricionais válidos para o tamanho de 15 cm com o pão 9 grãos, alface, tomate, cebola, pimentão e pepino. Frango Ranch | 232 g | 406 kcal | 45,3 g | 20 g | 14,3 g | 2,2 g | 5,2 g | 601 mg” O item é um sanduíche preparado no restaurante, portanto classificado como prato. A tabela oficial do Subway Brasil informa valores para subs de 15 cm com pão 9 grãos e vegetais padrão; o melhor ponto de partida encontrado foi Frango Ranch. Como a descrição permite várias proteínas e nenhuma foi escolhida, a estimativa foi mantida com faixa ampla para cobrir variação entre opções similares de 15 cm.",
+        "fat_g": 15.0,
+        "maximum": 452.0,
+        "method": "estimated",
+        "minimum": 370.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T12:38:48.084541Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "1 sanduíche de 15 cm (referência Subway Brasil para Frango Ranch) (~237 g, peso estimada)",
+        "portion_grams": 237.0,
+        "protein_g": 19.0,
         "revisar": true,
         "source_name": null,
         "source_url": null,
@@ -2400,6 +2471,41 @@
         "state": "ready"
       },
       "versao_pipeline": "calorias-v3"
+    },
+    "fcb03aa02de0be5560bfa3c2": {
+      "calculado_em": "2026-10-18T12:40:37.424586+00:00",
+      "nome": "Monte o seu Toast",
+      "origem": "estimated",
+      "restaurante": "Rei do Mate - Paulista 2001",
+      "resultado": {
+        "assumptions": [
+          "Estimativa pesquisada na web com base em “Tost do Rei / Tost pizza (base de referência da categoria Tost e Mini Tost)” — Rei do Mate (cardápio e página do produto Tost pizza) + TACO/NEPA-Unicamp (reidomate.com.br).",
+          "O item é um toast montado pelo cliente, sem opções escolhidas; portanto usei uma montagem média plausível do cardápio da rede.",
+          "Assumi uma porção de cerca de 150 g, equivalente a um lanche tostado com 2 fatias de pão, queijo, requeijão e um pouco de tomate.",
+          "Usei o tost de queijo/requeijão como referência de composição por ser a descrição oficial mais próxima disponível da categoria Tost e Mini Tost.",
+          "Como não há tabela nutricional oficial textualmente acessível para este item customizado, tratei como prato e estimei a composição nutricional a partir de tabelas de alimentos de referência.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 423.0,
+        "carbs_g": 35.7,
+        "confidence": "medium",
+        "evidence": "“No cardápio do Rei do Mate, a categoria aparece como “tost do rei” com o texto “Escolha seu pão, escolha seu recheio, a gente tosta para você”; na página do produto “Tost pizza” os ingredientes listados são “Queijo prato, requeijão, tomate e orégano.” ([reidomate.com.br](https://www.reidomate.com.br/cardapio)) Para os ingredientes de referência, usei valores por 100 g da TACO/NEPA-Unicamp para pão de forma, queijo prato e requeijão. ([cfn.org.br](https://cfn.org.br/wp-content/uploads/2017/03/taco_4_edicao_ampliada_e_revisada.pdf?utm_source=openai))” Tratei como prato porque é um item preparado na loja e montado do jeito do cliente, sem tabela nutricional oficial do produto customizado. A referência oficial da rede mostra que o Tost é “Escolha seu pão, escolha seu recheio, a gente tosta para você”, e o produto Tost pizza usa queijo prato, requeijão, tomate e orégano como base de composição. Com isso, estimei um toast médio de ~150 g usando valores por 100 g da TACO/NEPA-Unicamp para pão de forma, queijo prato e requeijão. A estimativa resultante fica em torno de 423 kcal, com faixa ampla por causa da ausência das opções escolhidas e do tamanho exato do pão/recheio.",
+        "fat_g": 22.8,
+        "maximum": 500.0,
+        "method": "estimated",
+        "minimum": 350.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T12:40:37.423821Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "toast/sanduíche tostado montado no estilo Rei do Mate, porção estimada de ~150 g (~150 g, peso estimada)",
+        "portion_grams": 150.0,
+        "protein_g": 17.6,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
     }
   },
   "versao": 1

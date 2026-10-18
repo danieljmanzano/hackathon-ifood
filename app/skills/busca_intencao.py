@@ -23,7 +23,8 @@ Explique as inferências em português, como hipóteses de preferência, sem afi
 As preferências e negações explícitas prevalecem sobre inferências de contexto. Não crie metas de
 calorias/macros nem alegações médicas. Extraia em nutrition_preferences metas numéricas APENAS
 quando o usuário informar explicitamente números e unidades. Calorias não são reais; gramas não
-são orçamento. Use goals high_protein, low_carb, low_fat ou low_calorie para preferências qualitativas.
+são orçamento. Use high_protein, low_carb, low_fat ou low_calorie para preferências qualitativas, SOMENTE em
+nutrition_preferences.goals (nunca em "goals", que aceita apenas os valores do enum do schema).
 "até 600 kcal e pelo menos 30 g de proteína" → max_calories=600, min_protein_g=30.
 São preferências por prato, não metas diárias. Não converta meta diária em meta por refeição.
 Não diagnostique nem determine porções clinicamente necessárias.
