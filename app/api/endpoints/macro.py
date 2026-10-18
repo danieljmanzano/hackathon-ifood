@@ -83,8 +83,11 @@ async def _com_descricoes(provider, recommendations, address):
 ORDINAIS = {"primeiro": 0, "primeira": 0, "1": 0, "segundo": 1, "segunda": 1, "2": 1, "terceiro": 2, "terceira": 2, "3": 2}
 
 
-def _alvo_da_montagem(recomendacoes, texto: str) -> MealCandidate:
-    """Prato que o cliente quer montar: o que ele cita pelo nome ou posição; senão o primeiro da lista."""
+def _alvo_da_montagem(recomendacoes, texto: str, so_se_citado: bool = False) -> MealCandidate | None:
+    """Prato que o cliente quer montar: o que ele cita (nome inteiro, posição ou o melhor casamento de palavras).
+
+    Sem citação devolve o primeiro da lista, ou None com `so_se_citado` (aí a mensagem pede outra busca).
+    """
     from app.services.review_processing import normalized
     pedido = normalized(texto)
     for r in recomendacoes:
@@ -93,7 +96,11 @@ def _alvo_da_montagem(recomendacoes, texto: str) -> MealCandidate:
     for palavra in pedido.replace(",", " ").split():
         if palavra in ORDINAIS and ORDINAIS[palavra] < len(recomendacoes):
             return recomendacoes[ORDINAIS[palavra]].candidate
-    return recomendacoes[0].candidate
+    palavras = {p for p in pedido.replace(",", " ").split() if len(p) > 3 and p not in {"pedido", "monte", "pegue", "coloque"}}
+    melhor = max(recomendacoes, key=lambda r: len(palavras & set(normalized(r.candidate.name).split())), default=None)
+    if melhor is not None and palavras & set(normalized(melhor.candidate.name).split()):
+        return melhor.candidate
+    return None if so_se_citado or not recomendacoes else recomendacoes[0].candidate
 
 
 def _limites_da_montagem(intent, session: Session, alvo: MealCandidate) -> AssemblyLimits:
@@ -389,10 +396,12 @@ async def search(
         intent = apply_profile_preferences(apply_diet_context(interpreted, diet_context, meal_text), session.profile)
         event("intent.ready", source=intent.interpretation_source, goals=intent.goals,
               fallback_reason=intent.fallback_reason, duration_ms=elapsed_ms(started))
-        if intent.montar_pedido and session.recommendations and not intent.food_query.strip():
-            # "monte o primeiro com até 600 kcal": usa as sugestões já mostradas, sem nova busca.
-            return await _iniciar_montagem(request, session, provider, settings, intent,
-                                           _alvo_da_montagem(session.recommendations, payload.text), payload, True)
+        if intent.montar_pedido and session.recommendations:
+            # "pegue o footlong de 30cm": se cita uma das sugestões já mostradas (ou não pede comida nova), monta ela
+            # sem nova busca; com comida nova, busca e monta o primeiro resultado.
+            alvo = _alvo_da_montagem(session.recommendations, payload.text, so_se_citado=bool(intent.food_query.strip()))
+            if alvo is not None:
+                return await _iniciar_montagem(request, session, provider, settings, intent, alvo, payload, True)
         nutritional = intent.nutrition_preferences.active
         batch_mode = nutritional and session.mode == "live" and settings.catalog_enrichment_enabled
         paging = {}

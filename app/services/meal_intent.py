@@ -36,6 +36,11 @@ VARIEDADE = (r'\b(?:diferentes?|outr[oa]s?|variad[oa]s?|variedade|novidades?|mai
              r'nenhum desses|nenhuma dessas|nao quero (?:esses?|essas?|isso))\b')
 
 
+# Pediu para o assistente montar o pedido. Vale também quando o modelo da interpretação falha (as regras assumem).
+MONTAR_PEDIDO = (r'\b(?:mont(?:e|a|ar|o)|faca|faz|fazer)\b.{0,30}\b(?:pedido|prato|lanche|sanduiche|combo|marmita)\b'
+                 r'|\b(?:pegue|pega|escolha|escolhe)\b.{0,60}\b(?:coloque|ponha|bota|com muit[ao])\b|\bmont(?:e|a)\s+(?:pra|para)\s+mim\b')
+
+
 def parse_intent(request: MealRequest) -> MealIntent:
     text = normalized(request.text)
     pede_variedade = bool(re.search(VARIEDADE, text))
@@ -121,7 +126,8 @@ def parse_intent(request: MealRequest) -> MealIntent:
     return MealIntent(goals=goals, party_size=party_size, max_delivery_minutes=max_delivery,
                       food_query=food_query, provider_query=food_query or defaults.get(goals[0] if goals else '', 'refeição'),
                       budget_cents=budget, labels=labels, inferred_goals=inferred_goals, inferences=inferences,
-                      nutrition_preferences=nutritional, avoid_repeats=pede_variedade)
+                      nutrition_preferences=nutritional, avoid_repeats=pede_variedade,
+                      montar_pedido=bool(re.search(MONTAR_PEDIDO, text)))
 
 
 @dataclass

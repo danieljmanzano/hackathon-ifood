@@ -144,6 +144,8 @@ def test_alvo_pelo_nome_pela_posicao_ou_o_primeiro():
     assert _alvo_da_montagem(recs, "monte a marmita fit").item_id == "1"
     assert _alvo_da_montagem(recs, "monta o terceiro").item_id == "2"
     assert _alvo_da_montagem(recs, "monta pra mim").item_id == "0"
+    assert _alvo_da_montagem(recs, "monta pra mim", so_se_citado=True) is None
+    assert _alvo_da_montagem(recs, "pegue a pizza grande", so_se_citado=True).item_id == "2"
 
 
 def test_limites_do_pedido_anterior_valem_para_o_que_nao_foi_repetido():
@@ -207,3 +209,25 @@ def test_chat_monta_o_pedido_em_segundo_plano_e_a_ui_acompanha(tmp_path, monkeyp
                                                        "item_id": a["candidate"]["item_id"], "quantity": a["quantity"],
                                                        "options": a["options"]})
         assert escolhida.status_code == 200 and escolhida.json()["assembly"] is None
+
+
+def test_regras_marcam_montar_pedido_quando_o_modelo_da_interpretacao_falha():
+    from app.schemas.macro import MealRequest
+    from app.services.meal_intent import parse_intent
+    for texto in ("pegue o footlong de 30cm coloque muita carne, não passe de 60 reais", "monte meu pedido", "monta pra mim",
+                  "faz o pedido do primeiro"):
+        assert parse_intent(MealRequest(text=texto)).montar_pedido, texto
+    for texto in ("quero uma pizza", "me mostre sanduíches com muita carne", "o pedido chegou rápido"):
+        assert not parse_intent(MealRequest(text=texto)).montar_pedido, texto
+
+
+def test_meta_qualitativa_sem_numero_usa_a_referencia_do_motor(tmp_path):
+    """"Não ter muitas calorias" (low_calorie) sem número: acima de 700 kcal conta como quebra."""
+    meta = AssemblyLimits(nutrition=NutritionPreferences(goals=["low_calorie"]))
+    r, eventos = rodar(tmp_path, Calculo({("frango",): nutricao(520), ("bacon", "frango"): nutricao(800)}),
+                       Modelo(proposta("frango", "bacon"), proposta("frango", "ovo")), meta)
+    assert any("acima do máximo de 700 kcal" in e for e in eventos)  # o bacon estourou a referência
+    assert r.state == "ready" and r.attempt == 2
+    pesado = Calculo({("frango",): nutricao(900)})
+    r, _ = rodar(tmp_path, pesado, Modelo(proposta("frango")), AssemblyLimits(nutrition=NutritionPreferences(goals=["low_calorie"])))
+    assert r.state == "impossible" and "pouco calórico" in r.message

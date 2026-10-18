@@ -68,8 +68,8 @@ class Settings(BaseSettings):
     openai_base_url: str = "https://api.openai.com/v1"
     openai_timeout: float = 60.0
     # Raciocínio dos modelos GPT-5: é cobrado como saída e o padrão da OpenAI (medium) gasta muito.
-    # "minimal" não aceita web_search, então a busca na web usa OPENAI_REASONING_EFFORT_WEB.
-    openai_reasoning_effort: Literal["minimal", "low", "medium", "high"] = "minimal"
+    # "none" é o mais rápido da família gpt-5.4 (que NÃO aceita "minimal"; use "minimal" só em modelos que aceitam). Sem web_search em "none"/"minimal", então a busca na web usa OPENAI_REASONING_EFFORT_WEB.
+    openai_reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh"] = "none"
     openai_reasoning_effort_web: Literal["low", "medium", "high"] = "low"
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.8-flash"
@@ -117,7 +117,7 @@ class Settings(BaseSettings):
     catalog_products_per_day: int | None = Field(default=None, ge=0)
     catalog_calls_per_product: int = Field(default=8, ge=0, le=30)
     catalog_calls_per_day: int | None = Field(default=None, ge=0)
-    catalog_max_output_tokens: int = Field(default=1800, ge=256, le=8000)
+    catalog_max_output_tokens: int = Field(default=4000, ge=256, le=8000)
     catalog_max_input_chars: int = Field(default=24000, ge=1000, le=100000)
     catalog_retry_seconds: int = Field(default=900, ge=1)
     catalog_max_attempts: int = Field(default=2, ge=1, le=5)

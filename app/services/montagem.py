@@ -24,6 +24,7 @@ from app.core.exceptions import AppError, MacroError
 from app.domain import select
 from app.schemas.macro import (Assembly, AssemblyLimits, MealCandidate, NutritionResult, SelectedItem, SelectedOption,
                                SelectionInput, UserProfile)
+from app.services.nutrition_batch_search import QUALITATIVE
 from app.services.llm_texto import chat_completion_fallback as chat_completion
 from app.services.nutrition.entrada import extrair_json
 from app.services.review_processing import normalized
@@ -32,6 +33,8 @@ from app.skills import montar_pedido
 log = logging.getLogger(__name__)
 TETOS = {"preço", "calorias", "carboidrato", "gordura"}  # só aumentam ao adicionar: o pedido base já os estoura = impossível
 MAX_QUANTIDADE = 5
+ROTULO_META = {"low_calorie": "pouco calórico", "high_protein": "muita proteína", "low_carb": "pouco carboidrato",
+               "low_fat": "pouca gordura"}
 # Preferências do cliente entregues ao modelo, como texto. Valor fixo por enquanto: a feature de preferências
 # (gostos, aversões, restrições) vai trocar isto por um texto montado a partir do perfil.
 PREFERENCIAS_DO_CLIENTE = "Sem preferências registradas."
@@ -91,11 +94,19 @@ def conferir(selected: SelectedItem, nutricao: NutritionResult, limites: Assembl
     if limites.max_price_cents is not None and total > limites.max_price_cents:
         quebras.append(Quebra("preço", f"preço {_reais(total)} acima do limite de {_reais(limites.max_price_cents)}"))
     n = limites.nutrition
-    for tipo, campo, valor, alvo, minimo in (
-        ("calorias", "calories", nutricao.calories, n.max_calories, False),
-        ("proteína", "protein_g", nutricao.protein_g, n.min_protein_g, True),
-        ("carboidrato", "carbs_g", nutricao.carbs_g, n.max_carbs_g, False),
-        ("gordura", "fat_g", nutricao.fat_g, n.max_fat_g, False),
+    efetivos = {"max_calories": (n.max_calories, ""), "min_protein_g": (n.min_protein_g, ""),
+                "max_carbs_g": (n.max_carbs_g, ""), "max_fat_g": (n.max_fat_g, "")}
+    for meta, (campo_pref, _, amplo, _) in ((g, QUALITATIVE[g]) for g in n.goals if g in QUALITATIVE):
+        # "pouco calórico", "muita proteína" sem número: vale a referência ampla do motor (por prato).
+        chave = {"calories": "max_calories", "protein_g": "min_protein_g", "carbs_g": "max_carbs_g",
+                 "fat_g": "max_fat_g"}[campo_pref]
+        if efetivos[chave][0] is None:
+            efetivos[chave] = (amplo, f" (referência para “{ROTULO_META[meta]}”)")
+    for tipo, campo, valor, (alvo, nota), minimo in (
+        ("calorias", "calories", nutricao.calories, efetivos["max_calories"], False),
+        ("proteína", "protein_g", nutricao.protein_g, efetivos["min_protein_g"], True),
+        ("carboidrato", "carbs_g", nutricao.carbs_g, efetivos["max_carbs_g"], False),
+        ("gordura", "fat_g", nutricao.fat_g, efetivos["max_fat_g"], False),
     ):
         if alvo is None:
             continue
@@ -106,7 +117,7 @@ def conferir(selected: SelectedItem, nutricao: NutritionResult, limites: Assembl
         total_n = valor * q
         if (total_n < alvo) if minimo else (total_n > alvo):
             quebras.append(Quebra(tipo, f"{tipo} {total_n:.0f} {unidade} {'abaixo do mínimo' if minimo else 'acima do máximo'} "
-                                        f"de {alvo:g} {unidade}"))
+                                        f"de {alvo:g} {unidade}{nota}"))
     return quebras
 
 
