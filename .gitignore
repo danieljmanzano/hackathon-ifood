@@ -2,5 +2,16 @@ __pycache__/
 *.pyc
 .venv/
 .env
+.env.*
+!.env.example
 .pytest_cache/
 .ifood_tokens.json
+data/
+*.sqlite3
+
+# Frontend
+node_modules/
+dist/
+*.tsbuildinfo
+playwright-report/
+test-results/
