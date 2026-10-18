@@ -7,7 +7,7 @@ import { ChatPreferences } from "./ChatPreferences";
 import { AddressPicker } from "./Addresses";
 import { addressIntent, confirmsOrder, matchChoice, normalize, reportsContext, requestedQuantity, wantsNewOrder } from "./chat-flow";
 import { consumptionMigrated, loadConsumption, markConsumptionMigrated, saveConsumption } from "./storage";
-import type { Address, Candidate, CheckoutChoices, NewAddress, OrderReviewInput, Recommendation, SelectedOption, Session } from "./types";
+import type { Address, Candidate, CheckoutChoices, NewAddress, Nutrition, OrderReviewInput, Recommendation, SelectedOption, Session } from "./types";
 
 type Phase = "address" | "discover" | "customize" | "delivery" | "payment" | "confirm" | "ordered";
 type ChatMessage = { id: string; role: "user" | "assistant"; text: string; recommendations?: Recommendation[] };
@@ -18,7 +18,27 @@ const phaseLabels: Record<Phase, string> = {
   delivery: "Entrega", payment: "Pagamento", confirm: "Revisão do pedido", ordered: "Pedido confirmado",
 };
 const errorText = (error: unknown) => error instanceof Error ? error.message : "Não foi possível concluir. Tente novamente.";
-const restoredPhase = (session: Session): Phase => !session.address ? "address" : session.order ? "ordered" : session.summary ? "confirm" : session.selected ? "delivery" : "discover";
+// Frase com as calorias do prato montado (vezes a quantidade), ou "" se ainda não estão prontas.
+const caloriesText = (nutrition: Nutrition | undefined, quantity: number) =>
+  nutrition?.state === "ready" && nutrition.calories != null
+    ? `cerca de ${Math.round(nutrition.calories * quantity)} kcal` + (nutrition.minimum != null && nutrition.maximum != null
+      ? ` (entre ${Math.round(nutrition.minimum * quantity)} e ${Math.round(nutrition.maximum * quantity)} kcal)` : "")
+    : "";
+// Macros, confiança e suposições do prato, em linhas para a bolha do chat (que respeita quebras de linha).
+const nutritionDetails = (nutrition: Nutrition | undefined, quantity: number) => {
+  if (nutrition?.state !== "ready") return "";
+  const grams = (v: number | null | undefined) => v == null ? "—" : `${Math.round(v * quantity)} g`;
+  const lines = [`Proteínas: ${grams(nutrition.protein_g)} · Carboidratos: ${grams(nutrition.carbs_g)} · Gorduras: ${grams(nutrition.fat_g)}`];
+  if (nutrition.confidence) {
+    const level = { low: "baixa", medium: "média", high: "alta" }[nutrition.confidence];
+    lines.push(`Confiança: ${level} (qualitativa, não é probabilidade de acerto)`);
+  }
+  if (nutrition.revisar && nutrition.motivo_revisao) lines.push(`Atenção: ${nutrition.motivo_revisao}`);
+  if (nutrition.portion_basis) lines.push(`Porção considerada: ${nutrition.portion_basis}${quantity > 1 ? ` (× ${quantity})` : ""}`);
+  if (nutrition.assumptions.length) lines.push("Suposições:", ...nutrition.assumptions.map(a => `• ${a}`));
+  return "\n\n" + lines.join("\n");
+};
+const restoredPhase = (session: Session): Phase => !session.address ? "address" : session.order ? "ordered" : session.summary ? "confirm" : session.selected && session.mode === "mock" ? "delivery" : "discover";
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -40,6 +60,7 @@ export default function App() {
   const [delivery, setDelivery] = useState("");
   const actionLock = useRef(false);
   const epoch = useRef(0);
+  const announceCalories = useRef(false);  // modo live: avisar as calorias quando o cálculo do prato terminar
   const bottom = useRef<HTMLDivElement>(null);
   const latestTurn = useRef<HTMLDivElement>(null);
   const composer = useRef<HTMLTextAreaElement>(null);
@@ -145,6 +166,14 @@ export default function App() {
     }, 3000);
     return () => { cancelled = true; clearInterval(timer); };
   }, [selectedNutritionPending, session?.selected?.candidate.item_id]);
+  useEffect(() => {
+    const selected = session?.selected;
+    if (!announceCalories.current || !selected || selected.nutrition.state === "pending") return;
+    announceCalories.current = false;
+    const kcal = caloriesText(selected.nutrition, selected.quantity);
+    say("assistant", kcal ? `Calorias do seu prato: ${kcal}.${nutritionDetails(selected.nutrition, selected.quantity)}`
+      : "Não consegui calcular as calorias deste prato agora.");
+  }, [session?.selected?.nutrition.state]);
 
   async function openAddresses(add = false) {
     if (!session || busy) return;
@@ -214,11 +243,20 @@ export default function App() {
     if (echo) say("user", `Continuar com ${quantity} unidade${quantity > 1 ? "s" : ""} de ${detail.name}.`);
     await perform(async () => {
       const next = await api.select(detail, quantity, options);
-      setSession(next); setPhase("delivery"); setDelivery("");
+      setSession(next);
       if (next.mode !== "mock") {
-        say("assistant", "Seu prato foi selecionado. A compra real ainda não está habilitada nesta integração; a consulta e as recomendações continuam disponíveis.");
+        // Sem compra real: volta para a descoberta em vez de travar na fase de entrega sem opções.
+        setPhase("discover"); setDetail(null);
+        const nutrition = next.selected?.nutrition;
+        const kcal = caloriesText(nutrition, quantity);
+        announceCalories.current = nutrition?.state === "pending";
+        say("assistant", "Seu prato foi selecionado"
+          + (kcal ? ` e tem ${kcal}.` : announceCalories.current ? ". Estou calculando as calorias e aviso aqui assim que ficarem prontas." : ".")
+          + " A compra real ainda não está habilitada nesta integração; a consulta e as recomendações continuam disponíveis."
+          + nutritionDetails(nutrition, quantity));
         return;
       }
+      setPhase("delivery"); setDelivery("");
       setChoices(await api.choices());
       say("assistant", "Prato escolhido. Qual opção de entrega você prefere?");
     });
@@ -247,7 +285,9 @@ export default function App() {
     const next = await perform(() => api.confirm(version));
     if (!next) return;
     setSession(next); setPhase("ordered");
-    say("assistant", "Pedido de demonstração confirmado! Nenhuma cobrança foi realizada. Você pode deixar uma avaliação aqui na conversa: escolha uma nota, escreva um comentário, ou os dois.");
+    const kcal = next.selected ? caloriesText(next.selected.nutrition, next.selected.quantity) : "";
+    say("assistant", `Pedido de demonstração confirmado!${kcal ? ` Seu pedido tem ${kcal}.` : ""} Nenhuma cobrança foi realizada. Você pode deixar uma avaliação aqui na conversa: escolha uma nota, escreva um comentário, ou os dois.`
+      + (next.selected ? nutritionDetails(next.selected.nutrition, next.selected.quantity) : ""));
   }
   async function startNewOrder() {
     const next = await perform(api.newOrder);
@@ -414,7 +454,9 @@ export default function App() {
       </section>}
       {phase === "ordered" && session?.order && <section className="chat-action order-receipt" aria-label="Pedido confirmado">
         <div className="receipt-heading"><CheckCircle2 size={25} /><div><h2>Pedido confirmado</h2><p>Demonstração · sem cobrança</p></div></div>
-        {session.selected && <p>{session.selected.quantity} × {session.selected.candidate.name}</p>}
+        {session.selected && <div className="summary-item"><p>{session.selected.quantity} × {session.selected.candidate.name}</p>
+          {/* session.selected é o que a consulta de calorias atualiza enquanto ainda está "pending". */}
+          <SelectedNutrition nutrition={session.selected.nutrition} quantity={session.selected.quantity} /></div>}
         {session.summary && <p className="receipt-total">Total: {money(session.summary.total_cents)}</p>}
         {session.order.review ? <OrderReviewCard review={session.order.review} busy={busy} onSave={async (rating, aspects) => {
           const next = await perform(() => api.editOrderReview(rating, aspects));

@@ -38,6 +38,6 @@ def test_falha_nao_e_gravada_na_base(tmp_path):
 
 def test_sem_chaves_fica_indisponivel(tmp_path):
     service._cache.clear()
-    s = settings(tmp_path, gemini_api_key="", openrouter_api_key="")
+    s = settings(tmp_path, openrouter_api_key="")
     r = asyncio.run(service.estimate_nutrition(candidato(item_id="item-sem-chave"), s))
     assert r.state == "unavailable"

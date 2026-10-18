@@ -106,6 +106,9 @@ async def responder(
     if web:
         payload["tools"] = [{"type": "web_search"}]
         payload["include"] = ["web_search_call.action.sources"]
+    if modelo.startswith(("gpt-5", "o")):  # só modelos de raciocínio aceitam o parâmetro
+        payload["reasoning"] = {"effort": settings.openai_reasoning_effort_web if web
+                                else settings.openai_reasoning_effort}
 
     if output_limit():
         payload["max_output_tokens"] = output_limit()

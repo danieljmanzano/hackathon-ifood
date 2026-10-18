@@ -1,4 +1,4 @@
-"""Busca na web (OpenAI web_search ou Gemini + Google Search). Só roda quando as bases não acharam.
+"""Busca na web (OpenAI web_search). Só roda quando as bases não acharam.
 
 Dois resultados possíveis, conforme o tipo do item:
 - industrializado (produto de mercado): tabela nutricional oficial do produto exato -> InfoOnline (vence as estimativas).
