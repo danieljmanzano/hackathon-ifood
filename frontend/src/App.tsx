@@ -143,7 +143,6 @@ export default function App() {
   const [reviewText, setReviewText] = useState("");
   const [entries, setEntries] = useState<Consumption[]>([]);
   const [fraction, setFraction] = useState("1");
-  const [feedback, setFeedback] = useState("");
   const [recordDate, setRecordDate] = useState("");
   const composer = useRef<HTMLTextAreaElement>(null);
 
@@ -334,7 +333,8 @@ export default function App() {
       } catch {
         // Tenta de novo no próximo ciclo; o pedido já está confirmado.
       }
-      if (tries >= 20) clearInterval(timer);
+      // Modelos gratuitos podem levar perto de um minuto; o backend desiste em 60 s.
+      if (tries >= 30) clearInterval(timer);
     }, 3000);
     return () => clearInterval(timer);
   }, [reviewState, session?.order?.id]);
@@ -463,8 +463,6 @@ export default function App() {
       );
       setPayment(session.summary?.payment.id || available.payment[0]?.id || "");
       setAccepted(false);
-      setOrderRating(null);
-      setReviewText("");
       open("checkout");
     }
   }
@@ -484,17 +482,9 @@ export default function App() {
     )
       return;
     // Never retry a submission automatically. A refreshed summary requires a new checkbox event.
-    const comment = reviewText.trim();
-    const orderReview =
-      orderRating != null || comment ? { rating: orderRating, comment } : undefined;
-    const next = await perform(() =>
-      api.confirm(session.summary!.version, orderReview),
-    );
+    const next = await perform(() => api.confirm(session.summary!.version));
     if (next) {
       setSession(next);
-      // With a rating the backend also records a review, so tastes and history must reload.
-      if (next.order?.review && effectiveReview(next.order.review).rating != null)
-        void api.myReviews().then(setReviews).catch(() => undefined);
       setDialog(null);
       navigate("orders");
       setToast(
@@ -523,7 +513,8 @@ export default function App() {
         e.item_id === session.selected!.candidate.item_id,
     );
     setFraction(String(existing?.fraction || 1));
-    setFeedback(existing?.feedback || "");
+    setOrderRating(session.order.review?.rating ?? null);
+    setReviewText(session.order.review?.comment ?? "");
     setRecordDate(existing?.consumed_at || new Date().toISOString());
     open("consumption");
   }
@@ -540,7 +531,7 @@ export default function App() {
       return false;
     }
   }
-  function recordConsumption() {
+  async function recordConsumption() {
     if (
       !session?.order ||
       !session.selected ||
@@ -568,7 +559,8 @@ export default function App() {
       quantity: session.selected.quantity,
       consumed_at: recordDate,
       nutrition,
-      feedback,
+      // Registros antigos guardavam aqui uma frase pronta; a avaliação agora fica no pedido, no servidor.
+      feedback: previous?.feedback ?? "",
     };
     const next = [
       ...entries.filter(
@@ -576,11 +568,27 @@ export default function App() {
       ),
       entry,
     ];
-    if (persistConsumption(next)) {
-      setDialog(null);
-      navigate("day");
-      setToast("Consumo confirmado e salvo neste navegador.");
+    if (!persistConsumption(next)) return;
+    const comment = reviewText.trim();
+    let reviewed = false;
+    if (orderRating != null || comment) {
+      const updated = await perform(() =>
+        api.reviewOrder({ rating: orderRating, comment }),
+      );
+      // Sem resposta, o consumo já está salvo e o erro fica visível no modal para tentar de novo.
+      if (!updated) return;
+      setSession(updated);
+      reviewed = true;
+      if (updated.order?.review && effectiveReview(updated.order.review).rating != null)
+        void api.myReviews().then(setReviews).catch(() => undefined);
     }
+    setDialog(null);
+    navigate("day");
+    setToast(
+      reviewed
+        ? "Consumo salvo. Estamos interpretando sua avaliação; veja em Meus pedidos."
+        : "Consumo confirmado e salvo neste navegador.",
+    )
   }
   const today = entries.filter(
     (e) => dayKey(e.consumed_at) === dayKey(new Date()),
@@ -1396,8 +1404,8 @@ export default function App() {
                   )}
                   <p className="section-footnote">
                     <Info size={14} />
-                    Registros e feedback ficam neste navegador. Sincronização
-                    com o servidor ainda pendente.
+                    Registros de consumo ficam neste navegador; a avaliação do
+                    pedido fica salva no Macro.
                   </p>
                 </>
               )}
@@ -1809,8 +1817,8 @@ export default function App() {
               Proteína, carboidratos e gordura não são calculados nesta versão.
             </p>
             <p>
-              Consumo e feedback são confirmados por você e ficam neste
-              navegador. Pedir não adiciona calorias ao seu dia.
+              Consumo e avaliação são confirmados por você. O consumo fica
+              neste navegador. Pedir não adiciona calorias ao seu dia.
             </p>
           </div>
         </Modal>
@@ -2266,43 +2274,6 @@ export default function App() {
                     confirmar este pedido de demonstração.
                   </span>
                 </label>
-                <fieldset className="order-review" disabled={busy}>
-                  <legend>
-                    Avalie o pedido <span className="optional">Opcional</span>
-                  </legend>
-                  <div className="order-review-stars" role="radiogroup" aria-label="Nota do pedido">
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        role="radio"
-                        aria-checked={orderRating === n}
-                        aria-label={`${n} de 5`}
-                        className={orderRating != null && n <= orderRating ? "filled" : ""}
-                        onClick={() => setOrderRating(orderRating === n ? null : n)}
-                      >
-                        ★
-                      </button>
-                    ))}
-                  </div>
-                  <textarea
-                    maxLength={200}
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                    placeholder="Deixe sua opinião sobre o pedido (opcional)"
-                    aria-label="Comentário sobre o pedido"
-                  />
-                  <div className="order-review-footer">
-                    <span
-                      className="order-review-hint"
-                      title="Escreva do seu jeito: o Macro interpreta o comentário em nota e aspectos (sabor, entrega, preço, porção), e você pode ajustar depois. Se escolher estrelas, sua nota prevalece. O iFood não recebe avaliações por esta integração; tudo fica salvo só no Macro."
-                    >
-                      <Info size={13} />
-                      Interpretamos seu texto. Fica só no Macro, não vai ao iFood.
-                    </span>
-                    <span>{reviewText.length}/200</span>
-                  </div>
-                </fieldset>
               </>
             ) : (
               <div className="info-box">
@@ -2364,7 +2335,7 @@ export default function App() {
             className="modal-body consumption-form"
             onSubmit={(e) => {
               e.preventDefault();
-              recordConsumption();
+              void recordConsumption();
             }}
           >
             <p>
@@ -2398,25 +2369,44 @@ export default function App() {
                 ))}
               </div>
             </fieldset>
-            <label className="form-field">
-              Como foi a refeição? <span className="optional">Opcional</span>
-              <select
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-              >
-                <option value="">Prefiro não avaliar agora</option>
-                <option>Gostei, pediria de novo</option>
-                <option>A porção foi pequena para mim</option>
-                <option>A porção foi grande para mim</option>
-                <option>Tinha mais molho do que eu gosto</option>
-                <option>Não gostei do preparo</option>
-              </select>
-            </label>
-            <p className="small muted">
-              O feedback fica registrado para consulta. Suas preferências podem
-              ser editadas no perfil; o feedback não altera nutrientes.
-            </p>
-            <button className="primary-button full-width" type="submit">
+            <fieldset className="order-review" disabled={busy}>
+              <legend>
+                Como foi a refeição? <span className="optional">Opcional</span>
+              </legend>
+              <div className="order-review-stars" role="radiogroup" aria-label="Nota do pedido">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    role="radio"
+                    aria-checked={orderRating === n}
+                    aria-label={`${n} de 5`}
+                    className={orderRating != null && n <= orderRating ? "filled" : ""}
+                    onClick={() => setOrderRating(orderRating === n ? null : n)}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+              <textarea
+                maxLength={200}
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                placeholder="Conte do seu jeito: sabor, entrega, porção… (opcional)"
+                aria-label="Comentário sobre o pedido"
+              />
+              <div className="order-review-footer">
+                <span
+                  className="order-review-hint"
+                  title="Escreva do seu jeito: o Macro interpreta o comentário em nota e aspectos (sabor, entrega, preço, porção), e você pode ajustar depois. Se escolher estrelas, sua nota prevalece. O iFood não recebe avaliações por esta integração; tudo fica salvo só no Macro."
+                >
+                  <Info size={13} />
+                  Interpretamos seu texto. Fica só no Macro, não vai ao iFood.
+                </span>
+                <span>{reviewText.length}/200</span>
+              </div>
+            </fieldset>
+            <button className="primary-button full-width" type="submit" disabled={busy}>
               Confirmar consumo
               <Check size={17} />
             </button>

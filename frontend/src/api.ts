@@ -86,8 +86,10 @@ export const api = {
   choices: () => request<CheckoutChoices>("/checkout/choices"),
   review: (delivery_id: string, payment_id: string) =>
     request<Session>("/checkout/review", { delivery_id, payment_id }),
-  confirm: (version: string, review?: OrderReviewInput) =>
-    request<Session>("/checkout/confirm", { version, confirmed: true, review }),
+  confirm: (version: string) =>
+    request<Session>("/checkout/confirm", { version, confirmed: true }),
+  reviewOrder: (review: OrderReviewInput) =>
+    request<Session>("/checkout/order/review", review),
   order: () => request<Session>("/checkout/order"),
   editOrderReview: (rating: number, aspects: OrderAspects) =>
     request<Session>("/checkout/order/review", { rating, aspects }, "PUT"),

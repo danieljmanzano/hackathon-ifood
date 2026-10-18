@@ -1,4 +1,4 @@
-"""Avaliação facilitada: texto livre e nota opcional na confirmação; o LLM estrutura em segundo plano."""
+"""Avaliação facilitada: texto livre e nota opcional ao registrar o consumo; o LLM estrutura em segundo plano."""
 import json
 import time
 
@@ -66,10 +66,12 @@ def checkout(client):
 
 
 def confirm(client, version, review=None):
-    body = {'version': version, 'confirmed': True}
-    if review is not None:
-        body['review'] = review
-    return client.post('/api/checkout/confirm', json=body)
+    """Confirma o pedido e, se houver, envia a avaliação como o registro de consumo faz."""
+    response = client.post('/api/checkout/confirm', json={'version': version, 'confirmed': True})
+    assert response.status_code == 200, response.text
+    if review is None:
+        return response
+    return client.post('/api/checkout/order/review', json=review)
 
 
 def settled(client):
@@ -98,8 +100,9 @@ def test_without_llm_user_values_are_kept_literally(client):
     assert saved['rating'] == 2 and saved['comment'] == review['comment']
     # Sem leitura do comentário, nenhum aspecto é inventado: todos ficam neutros.
     assert set(saved['aspects'].values()) == {3}
-    # Reconfirmar não altera a avaliação já registrada.
-    assert confirm(client, version, {'rating': 5}).json()['order']['review'] == review
+    # Reconfirmar o pedido não mexe na avaliação; reenviar o mesmo conteúdo também não.
+    assert client.post('/api/checkout/confirm', json={'version': version, 'confirmed': True}).json()['order']['review'] == review
+    assert client.post('/api/checkout/order/review', json={'rating': 2, 'comment': review['comment']}).json()['order']['review'] == review
 
 
 def test_confirm_without_review_is_backward_compatible(client):
@@ -112,9 +115,12 @@ def test_confirm_without_review_is_backward_compatible(client):
     assert client.get('/api/reviews/me').json() == history
 
 
-def test_blank_review_is_ignored_and_text_without_rating_stays_off_history(client):
+def test_blank_review_is_rejected_and_text_without_rating_stays_off_history(client):
+    assert client.get('/api/session').status_code == 200
+    assert client.post('/api/checkout/order/review', json={'rating': 3}).status_code == 422  # sem pedido
     _, version = checkout(client)
-    assert confirm(client, version, {'comment': '   '}).json()['order']['review'] is None
+    assert confirm(client, version, {'comment': '   '}).status_code == 422
+    assert client.get('/api/session').json()['order']['review'] is None
 
     client.cookies.clear()
     candidate, version = checkout(client)
@@ -129,7 +135,14 @@ def test_blank_review_is_ignored_and_text_without_rating_stays_off_history(clien
 def test_invalid_review_is_rejected(client, review):
     _, version = checkout(client)
     assert confirm(client, version, review).status_code == 422
-    assert client.get('/api/session').json()['order'] is None
+    assert client.get('/api/session').json()['order']['review'] is None
+
+
+def test_confirm_no_longer_accepts_review(client):
+    _, version = checkout(client)
+    response = client.post('/api/checkout/confirm', json={'version': version, 'confirmed': True,
+                                                          'review': {'rating': 3}})
+    assert response.status_code == 422
 
 
 def test_llm_structures_free_text_in_background(make_client, monkeypatch):
@@ -193,3 +206,37 @@ def test_user_can_correct_the_interpretation(make_client, monkeypatch):
     assert saved['rating'] == 4
     assert saved['aspects'] == {'taste': 5, 'delivery': 1, 'value_for_money': 3, 'portion_size': 3}
     assert client.put('/api/checkout/order/review', json={'rating': 6}).status_code == 422
+
+
+def test_replacing_review_reinterprets_and_drops_stale_rating(make_client, monkeypatch):
+    calls = llm_replies(monkeypatch, '{"rating": 5, "aspects": {"taste": 5}}')
+    client = make_client(openrouter_api_key='test')
+    candidate, version = checkout(client)
+    confirm(client, version, {'comment': 'muito bom'})
+    settled(client)
+    assert saved_review(client, candidate)['rating'] == 5
+    assert client.post('/api/checkout/order/review', json={'comment': 'muito bom'}).status_code == 200
+    assert len(calls) == 1  # mesmo conteúdo, sem nova chamada
+    # Novo texto sem nota e LLM indisponível: a nota antiga não pode continuar valendo.
+    llm_replies(monkeypatch, TimeoutError())
+    review = client.post('/api/checkout/order/review', json={'comment': 'mudei de ideia'}).json()['order']['review']
+    assert review['interpretation_state'] == 'pending' and review['interpretation'] is None
+    assert settled(client)['interpretation_state'] == 'failed'
+    saved = saved_review(client, candidate)
+    assert saved is None or saved['id'] != client.get('/api/checkout/order').json()['order']['id'] + '-review'
+
+
+def test_resending_same_review_while_pending_is_not_an_error(make_client, monkeypatch):
+    import asyncio
+
+    async def slow(messages, **kwargs):
+        await asyncio.sleep(0.3)
+        return '{"rating": 4}'
+
+    monkeypatch.setattr(interpretation, 'chat_completion', slow)
+    client = make_client(openrouter_api_key='test')
+    _, version = checkout(client)
+    confirm(client, version, {'comment': 'bom'})
+    assert client.post('/api/checkout/order/review', json={'comment': 'bom'}).status_code == 200
+    assert client.post('/api/checkout/order/review', json={'comment': 'outro'}).status_code == 409
+    assert settled(client)['interpretation']['rating'] == 4

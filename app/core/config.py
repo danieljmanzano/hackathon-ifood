@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     intent_llm_timeout_seconds: float = Field(default=18, gt=0, le=20)
     # Interpretação da avaliação livre do pedido; roda em segundo plano, então tolera mais tempo.
     review_llm_enabled: bool = True
-    review_llm_timeout_seconds: float = Field(default=30, gt=0, le=60)
+    review_llm_timeout_seconds: float = Field(default=60, gt=0, le=120)
 
     # OpenAI (usada quando NUTRITION_PROVIDER=openai; a chave e o modelo ficam na seção de nutrição abaixo)
     openai_base_url: str = "https://api.openai.com/v1"
@@ -83,6 +83,8 @@ class Settings(BaseSettings):
     # A busca responde sem esperar as calorias (os cards mostram "Calculando…" e a tela atualiza sozinha).
     # Um prazo curto ainda entrega na hora o que já está em cache ou é muito rápido.
     nutrition_search_budget_seconds: float = Field(default=1, ge=0, le=28)
+    # Adicionar ao carrinho também não espera: somado às chamadas ao iFood, passaria dos 30 s do frontend.
+    nutrition_selection_budget_seconds: float = Field(default=2, ge=0, le=28)
     nutrition_concurrency: int = Field(default=3, ge=1, le=10)
 
     # Cascata de calorias (ver pipeline_calorias_v2.dot).

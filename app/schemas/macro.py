@@ -281,7 +281,7 @@ class ReviewInterpretation(Model):
 
 
 class OrderReviewInput(Model):
-    """Avaliação rápida enviada junto da confirmação. Fica só no Macro: o MCP do iFood não recebe reviews."""
+    """Avaliação livre enviada ao registrar o consumo. Fica só no Macro: o MCP do iFood não recebe reviews."""
     rating: Rating | None = None
     comment: Annotated[str, AfterValidator(lambda text: text[:200])] = ""
 
@@ -320,7 +320,6 @@ class OrderReview(Model):
 class ConfirmationInput(Model):
     version: str
     confirmed: Literal[True]
-    review: OrderReviewInput | None = None
 
 
 class OrderRecord(Model):

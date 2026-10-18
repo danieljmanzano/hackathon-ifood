@@ -150,8 +150,9 @@ def refresh_recommendations(recommendations: list[Recommendation], settings: Set
     return atualizadas
 
 
-async def estimate_selected(selected: SelectedItem, settings: Settings, aguardar: bool = True) -> NutritionResult:
-    """Calorias do prato montado (com as opções escolhidas), dentro do prazo da resposta HTTP.
+async def estimate_selected(selected: SelectedItem, settings: Settings, aguardar: bool = True,
+                            prazo: float | None = None) -> NutritionResult:
+    """Calorias do prato montado (com as opções escolhidas), esperando no máximo `prazo` segundos.
 
     Com aguardar=False só consulta: devolve o resultado se já terminou, ou "pending" se ainda está calculando.
     """
@@ -163,8 +164,9 @@ async def estimate_selected(selected: SelectedItem, settings: Settings, aguardar
     if not aguardar and chave not in _em_andamento:
         return _resultado("error", evidence="O cálculo foi interrompido. Escolha o prato de novo para recalcular.")
     tarefa = _tarefa(selected.candidate, lambda: estimate_nutrition(selected, settings), chave)
-    if aguardar:
-        await asyncio.wait([tarefa], timeout=settings.nutrition_response_budget_seconds)
+    espera = settings.nutrition_response_budget_seconds if prazo is None else prazo
+    if aguardar and espera > 0:
+        await asyncio.wait([tarefa], timeout=espera)
     return _estado_da_tarefa(tarefa)
 
 

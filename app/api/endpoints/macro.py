@@ -25,6 +25,7 @@ from app.schemas.macro import (
     OrderRecord,
     OrderReview,
     OrderReviewEdit,
+    OrderReviewInput,
     SelectionInput,
     Session,
     UserProfile,
@@ -338,7 +339,7 @@ async def menu(
 
 
 @router.get("/recommendations/nutrition", response_model=Session)
-def recommendations_nutrition(
+async def recommendations_nutrition(
     request: Request,
     session: Session = Depends(current_session),
     settings: Settings = Depends(get_settings),
@@ -385,8 +386,10 @@ async def selection(
     candidate = await provider.item(payload.merchant_id, payload.item_id, session.address)
     selected_item = select(candidate, payload)
     # Prato montado: calcula as calorias com a descrição completa e as opções escolhidas.
+    # Espera pouco; o que não terminar volta "pending" e o frontend consulta /selection/nutrition.
     selected_item = selected_item.model_copy(
-        update={"nutrition": await estimate_selected(selected_item, settings)}
+        update={"nutrition": await estimate_selected(
+            selected_item, settings, prazo=settings.nutrition_selection_budget_seconds)}
     )
 
     def update(s: Session):
@@ -464,7 +467,7 @@ def review(
 
 
 @router.post("/checkout/confirm", response_model=Session)
-async def confirm(
+def confirm(
     payload: ConfirmationInput,
     request: Request,
     settings: Settings = Depends(get_settings),
@@ -478,34 +481,59 @@ async def confirm(
             raise MacroError("Sessão inválida. Recarregue a página.", 401)
         if not s.summary or payload.version != s.summary.version:
             raise MacroError("O resumo mudou. Revise o pedido e confirme a nova versão.")
-        created = not s.order
-        if created:
-            given = payload.review if payload.review and not payload.review.empty else None
+        if not s.order:
             s.order = OrderRecord(
                 id=f"demo-order-{uuid4()}",
                 cart_id=s.summary.cart_id,
                 status="submitted",
                 simulated=True,
-                review=given and OrderReview(
-                    rating=given.rating, comment=given.comment,
-                    # Só há o que interpretar quando o usuário escreveu algo.
-                    interpretation_state="pending" if given.comment and llm_available(settings) else "none",
-                ),
             )
             db.save(s, connection)
-    # Fora da transação: save_review abre a sua. Só a primeira confirmação grava a avaliação.
-    if created and s.order.review:
-        # A nota escolhida já vale; a interpretação completa aspectos (e a nota, se faltou) depois.
-        sync_taste_review(db, s)
-        if s.order.review.interpretation_state == "pending":
-            schedule_interpretation(db, s.id, settings)
-    return s
+        return s
 
 
 @router.get("/checkout/order", response_model=Session)
 def order_status(session: Session = Depends(current_session)):
     """Consulta leve para acompanhar a interpretação em segundo plano."""
     return session
+
+
+@router.post("/checkout/order/review", response_model=Session)
+async def review_order(
+    payload: OrderReviewInput,
+    request: Request,
+    session: Session = Depends(current_session),
+    settings: Settings = Depends(get_settings),
+):
+    """Avaliação livre enviada ao registrar o consumo, quando o usuário já provou o pedido.
+
+    Fica só no Macro: o MCP do iFood não recebe reviews. Reenviar o mesmo conteúdo não reinterpreta.
+    """
+    if not session.order or not session.summary:
+        raise MacroError("Confirme o pedido antes de avaliá-lo.", 422)
+    if payload.empty:
+        raise MacroError("Escreva um comentário ou escolha uma nota.", 422)
+    current = session.order.review
+    # Reabrir o registro de consumo reenvia a avaliação; sem mudança, nada a fazer nem esperar.
+    if current and (current.rating, current.comment) == (payload.rating, payload.comment):
+        return session
+    if current and current.interpretation_state == "pending":
+        raise MacroError("Ainda estamos interpretando sua avaliação. Tente de novo em instantes.", 409)
+
+    def update(s: Session):
+        s.order.review = OrderReview(
+            rating=payload.rating, comment=payload.comment,
+            # Só há o que interpretar quando o usuário escreveu algo.
+            interpretation_state="pending" if payload.comment and llm_available(settings) else "none",
+        )
+
+    db = request.app.state.db
+    updated = mutate_session(request, session, update)
+    # A nota escolhida já vale; a interpretação completa aspectos (e a nota, se faltou) depois.
+    sync_taste_review(db, updated)
+    if updated.order.review.interpretation_state == "pending":
+        schedule_interpretation(db, updated.id, settings)
+    return updated
 
 
 @router.put("/checkout/order/review", response_model=Session)

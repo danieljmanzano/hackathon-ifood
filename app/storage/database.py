@@ -80,6 +80,15 @@ class Database:
                  review.model_dump_json()),
             )
 
+    def delete_review(self, user_id: str, simulated: bool, merchant_id: str, item_id: str, review_id: str):
+        # Só remove a avaliação com este id; uma nota dada por outro caminho ao mesmo item é preservada.
+        with self.transaction() as connection:
+            connection.execute(
+                "DELETE FROM reviews WHERE user_id = ? AND simulated = ? AND merchant_id = ? AND item_id = ? "
+                "AND json_extract(payload, '$.id') = ?",
+                (user_id, simulated, merchant_id, item_id, review_id),
+            )
+
     @contextmanager
     def transaction(self):
         connection = sqlite3.connect(self.path, timeout=10)

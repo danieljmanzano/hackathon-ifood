@@ -51,7 +51,8 @@ async def interpret(review: OrderReview, item_name: str, merchant_name: str, set
         [{'role': 'system', 'content': SYSTEM_PROMPT},
          {'role': 'user', 'content': json.dumps(
              {'prato': item_name, 'restaurante': merchant_name, 'comentario': review.comment}, ensure_ascii=False)}],
-        temperature=0, max_tokens=400,
+        # Modelos de raciocínio gastam tokens antes do JSON; com pouco limite a resposta volta vazia.
+        temperature=0, max_tokens=1500,
         settings=settings.model_copy(update={'openrouter_timeout': settings.review_llm_timeout_seconds}),
     ), settings.review_llm_timeout_seconds)
     cleaned = raw.strip()
@@ -64,9 +65,15 @@ async def interpret(review: OrderReview, item_name: str, merchant_name: str, set
 def sync_taste_review(db: Database, session: Session) -> None:
     """Espelha a avaliação do pedido no histórico de gostos. Sem nota efetiva não há sinal a registrar."""
     review = session.order.review if session.order else None
-    if not review or review.effective_rating is None or not session.summary:
+    if not review or not session.summary:
         return
     candidate = session.summary.items[0].candidate
+    if review.effective_rating is None:
+        # Uma avaliação substituída por outra sem nota deixa de valer.
+        db.delete_review(session.profile.id, session.mode == 'mock', candidate.merchant_id, candidate.item_id,
+                         review_id=f'{session.order.id}-review')
+        review_context(db, session.profile.id, session.mode == 'mock', session.profile)
+        return
     # Aspectos não mencionados ficam neutros (3): não pesam na importância nem nas afinidades.
     aspects = {key: value or 3 for key, value in review.effective_aspects.items()}
     db.save_review(Review(
@@ -86,6 +93,7 @@ def schedule_interpretation(db: Database, session_id: str, settings: Settings) -
         try:
             result, state = await interpret(review, candidate.name, candidate.merchant_name, settings), 'done'
         except asyncio.TimeoutError:
+            log.warning('Interpretação da avaliação excedeu %ss', settings.review_llm_timeout_seconds)
             result, state = None, 'failed'
         except (ValidationError, ValueError, TypeError, OpenRouterError) as exc:
             log.warning('Interpretação da avaliação falhou: %s', exc)
