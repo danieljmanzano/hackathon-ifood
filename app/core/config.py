@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     version: str = "0.1.0"
     environment: str = "development"
     debug: bool = False
+    busca_log: Literal["off", "resumo", "detalhe"] = "resumo"
     api_v1_prefix: str = "/api/v1"
     cors_origins: list[str] = ["*"]
 

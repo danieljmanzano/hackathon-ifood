@@ -49,7 +49,16 @@ class RepositorioProdutos:
 
     def get(self, chave: str, versao_pipeline: str) -> NutritionResult | None:
         """Resultado salvo, ou None se não há ou foi calculado por outra versão do pipeline (e não é manual)."""
-        registro = self._ler()["produtos"].get(chave)
+        return self.get_many([chave], versao_pipeline).get(chave)
+
+    def get_many(self, chaves: list[str], versao_pipeline: str) -> dict[str, NutritionResult]:
+        """Lê a base uma vez para consultar um catálogo inteiro, sem chamadas externas."""
+        registros = self._ler()["produtos"]
+        return {chave: resultado for chave in chaves
+                if (resultado := self._validar(registros.get(chave), versao_pipeline)) is not None}
+
+    @staticmethod
+    def _validar(registro, versao_pipeline: str) -> NutritionResult | None:
         if not registro:
             return None
         if registro.get("origem") != "manual" and registro.get("versao_pipeline") != versao_pipeline:

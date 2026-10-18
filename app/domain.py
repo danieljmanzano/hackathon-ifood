@@ -1,7 +1,11 @@
 import re
 import unicodedata
+import logging
+import time
+from collections import Counter
 
 from app.core.exceptions import MacroError
+from app.core.search_logs import elapsed_ms, event
 from app.schemas.macro import (
     MealCandidate,
     MealRequest,
@@ -10,9 +14,11 @@ from app.schemas.macro import (
     SelectedItem,
     SelectionInput,
     UserProfile,
+    NutritionResult,
 )
 from app.services.review_recommendations import ReviewContext, review_signal
 from app.services.meal_intent import assess_intent, parse_intent
+from app.services.nutrition_preferences import apply_profile_preferences, assess_nutrition
 
 
 def normalized(value: str) -> str:
@@ -36,8 +42,22 @@ def rank(
     review_context: ReviewContext | None = None,
     recently_shown: list[tuple[str, str]] | None = None,
     intent: MealIntent | None = None,
+    nutrition_by_item: dict[tuple[str, str], NutritionResult] | None = None,
+    limit: int = 3,
 ) -> list[Recommendation]:
-    intent = intent or parse_intent(request)
+    started = time.perf_counter()
+    excluded = Counter()
+    details = {}
+    event("ranking.started", candidate_count=len(candidates), preference_count=len(profile.preferences),
+          restriction_count=len(profile.restrictions) + len(request.restrictions))
+
+    def reject(candidate, reason):
+        excluded[reason] += 1
+        event("ranking.rejected", level=logging.DEBUG, merchant_id=candidate.merchant_id,
+              item_id=candidate.item_id, reason=reason)
+
+    intent = apply_profile_preferences(intent or parse_intent(request), profile)
+    nutrition_by_item = nutrition_by_item or {}
     query = intent.food_query
     generic = {"almoco", "jantar", "comida", "comer", "algo", "opcao", "opcoes", "refeicao", "com", "por", "favor", "uma", "que", "tem"}
     words = [w for w in normalized(query).split() if len(w) > 2 and w not in generic]
@@ -52,13 +72,17 @@ def rank(
         relevance = sum(bool(re.search(r"\b" + re.escape(w) + r"s?\b", search_text)) for w in set(words))
         has_search_matches = has_search_matches or relevance > 0
         if not candidate.available:
+            reject(candidate, "unavailable")
             continue
         if "vegetarian" in intent.goals and candidate.simulated and "vegetarian" not in candidate.features.tags:
+            reject(candidate, "vegetarian")
             continue
         if any(normalized(d) in text for d in profile.dislikes if d.strip()):
+            reject(candidate, "dislike")
             continue
         restrictions = profile.restrictions + request.restrictions
         if any(normalized(r) in text for r in restrictions if r.strip()):
+            reject(candidate, "restriction")
             continue
         reasons, score = [], 0
         matches = [
@@ -76,10 +100,12 @@ def rank(
             )
             score += 1
         elif budget is not None:
+            reject(candidate, "budget")
             continue
-        limitations = [
+        nutrition = nutrition_by_item.get((candidate.merchant_id, candidate.item_id), NutritionResult())
+        limitations = ([] if nutrition.state == "ready" else [
             "Informação nutricional indisponível. Calorias e macros não foram calculados."
-        ]
+        ])
         if restrictions:
             limitations.append(
                 "Não foi possível verificar as restrições: "
@@ -95,25 +121,45 @@ def rank(
             if review_context.simulated:
                 limitations.append("Personalização de demonstração baseada em avaliações fictícias.")
         fit = assess_intent(candidate, intent)
-        reasons = fit.reasons + reasons
-        limitations += fit.limitations
+        nutrition_fit = assess_nutrition(nutrition, intent.nutrition_preferences)
+        nutrition_points = 4 * nutrition_fit.score
+        score += nutrition_points
+        reasons = nutrition_fit.reasons + fit.reasons + reasons
+        limitations += fit.limitations + nutrition_fit.limitations
         exposure = recently_shown.count((candidate.merchant_id, candidate.item_id))
         merchant_exposure = sum(mid == candidate.merchant_id for mid, _ in recently_shown)
-        score -= 2 * exposure + 0.5 * merchant_exposure
+        rotation_penalty = 2 * exposure + 0.5 * merchant_exposure
+        score -= rotation_penalty
+        recommendation = Recommendation(
+            candidate=candidate,
+            nutrition=nutrition,
+            reasons=reasons or ["Opção disponível no catálogo consultado."],
+            limitations=limitations,
+            review_signal=signal,
+        )
+        components = dict(merchant_id=candidate.merchant_id, item_id=candidate.item_id,
+                          relevance=relevance, intent_score=fit.score,
+                          nutrition_score=nutrition_fit.score, nutrition_state=nutrition.state,
+                          nutrition_points=nutrition_points,
+                          preference_score=len(matches) * 3,
+                          query_score=2 if relevance else 0,
+                          budget_score=1 if budget is not None else 0,
+                          reviews_score=signal.score if signal else 0,
+                          rotation_penalty=rotation_penalty, score=round(score, 4))
+        details[id(recommendation)] = components
+        event("ranking.scored", level=logging.DEBUG, **components)
         ranked.append(
             (
                 relevance,
                 fit.score,
                 score,
-                Recommendation(
-                    candidate=candidate,
-                    reasons=reasons or ["Opção disponível no catálogo consultado."],
-                    limitations=limitations,
-                    review_signal=signal,
-                ),
+                recommendation,
             )
         )
     if words and has_search_matches:
+        for entry in ranked:
+            if entry[0] == 0:
+                reject(entry[3].candidate, "search_mismatch")
         ranked = [entry for entry in ranked if entry[0] > 0]
     ordered = [r for _, _, _, r in sorted(ranked, key=lambda entry: (
         -entry[0], -entry[1], -entry[2], entry[3].candidate.merchant_id, entry[3].candidate.item_id
@@ -124,9 +170,15 @@ def rank(
         if recommendation.candidate.merchant_id not in merchants:
             chosen.append(recommendation)
             merchants.add(recommendation.candidate.merchant_id)
-        if len(chosen) == 3:
-            return chosen
-    return (chosen + [r for r in ordered if r not in chosen])[:3]
+        if len(chosen) == limit:
+            break
+    chosen = (chosen + [r for r in ordered if r not in chosen])[:limit]
+    event("ranking.completed", candidate_count=len(candidates), eligible_count=len(ordered),
+          excluded=dict(excluded), result_count=len(chosen),
+          selected=[dict(position=i + 1, **details[id(rec)]) for i, rec in enumerate(chosen)],
+          sort_order=["relevance", "intent_score", "score"],
+          duration_ms=elapsed_ms(started))
+    return chosen
 
 
 def select(candidate: MealCandidate, selection: SelectionInput) -> SelectedItem:

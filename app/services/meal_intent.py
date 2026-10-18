@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from app.schemas.macro import MealCandidate, MealIntent, MealRequest
 from app.services.review_processing import normalized
+from app.services.nutrition_preferences import extract_preferences, merge_preferences, preference_labels
 
 LABELS = {
     'large_portion': 'porções maiores', 'small_portion': 'porções menores',
@@ -32,12 +33,14 @@ STOPWORDS = {
 
 def parse_intent(request: MealRequest) -> MealIntent:
     text = normalized(request.text)
-    working = text
+    working, nutritional = extract_preferences(text)
+    nutritional = merge_preferences(nutritional, request.nutrition_preferences)
     budget = request.budget_cents
     money = r'(?:ate\s*(?:r\$\s*)?|r\$\s*|(?:tenho|gastar)\s+)(\d+)(?:[,.](\d{1,2}))?(?:\s*reais)?|(\d+)(?:[,.](\d{1,2}))?\s*reais'
-    for match in list(re.finditer(money, text)):
+    money_text = working
+    for match in list(re.finditer(money, money_text)):
         # "até 30 minutos" e "para 2 pessoas" não são valores em reais.
-        if re.match(r'\s*(?:minutos?|min\b|pessoas?)', text[match.end():]):
+        if re.match(r'\s*(?:minutos?|min\b|pessoas?|kcal|calorias|g\b|gramas)', money_text[match.end():]):
             continue
         if budget is None:
             budget = int(match[1] or match[3]) * 100 + int((match[2] or match[4] or '0').ljust(2, '0'))
@@ -98,7 +101,7 @@ def parse_intent(request: MealRequest) -> MealIntent:
         working = re.sub(r'\b(?:pre.?treino|vou treinar|antes de treinar|treinei(?: musculacao)?(?: hoje)?|acabei de treinar|saindo da academia|daqui|pouco)\b', ' ', working)
     words = re.findall(r'[a-z0-9]+(?:-[a-z0-9]+)*', working)
     food_query = ' '.join(w for w in words if w not in STOPWORDS and len(w) > 1)
-    labels = [LABELS[goal] for goal in goals]
+    labels = [LABELS[goal] for goal in goals] + preference_labels(nutritional)
     if party_size:
         labels.append(f'comida para {party_size} pessoas')
     if max_delivery:
@@ -109,7 +112,8 @@ def parse_intent(request: MealRequest) -> MealIntent:
                 'indulgent': 'hambúrguer pizza', 'vegetarian': 'vegetariano'}
     return MealIntent(goals=goals, party_size=party_size, max_delivery_minutes=max_delivery,
                       food_query=food_query, provider_query=food_query or defaults.get(goals[0] if goals else '', 'refeição'),
-                      budget_cents=budget, labels=labels, inferred_goals=inferred_goals, inferences=inferences)
+                      budget_cents=budget, labels=labels, inferred_goals=inferred_goals, inferences=inferences,
+                      nutrition_preferences=nutritional)
 
 
 @dataclass
@@ -156,7 +160,7 @@ def assess_intent(candidate: MealCandidate, intent: MealIntent) -> IntentFit:
                 score += 1
                 reasons.append({
                     'light': 'Você pediu algo leve: esta opção está marcada como leve no catálogo.',
-                    'protein': 'Para seu pedido, priorizamos opções com fontes de proteína indicadas no catálogo; os macros ainda precisam de estimativa.',
+                    'protein': 'Para seu pedido, priorizamos opções com fontes de proteína indicadas no catálogo.',
                     'comfort': 'Você quer comida caseira: esta opção corresponde a esse estilo.',
                     'indulgent': 'Você quer sair da rotina: esta opção corresponde a esse tipo de refeição.',
                     'vegetarian': 'Você pediu uma opção vegetariana: este prato está identificado assim no catálogo. Confirme os ingredientes com o restaurante.',

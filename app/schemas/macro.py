@@ -18,6 +18,21 @@ class Model(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
 
+NutritionGoal = Literal["high_protein", "low_carb", "low_fat", "low_calorie"]
+
+
+class NutritionPreferences(Model):
+    goals: list[NutritionGoal] = Field(default_factory=list, max_length=4)
+    max_calories: NonNegative | None = None
+    min_protein_g: NonNegative | None = None
+    max_carbs_g: NonNegative | None = None
+    max_fat_g: NonNegative | None = None
+
+    @property
+    def active(self) -> bool:
+        return bool(self.goals) or any(value is not None for key, value in self.model_dump().items() if key != "goals")
+
+
 class UserProfile(Model):
     id: str
     preferences: list[str] = Field(default_factory=list, max_length=30)
@@ -25,12 +40,14 @@ class UserProfile(Model):
     dislikes: list[str] = Field(default_factory=list, max_length=30)
     default_budget_cents: Cents | None = None
     daily_calorie_goal: NonNegative | None = None
+    nutrition_preferences: NutritionPreferences = Field(default_factory=NutritionPreferences)
 
 
 class MealRequest(Model):
     text: Text
     budget_cents: Cents | None = None
     restrictions: list[str] = Field(default_factory=list, max_length=30)
+    nutrition_preferences: NutritionPreferences = Field(default_factory=NutritionPreferences)
 
 
 class Address(Model):
@@ -118,6 +135,7 @@ class MealIntent(Model):
     inferences: list[str] = Field(default_factory=list, max_length=5)
     inferred_goals: list[Literal["large_portion", "small_portion", "light", "cheap", "fast", "protein", "comfort", "indulgent", "vegetarian"]] = Field(default_factory=list)
     fallback_reason: Literal["disabled", "not_configured", "timeout", "invalid_response", "unavailable"] | None = None
+    nutrition_preferences: NutritionPreferences = Field(default_factory=NutritionPreferences)
 
 
 class MealCandidate(Model):

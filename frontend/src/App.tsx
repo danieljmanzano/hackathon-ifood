@@ -49,6 +49,7 @@ import {
 } from "./components";
 import { ReviewEditor, ReviewHistory, TasteSummary } from "./Reviews";
 import { loadConsumption, saveConsumption } from "./storage";
+import type { NutritionPreferences } from "./types";
 import type {
   Address,
   Candidate,
@@ -859,7 +860,7 @@ export default function App() {
                         maxLength={2000}
                         value={text}
                         onChange={(e) => setText(e.target.value)}
-                        placeholder="Acabei de treinar. Quero um frango grelhado até R$ 40…"
+                        placeholder="Quero frango até R$ 40, até 600 kcal e pelo menos 30 g de proteína…"
                         disabled={disabled || !!session.order}
                         onKeyDown={(e) => {
                           if (
@@ -2332,6 +2333,13 @@ export default function App() {
   );
 }
 
+const nutritionFields = [
+  { key: "max_calories", label: "Máximo de calorias por prato", unit: "kcal" },
+  { key: "min_protein_g", label: "Mínimo de proteína por prato", unit: "g" },
+  { key: "max_carbs_g", label: "Máximo de carboidratos por prato", unit: "g" },
+  { key: "max_fat_g", label: "Máximo de gordura por prato", unit: "g" },
+] as const;
+
 function ProfileForm({
   profile,
   busy,
@@ -2359,6 +2367,14 @@ function ProfileForm({
       : "",
   );
   const [localError, setLocalError] = useState("");
+  const [nutritionGoals, setNutritionGoals] = useState<NutritionPreferences["goals"]>(
+    profile.nutrition_preferences?.goals ?? [],
+  );
+  const [nutritionLimits, setNutritionLimits] = useState(() =>
+    Object.fromEntries(nutritionFields.map(({ key }) => [
+      key, profile.nutrition_preferences?.[key]?.toString() ?? "",
+    ])),
+  );
   const split = (value: string) => [
     ...new Set(
       value
@@ -2374,6 +2390,13 @@ function ProfileForm({
       ? Number(budget.replace(",", "."))
       : null;
     const goalNumber = goal.trim() ? Number(goal.replace(",", ".")) : null;
+    const nutritional = Object.fromEntries(nutritionFields.map(({ key }) => [
+      key, nutritionLimits[key].trim() ? Number(nutritionLimits[key].replace(",", ".")) : null,
+    ]));
+    if (Object.values(nutritional).some(value => value != null && (!Number.isFinite(value) || value < 0))) {
+      setLocalError("Informe preferências nutricionais válidas e não negativas.");
+      return;
+    }
     if (
       (budgetNumber != null &&
         (!Number.isFinite(budgetNumber) ||
@@ -2404,6 +2427,7 @@ function ProfileForm({
       default_budget_cents:
         budgetNumber == null ? null : Math.round(budgetNumber * 100),
       daily_calorie_goal: goalNumber,
+      nutrition_preferences: { goals: nutritionGoals, ...nutritional } as NutritionPreferences,
     });
   }
   function togglePreference(value: string) {
@@ -2549,6 +2573,44 @@ function ProfileForm({
               <small>Cadastre a meta que você já utiliza.</small>
             </label>
           </div>
+        </section>
+        <section>
+          <div className="form-section-title">
+            <span className="purple"><Dumbbell size={20} /></span>
+            <div>
+              <h2>O que você prioriza na nutrição?</h2>
+              <p>Essas preferências ajudam a ordenar os pratos da busca.</p>
+            </div>
+          </div>
+          <div className="preference-picker">
+            {([
+              ["high_protein", "Mais proteína"], ["low_carb", "Menos carboidratos"],
+              ["low_fat", "Menos gordura"], ["low_calorie", "Menos calorias"],
+            ] as const).map(([value, label]) => (
+              <button type="button" key={value} aria-pressed={nutritionGoals.includes(value)}
+                className={nutritionGoals.includes(value) ? "selected" : ""}
+                onClick={() => setNutritionGoals(current => current.includes(value)
+                  ? current.filter(goal => goal !== value) : [...current, value])}>
+                {nutritionGoals.includes(value) ? <Check size={14} /> : <Plus size={14} />}
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="form-columns">
+            {nutritionFields.map(({ key, label, unit }) => (
+              <label className="form-field" key={key}>
+                {label}
+                <div className="input-unit suffix">
+                  <input inputMode="decimal" value={nutritionLimits[key]} placeholder="Opcional"
+                    aria-label={label} maxLength={12}
+                    onChange={e => setNutritionLimits(current => ({ ...current, [key]: e.target.value }))} />
+                  <span>{unit}</span>
+                </div>
+              </label>
+            ))}
+          </div>
+          <p>Usamos estimativas por prato, antes dos adicionais. Dados ausentes são sinalizados.
+            Você pode informar outros valores na mensagem da busca; eles valem para aquele pedido.</p>
         </section>
         {localError && (
           <p className="inline-error" role="alert">

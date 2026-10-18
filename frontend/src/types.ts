@@ -1,3 +1,10 @@
+export interface NutritionPreferences {
+  goals: ("high_protein" | "low_carb" | "low_fat" | "low_calorie")[];
+  max_calories: number | null;
+  min_protein_g: number | null;
+  max_carbs_g: number | null;
+  max_fat_g: number | null;
+}
 export interface Profile {
   id: string;
   preferences: string[];
@@ -5,6 +12,7 @@ export interface Profile {
   dislikes: string[];
   default_budget_cents: number | null;
   daily_calorie_goal: number | null;
+  nutrition_preferences: NutritionPreferences;
 }
 export interface Address {
   id: string;
@@ -53,6 +61,7 @@ export interface MealFeatures {
   eta_max_minutes: number | null;
 }
 export interface MealIntent {
+  nutrition_preferences: NutritionPreferences;
   interpretation_source: "llm" | "rules";
   context_summary: string | null;
   inferences: string[];

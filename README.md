@@ -188,3 +188,41 @@ INTENT_LLM_TIMEOUT_SECONDS=18
 A seleção usa `OPENROUTER_MODEL` e os fallbacks já configurados. Um identificador de modelo inválido com HTTP 400 agora permite tentar os alternativos; outros erros 400 continuam sendo recusados. O timeout envolve todas as tentativas da interpretação. O cache da interpretação dura cinco minutos, tem limite de 128 entradas em memória e não guarda o ranqueamento: a rotação de pratos continua por busca. Respostas inválidas, timeout e falhas do provedor voltam para regras locais sem interromper a busca. Logs dessa camada não registram mensagens do usuário nem credenciais.
 
 `/api/health` informa `intent_interpretation=llm_configured` quando há configuração; isso não garante que o provedor esteja disponível. O resultado de cada busca informa a fonte realmente utilizada. O frontend permite até 60 segundos na busca para acomodar interpretação, consulta ao catálogo e enriquecimento nutricional. O contrato das ferramentas MCP permanece igual.
+
+## Logs de busca e recomendação
+
+Os eventos ficam no terminal do backend e usam um identificador aleatório por busca. O header **`X-Search-Id`** de `POST /api/search` permite relacionar a resposta com todas as etapas no log. Esse identificador não é o ID do usuário nem o cookie da sessão.
+
+Configure na `.env` e reinicie o backend:
+
+```dotenv
+BUSCA_LOG=resumo
+```
+
+- `resumo` (padrão): origem da interpretação, objetivos reconhecidos, cache/fallback do LLM, tempo de consulta ao catálogo, quantidade de candidatos/reviews, descartes por motivo, pratos selecionados com pontuação, estados da nutrição e duração total.
+- `detalhe`: acrescenta pontuação de cada candidato e motivo de cada descarte.
+- `off`: mantém somente falhas e avisos de busca.
+
+Exemplo para iniciar diretamente com detalhes:
+
+```bash
+BUSCA_LOG=detalhe .venv/bin/python -m uvicorn app.main:app --port 8000
+```
+
+A sequência principal é `search.started → intent.ready → catalog.completed → reviews.ready → ranking.completed → nutrition.prepared → search.completed`. Falhas geram `search.failed` com etapa, classe do erro, status quando disponível e tempo decorrido. Cache da interpretação aparece em `intent.cache_hit`; sua indisponibilidade aparece em `intent.fallback` com motivo (`disabled`, `not_configured`, `timeout`, `invalid_response` ou `unavailable`). Uma falha do LLM que permite fallback não interrompe a busca.
+
+`ranking.completed` registra contagens por motivo de exclusão (`unavailable`, `vegetarian`, `dislike`, `restriction`, `budget`, `search_mismatch`). Para os selecionados, mostra IDs do restaurante/item, posição, relevância, aderência à intenção, pontos por preferências/busca/orçamento/reviews, penalidade de repetição e pontuação resultante. A ordenação continua usando relevância, intenção e pontuação nessa ordem; os logs não alteram as recomendações.
+
+A configuração é independente de `CALORIAS_LOG`. Não são registrados texto integral da mensagem, endereço, identidade/cookie do usuário, conteúdo das reviews ou credenciais. As chamadas de interpretação também omitem conteúdo retornado pelo modelo e corpos de erro do provedor, mesmo em nível detalhado. Os logs existentes da pipeline nutricional continuam sendo controlados separadamente por `CALORIAS_LOG`.
+
+## Preferências nutricionais na busca
+
+Em **Preferências**, salve objetivos como mais proteína, menos carboidratos, menos gordura ou menos calorias. Também é possível informar máximo de kcal, mínimo de proteína e máximos de carboidratos/gordura **por prato**. Esses campos são persistidos em `profile.nutrition_preferences`, junto ao perfil na sessão SQLite. Sessões anteriores recebem valores vazios por padrão.
+
+Na busca, por exemplo: **“frango até R$ 35, até 600 kcal e pelo menos 30 g de proteína”** ou **“quero algo low carb”**. O LLM extrai as preferências em JSON validado; as regras locais reconhecem os exemplos mesmo sem LLM. Valores da mensagem prevalecem sobre os padrões do perfil somente naquela busca; campos estruturados de `MealRequest.nutrition_preferences` prevalecem sobre os extraídos da mensagem. Objetivos qualitativos são combinados. A meta diária de calorias continua sendo usada pelo acompanhamento diário e não é convertida em limite por prato.
+
+A busca consulta os resultados nutricionais já calculados em memória e na base local para todo o catálogo recebido. Depois, estima no máximo **12 candidatos elegíveis** dentro do prazo `NUTRITION_SEARCH_BUDGET_SECONDS` e faz o ranking final dos três pratos. Cálculos pendentes continuam em segundo plano. Os resultados passam a ser aproveitados nas próximas buscas; a atualização dos cards troca os dados e as justificativas sem mudar os pratos durante a leitura.
+
+A adequação nutricional gera um sinal entre 0 e 3, multiplicado por 4 e somado aos pontos de gostos, orçamento, reviews e rotação. Limites numéricos recebem pontuação proporcional à proximidade com o valor pedido, limitada ao atendimento completo. Objetivos qualitativos usam comparações graduais dos valores disponíveis. A relevância do alimento e o atendimento às intenções de porção/estilo continuam sendo critérios anteriores à pontuação; alternativas de restaurantes diferentes continuam sendo priorizadas.
+
+Valores ausentes não contam como zero calorias/macros nem como atendimento da preferência. A resposta explica quais valores estão disponíveis, quais preferências não foram atendidas ou não puderam ser verificadas. São estimativas por prato antes dos adicionais, usadas como preferência de ordenação; não são um filtro rígido nem garantia dos limites. Os logs incluem `nutrition_score`, `nutrition_points` e `nutrition_state` por candidato e `nutrition.ranking` com o tamanho do conjunto comparado. O contrato das ferramentas MCP permanece igual.
