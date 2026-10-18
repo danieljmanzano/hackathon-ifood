@@ -14,8 +14,6 @@ Quem tem um objetivo com a alimentação (ganhar massa, emagrecer, comer melhor 
 2. **Decidir cansa.** Ela precisa cruzar o que já comeu no dia, o objetivo, a fome do momento, o orçamento e o que está aberto. Rolar o app fazendo essa conta mental leva tempo e termina, muitas vezes, no pedido de sempre.
 3. **As avaliações não respondem à pergunta dela.** Uma nota 4,6 não diz se a porção é grande, se o frango é seco ou se a comida chega fria. Isso está espalhado em comentários que ninguém lê antes de pedir.
 
-> ⚠️ Equipe: incluir aqui a persona do demo (ex.: "Lucas, 24 anos, treina 5x por semana") e, se houver, algum dado ou relato que sustente o problema.
-
 ## A proposta
 
 O **Macro** é um agente de conversa que funciona como complemento do iFood. A pessoa conta, do jeito dela, como está:

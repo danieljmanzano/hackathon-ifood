@@ -8,7 +8,10 @@ Equipe "iFood Benefícios" · Hackathon SEMCOMP × iFood 2026
 
 Telas reais do Macro, capturadas do aplicativo rodando no modo de demonstração (catálogo, endereço e pedidos fictícios, sem cobrança). As telas de celular estão em 390 px de largura. O racional de cada decisão está no [entregável 03 · Racional da Experiência](03-racional-da-experiencia.md).
 
-> ⚠️ Equipe: adicionar o link da demo ou do vídeo, se houver.
+<video controls preload="metadata" width="100%" style="max-width: 900px">
+  <source src="apresentacao/video.mp4" type="video/mp4">
+  Seu navegador não conseguiu carregar o vídeo. <a href="apresentacao/video.mp4">Abra o arquivo MP4 diretamente</a>.
+</video>
 
 ## Jornada completa
 
