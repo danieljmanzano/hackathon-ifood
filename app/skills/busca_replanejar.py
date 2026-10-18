@@ -11,8 +11,11 @@ evita e orçamento que o próprio usuário pediu.
 """
 import json
 
+from . import busca_mcp
+
 INSTRUCOES = """Você é o planejador de busca de um app de delivery de comida. Uma busca não devolveu nenhuma opção
-para mostrar. Decida UMA ação: tentar de novo com uma estratégia nova, ou desistir e explicar ao usuário.
+para mostrar. Decida UMA ação: tentar de novo com uma estratégia nova, desistir e explicar ao usuário, ou (só se
+"mcp_disponivel" for true) explorar o iFood com ferramentas antes de decidir.
 
 Você recebe o pedido, o horário local, o que já foi tentado e um diagnóstico do que limitou o resultado. Se houver
 "conversa" (últimas mensagens e a busca anterior), use-a só para entender o que o usuário quer (ex.: ele já recusou
@@ -29,6 +32,9 @@ Como decidir:
 - Relaxar limites: relaxe o orçamento (relaxar_orcamento_padrao=true) SOMENTE se orcamento.origem for
   "padrao_do_perfil". Se o usuário pediu o valor, não relaxe: explique e sugira aumentar. Nunca relaxe restrições
   alimentares, alergias ou alimentos que o usuário evita.
+- Explorar (acao="usar_ferramentas", só com mcp_disponivel=true): quando você não sabe o que existe por perto, consulte
+  categorias, restaurantes abertos ou o cardápio de um restaurante e decida com base no que voltar. No máximo um passo
+  de exploração antes de decidir; depois use "buscar_de_novo" ou "desistir".
 - Desista (acao="desistir") quando já houve tentativas suficientes, quando o único caminho é o usuário mudar algo
   (o orçamento que pediu, o horário, o tipo de comida) ou quando nenhuma consulta nova faz sentido.
 - Escreva em português, curto e concreto, sem inventar restaurantes, preços ou horários que não estejam no diagnóstico:
@@ -44,7 +50,16 @@ SCHEMA = {
     "type": "object",
     "properties": {
         "diagnostico": {"type": "string", "description": "Por que a busca não achou nada (1 a 2 frases)"},
-        "acao": {"type": "string", "enum": ["buscar_de_novo", "desistir"]},
+        "acao": {"type": "string", "enum": ["buscar_de_novo", "desistir", "usar_ferramentas"]},
+        "chamadas": {
+            "type": "array",
+            "items": {"type": "object", "properties": {"ferramenta": {"type": "string"},
+                                                       "argumentos": {"type": "object"}},
+                      "required": ["ferramenta"]},
+            "description": "Só com acao=usar_ferramentas (até 3)",
+        },
+        "refinamentos": {"type": "object", "description": "Para a próxima busca: itemTaxonomy, maxDistanceKm, "
+                                                          "maxDeliveryTimeMinutes (só com ids/valores vistos)"},
         "search_queries": {"type": "array", "items": {"type": "string"}, "description": "Consultas NOVAS (até 4)"},
         "cuisine": {"type": "string", "description": "Culinária ou tipo de restaurante, se mudar; senão vazio"},
         "relaxar_orcamento_padrao": {"type": "boolean"},
@@ -56,6 +71,11 @@ SCHEMA = {
 }
 
 CABECALHO = "Diagnóstico da busca:\n"
+
+
+def instrucoes(com_mcp: bool) -> str:
+    """O texto do planejador; com MCP (modo live) leva anexada a lista de ferramentas de leitura."""
+    return f"{INSTRUCOES}\n\n{busca_mcp.FERRAMENTAS}" if com_mcp else INSTRUCOES
 
 
 def pedido(diagnostico: dict) -> str:
@@ -72,4 +92,5 @@ def exemplo() -> list[tuple[str, str]]:
                         "itens_abertos": 0, "restaurantes_fechados": 3, "mais_barato_aberto_reais": None,
                         "descartes": {"restaurante fechado/indisponível": 6}}],
     }
-    return [("sistema", INSTRUCOES), ("usuário", pedido(diagnostico))]
+    return [("sistema (sem MCP)", INSTRUCOES), ("sistema (com MCP, modo live)", instrucoes(True)),
+            ("usuário", pedido(diagnostico))]

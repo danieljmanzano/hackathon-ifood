@@ -31,8 +31,14 @@ STOPWORDS = {
 }
 
 
+# Pedidos de novidade: o usuário quer algo que ainda não viu (não repetir os já mostrados e variar os tipos).
+VARIEDADE = (r'\b(?:diferentes?|outr[oa]s?|variad[oa]s?|variedade|novidades?|mais opcoes|algo novo|'
+             r'nenhum desses|nenhuma dessas|nao quero (?:esses?|essas?|isso))\b')
+
+
 def parse_intent(request: MealRequest) -> MealIntent:
     text = normalized(request.text)
+    pede_variedade = bool(re.search(VARIEDADE, text))
     working, nutritional = extract_preferences(text)
     nutritional = merge_preferences(nutritional, request.nutrition_preferences)
     budget = request.budget_cents
@@ -99,6 +105,8 @@ def parse_intent(request: MealRequest) -> MealIntent:
     if suggested:
         inferences.append('O contexto de treino foi usado para sugerir o estilo e o tamanho da refeição, sem assumir uma necessidade nutricional.')
         working = re.sub(r'\b(?:pre.?treino|vou treinar|antes de treinar|treinei(?: musculacao)?(?: hoje)?|acabei de treinar|saindo da academia|daqui|pouco)\b', ' ', working)
+    if pede_variedade:  # "diferente", "variadas"... descrevem o pedido, não a comida
+        working = re.sub(VARIEDADE + r'|\b(?:mostre|mostra|me)\b', ' ', working)
     words = re.findall(r'[a-z0-9]+(?:-[a-z0-9]+)*', working)
     food_query = ' '.join(w for w in words if w not in STOPWORDS and len(w) > 1)
     labels = [LABELS[goal] for goal in goals] + preference_labels(nutritional)
@@ -113,7 +121,7 @@ def parse_intent(request: MealRequest) -> MealIntent:
     return MealIntent(goals=goals, party_size=party_size, max_delivery_minutes=max_delivery,
                       food_query=food_query, provider_query=food_query or defaults.get(goals[0] if goals else '', 'refeição'),
                       budget_cents=budget, labels=labels, inferred_goals=inferred_goals, inferences=inferences,
-                      nutrition_preferences=nutritional)
+                      nutrition_preferences=nutritional, avoid_repeats=pede_variedade)
 
 
 @dataclass

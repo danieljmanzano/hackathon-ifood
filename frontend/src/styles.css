@@ -1396,6 +1396,36 @@ select {
   background: #eff4f8;
   color: #7391a5;
 }
+.nutrition-badge-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  align-self: flex-start;
+  gap: 4px;
+}
+.macro-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.macro-chip {
+  font-size: 8px;
+  background: #f7f2ea;
+  color: #8a7a62;
+  border-radius: 5px;
+  padding: 5px 6px;
+}
+.macro-chip b {
+  margin-right: 2px;
+}
+.selected-nutrition.ready .macro-chips {
+  margin-top: 4px;
+}
+.selected-nutrition.ready .macro-chip {
+  background: #fff;
+  color: var(--orange-dark);
+  font-size: 11px;
+}
 .reason {
   display: flex;
   align-items: flex-start;

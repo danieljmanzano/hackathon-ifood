@@ -151,6 +151,12 @@ def refresh_recommendations(recommendations: list[Recommendation], settings: Set
     """
     if not pipeline_disponivel(settings):
         return list(recommendations)
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:  # chamada fora do loop (thread): não dá para iniciar cálculo; devolve o que há no cache
+        return [_com_nutricao(r, _cache[_chave(r.candidate, None)])
+                if r.nutrition.state == "pending" and _chave(r.candidate, None) in _cache else r
+                for r in recommendations]
     atualizadas = []
     for rec in recommendations:
         if rec.nutrition.state != "pending":

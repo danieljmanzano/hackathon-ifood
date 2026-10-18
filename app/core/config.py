@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     busca_max_replanejamentos: int = Field(default=1, ge=0, le=2)
     busca_prazo_total_segundos: float = Field(default=28, gt=0, le=29)  # o frontend desiste aos 30 s
     busca_replanejar_timeout_seconds: float = Field(default=10, gt=0, le=20)
+    # No modo live o planejador pode explorar o iFood com tools de LEITURA do MCP (categorias, restaurantes, cardápio).
+    busca_mcp_ferramentas: bool = True
+    busca_max_passos_planejador: int = Field(default=2, ge=1, le=3)  # perguntas ao modelo por rodada (1 pode ser exploração)
     # Por privacidade os logs da busca só têm contagens. Ligue para ver consultas e respostas dos modelos (depuração).
     busca_log_conteudo: bool = False
     # Quanto da conversa o agente de busca lê (0 desliga): últimas N mensagens, cortadas em M caracteres cada.

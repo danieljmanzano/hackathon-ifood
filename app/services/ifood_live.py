@@ -263,6 +263,22 @@ class MCPIFood:
         except (KeyError, TypeError, ValueError):
             raise MacroError("Resposta de endereço difere do contrato documentado.", 502) from None
 
+    async def chamar_ferramentas(self, chamadas: list[tuple[str, dict]]) -> list[dict]:
+        """Executa chamadas de LEITURA já validadas (busca_mcp.preparar), em paralelo, numa só conexão.
+
+        Cada resultado é {"ok": True, "dados": {...}} ou {"ok": False, "erro": "..."}; uma falha não derruba as outras.
+        As travas de `_call_in` continuam valendo: só READ_TOOLS e argumentos conferidos com o schema real.
+        """
+        async with self.connection() as session:
+            tools = await self.tools(session)
+
+            async def uma(nome: str, argumentos: dict) -> dict:
+                try:
+                    return {"ok": True, "dados": await self._call_in(session, tools, nome, argumentos)}
+                except MacroError as e:
+                    return {"ok": False, "erro": e.message}
+            return list(await asyncio.gather(*(uma(n, a) for n, a in chamadas)))
+
     def _q(self, texto: str) -> str:
         """Consulta nos logs: derivada do pedido do usuário, então só aparece com BUSCA_LOG_CONTEUDO=true."""
         return f"“{texto}”" if self.settings.busca_log_conteudo else "(oculta)"
@@ -281,9 +297,15 @@ class MCPIFood:
         except (KeyError, TypeError, ValueError, ArithmeticError):
             raise MacroError("Resultado de busca difere do contrato documentado.", 502) from None
 
+    @staticmethod
+    def itens_de_resposta(dados: dict) -> list[MealCandidate]:
+        """Converte uma resposta de itens do MCP em candidatos (usado também pelo agente de busca)."""
+        return MCPIFood._itens(dados)
+
     async def _buscar_itens(self, session, tools, query: str, address: Address, budget_cents: int | None,
-                            somente_abertos: bool = True):
+                            somente_abertos: bool = True, refinamentos: dict | None = None):
         refinements = {"onlyOpen": True} if somente_abertos else {}
+        refinements.update(refinamentos or {})  # já saneados por busca_mcp.sanear_refinamentos
         if budget_cents is not None:
             refinements["maxItemPrice"] = budget_cents / 100
         logs.info("ifood", f"searchOffers ITEM consulta {self._q(query)} · {'só abertos' if somente_abertos else 'inclui fechados'}"
@@ -320,13 +342,14 @@ class MCPIFood:
         return itens
 
     async def search_many(self, queries: list[str], address: Address, budget_cents: int | None,
-                          cuisine: str | None = None) -> list[MealCandidate]:
+                          cuisine: str | None = None, refinamentos: dict | None = None) -> list[MealCandidate]:
         """Várias consultas numa só conexão (em paralelo), sem repetidos. Sem itens, tenta restaurantes."""
         queries = list(dict.fromkeys(q for q in queries if q.strip()))[:MAX_CONSULTAS] or ["refeição"]
         async with self.connection() as session:
             tools = await self.tools(session)
             respostas = await asyncio.gather(
-                *(self._buscar_itens(session, tools, q, address, budget_cents) for q in queries),
+                *(self._buscar_itens(session, tools, q, address, budget_cents, refinamentos=refinamentos)
+                  for q in queries),
                 return_exceptions=True)
             erros = [r for r in respostas if isinstance(r, BaseException)]
             if len(erros) == len(respostas):

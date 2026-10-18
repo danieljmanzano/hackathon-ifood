@@ -166,6 +166,7 @@ class MealIntent(Model):
     # Consultas concretas para o buscador do iFood (pratos/itens, não só a culinária), da mais específica à mais geral.
     search_queries: list[str] = Field(default_factory=list, max_length=6)
     cuisine: str | None = None  # ex.: "japonesa"; usada para achar restaurantes quando os itens não aparecem
+    avoid_repeats: bool = False  # "diferente", "outro", "variado": não repetir pratos já mostrados e variar os tipos
     budget_cents: Cents | None = None
     labels: list[str] = Field(default_factory=list)
     interpretation_source: Literal["rules", "llm"] = "rules"

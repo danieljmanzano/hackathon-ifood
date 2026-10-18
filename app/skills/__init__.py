@@ -16,10 +16,11 @@ Pipeline de calorias (ordem em que as skills entram):
 Busca:
   busca_intencao         entender o pedido (com a hora local) e planejar as consultas ao iFood
   busca_replanejar       a busca não achou nada: tentar outra estratégia ou explicar ao usuário
+  busca_mcp              as tools de leitura do MCP que o planejador pode chamar para explorar (modo live)
 Agente:
   agente_pedidos         papel do agente · agente_ifood_mcp  como usar o MCP do iFood
 """
-from . import (agente_ifood_mcp, agente_pedidos, busca_intencao, busca_replanejar, item_pedido, nutricao_bases, nutricao_estimativa,
+from . import (agente_ifood_mcp, agente_pedidos, busca_intencao, busca_mcp, busca_replanejar, item_pedido, nutricao_bases, nutricao_estimativa,
                nutricao_ingredientes, nutricao_juiz_web, nutricao_web)
 
 SKILLS = {
@@ -31,6 +32,7 @@ SKILLS = {
     "nutricao_ingredientes": nutricao_ingredientes,
     "busca_intencao": busca_intencao,
     "busca_replanejar": busca_replanejar,
+    "busca_mcp": busca_mcp,
     "agente_pedidos": agente_pedidos,
     "agente_ifood_mcp": agente_ifood_mcp,
 }

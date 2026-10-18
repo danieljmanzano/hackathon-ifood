@@ -20,7 +20,7 @@ from app.services.review_processing import digest, normalized
 from app.services.nutrition_preferences import merge_preferences, preference_labels, without_daily_targets
 from app.skills import busca_intencao
 
-VERSION = 'context-intent-v5-conversa'
+VERSION = 'context-intent-v6-variedade'
 Goal = Literal['large_portion', 'small_portion', 'light', 'cheap', 'fast', 'protein', 'comfort', 'indulgent', 'vegetarian']
 
 
@@ -30,6 +30,7 @@ class LLMIntent(Model):
     search_queries: list[Annotated[str, Field(min_length=2, max_length=60, pattern=r'^[\w\s\-]+$')]] = Field(
         default_factory=list, max_length=4)
     cuisine: str = Field(default='', max_length=40, pattern=r'^[\w\s\-]*$')
+    avoid_repeats: bool = False
     context_summary: str = Field(min_length=1, max_length=400)
     inferences: list[str] = Field(default_factory=list, max_length=5)
     budget_cents: Cents | None = None
@@ -121,6 +122,7 @@ def merge_intent(base: MealIntent, result: LLMIntent, message: str = "", *, grou
         'inferences': result.inferences, 'inferred_goals': inferred, 'fallback_reason': None,
         'nutrition_preferences': nutritional,
         'search_queries': _consultas(result, query, provider_query), 'cuisine': result.cuisine.strip() or None,
+        'avoid_repeats': base.avoid_repeats or result.avoid_repeats,
     })
 
 

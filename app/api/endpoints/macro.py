@@ -463,7 +463,7 @@ async def menu(
 
 
 @router.get("/recommendations/nutrition", response_model=Session)
-def recommendations_nutrition(
+async def recommendations_nutrition(  # async: reiniciar um cálculo perdido exige o loop de eventos (create_task)
     request: Request,
     session: Session = Depends(current_session),
     settings: Settings = Depends(get_settings),

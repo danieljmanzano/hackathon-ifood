@@ -23,6 +23,7 @@ client = TestClient(app)
 
 def sessao(mensagens=(), intent=None):
     return SimpleNamespace(messages=[Message(role=r, text=t) for r, t in mensagens], request_intent=intent,
+                           recommendations=[],
                            profile=UserProfile(id="u"), address=ENDERECO, mode="live", recent_recommendations=[])
 
 

@@ -27,8 +27,22 @@ def mensagens_recentes(session: Session, settings: Settings) -> list[dict]:
             for m in session.messages[-quantas:] if m.text.strip()]
 
 
-def busca_anterior(intent: MealIntent | None) -> dict | None:
-    """Como a busca anterior foi entendida: é o que "outra opção" ou "mais barato" modificam."""
+MAX_JA_RECOMENDADOS = 8
+
+
+def ja_recomendados(session: Session) -> list[dict]:
+    """Pratos que o app JÁ mostrou na última busca: sem isso o agente não sabe o que "diferente" quer evitar."""
+    vistos, lista = set(), []
+    for r in session.recommendations[:MAX_JA_RECOMENDADOS]:
+        chave = (r.candidate.merchant_id, r.candidate.item_id)
+        if chave not in vistos:
+            vistos.add(chave)
+            lista.append({"prato": r.candidate.name, "restaurante": r.candidate.merchant_name})
+    return lista
+
+
+def busca_anterior(intent: MealIntent | None, recomendados: list[dict] | None = None) -> dict | None:
+    """Como a busca anterior foi entendida e o que ela mostrou: é o que "outra opção" ou "mais barato" modificam."""
     if intent is None:
         return None
     resumo = {
@@ -38,13 +52,14 @@ def busca_anterior(intent: MealIntent | None) -> dict | None:
         "objetivos": intent.goals,
         "orcamento_reais": intent.budget_cents / 100 if intent.budget_cents is not None else None,
         "pessoas": intent.party_size,
+        "ja_recomendados": recomendados or [],
     }
     return {k: v for k, v in resumo.items() if v not in (None, [], "")} or None
 
 
 def montar(session: Session, settings: Settings) -> dict | None:
     """{"historico": [...], "busca_anterior": {...}} ou None quando não há nada a mostrar."""
-    conversa = {"historico": mensagens_recentes(session, settings), "busca_anterior": busca_anterior(session.request_intent)}
+    conversa = {"historico": mensagens_recentes(session, settings), "busca_anterior": busca_anterior(session.request_intent, ja_recomendados(session))}
     conversa = {k: v for k, v in conversa.items() if v}
     return conversa or None
 

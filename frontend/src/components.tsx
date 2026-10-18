@@ -196,13 +196,48 @@ const nutritionLabels = {
   unavailable: "Nutrição indisponível",
   error: "Estimativa indisponível",
 };
+const MACROS = [
+  { sigla: "P", nome: "Proteína", campo: "protein_g" },
+  { sigla: "C", nome: "Carboidratos", campo: "carbs_g" },
+  { sigla: "G", nome: "Gordura", campo: "fat_g" },
+] as const;
+// Macros do prato (por unidade; `quantity` multiplica como nas calorias). Some o que o pipeline não informou.
+export function macrosDe(nutrition: Nutrition, quantity = 1) {
+  if (nutrition.state !== "ready") return [];
+  return MACROS.flatMap((m) => {
+    const valor = nutrition[m.campo];
+    return valor == null ? [] : [{ ...m, valor: Math.round(valor * quantity) }];
+  });
+}
+export function MacroChips({
+  nutrition,
+  quantity = 1,
+}: {
+  nutrition: Nutrition;
+  quantity?: number;
+}) {
+  const itens = macrosDe(nutrition, quantity);
+  if (itens.length === 0) return null;
+  return (
+    <span className="macro-chips" aria-label="Macronutrientes">
+      {itens.map((m) => (
+        <span className="macro-chip" key={m.campo} title={m.nome}>
+          <b>{m.sigla}</b> {m.valor} g
+        </span>
+      ))}
+    </span>
+  );
+}
 export function NutritionBadge({ nutrition }: { nutrition: Nutrition }) {
   return (
-    <span className={`nutrition-badge ${nutrition.state}`}>
-      <Flame size={13} />
-      {nutrition.state === "ready"
-        ? `${Math.round(nutrition.minimum!)}–${Math.round(nutrition.maximum!)} kcal`
-        : nutritionLabels[nutrition.state]}
+    <span className="nutrition-badge-group">
+      <span className={`nutrition-badge ${nutrition.state}`}>
+        <Flame size={13} />
+        {nutrition.state === "ready"
+          ? `${Math.round(nutrition.minimum!)}–${Math.round(nutrition.maximum!)} kcal`
+          : nutritionLabels[nutrition.state]}
+      </span>
+      <MacroChips nutrition={nutrition} />
     </span>
   );
 }
@@ -228,6 +263,20 @@ export function NutritionDetails({ nutrition }: { nutrition: Nutrition }) {
                 : "Estimativa"}{" "}
             por {nutrition.portion_basis}.
           </p>
+          {macrosDe(nutrition).length > 0 && (
+            <p>
+              {macrosDe(nutrition)
+                .map((m) => `${m.nome} ${m.valor} g`)
+                .join(" · ")}
+              {nutrition.portion_grams ? ` (prato de cerca de ${nutrition.portion_grams} g)` : ""}.
+            </p>
+          )}
+          {nutrition.revisar && (
+            <p>
+              Estimativa com pouca certeza: confira antes de decidir.
+              {nutrition.motivo_revisao ? ` ${nutrition.motivo_revisao}` : ""}
+            </p>
+          )}
           {nutrition.confidence && (
             <p>
               Confiança qualitativa{" "}
@@ -488,6 +537,7 @@ export function SelectedNutrition({
               ? "tabela nutricional"
               : "estimativa"}
         </span>
+        <MacroChips nutrition={nutrition} quantity={quantity} />
       </div>
     </div>
   );
