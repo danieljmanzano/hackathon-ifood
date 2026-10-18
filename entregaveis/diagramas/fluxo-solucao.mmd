@@ -1,0 +1,21 @@
+flowchart TD
+    A[Pessoa escreve na conversa] --> B{O que a mensagem pede?}
+    B -->|objetivo ou o que comeu| C[Salva contexto do dia<br/>sem disparar busca]
+    B -->|comida| D[Interpreta intenção<br/>fome, orçamento, objetivo, termos]
+    C -->|mensagem também pede comida| D
+    D --> E[Busca no iFood via MCP<br/>searchOffers perto do endereço]
+    E --> F[Filtra e ranqueia<br/>restrições, orçamento, avaliações, variedade]
+    F -->|sobrou algo| G[Até 3 sugestões com motivos]
+    F -->|nada sobrou| H[Agente replaneja<br/>novas consultas ou explora o MCP]
+    H -->|até 2 rodadas| E
+    H -->|desiste| I[Mensagem específica do motivo<br/>fechado, caro, filtrado...]
+    G --> J[Estimativa nutricional<br/>em segundo plano]
+    G --> K[Pessoa escolhe o prato]
+    K --> L[Monta complementos e quantidade<br/>getItem]
+    L --> M[Entrega e pagamento]
+    M --> N[Revisão com total]
+    N -->|botão ou 'confirmar pedido'| O[Pedido confirmado]
+    O --> P[Avaliação livre na conversa]
+    P --> Q[Interpretação em segundo plano<br/>pessoa pode corrigir]
+    Q --> R[Perfil de gostos atualizado]
+    R -.próximas sugestões.-> F

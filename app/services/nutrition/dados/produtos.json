@@ -861,6 +861,39 @@
       },
       "versao_pipeline": "calorias-v3"
     },
+    "2910ad4570af": {
+      "calculado_em": "2026-10-18T11:48:52.851320+00:00",
+      "nome": "Burrito de frango",
+      "origem": "consensus",
+      "restaurante": "Pimenta Mexicana (demo)",
+      "resultado": {
+        "assumptions": [
+          "Assumi que o burrito vem enrolado em uma única tortilha grande.",
+          "Assumi porções típicas de delivery para frango, arroz, feijão e guacamole, sem extras como queijo, sour cream ou molhos adicionais.",
+          "Não houve foto; a estimativa foi feita apenas com base no nome e na descrição.",
+          "Soma pela TACO cobrindo 70% da massa: frango cozido/grelhado→Frango, inteiro, sem pele, cozido, arroz cozido→Arroz, tipo 1, cozido, feijão cozido→Feijão, carioca, cozido."
+        ],
+        "calories": 577.0,
+        "carbs_g": 58.9,
+        "confidence": "medium",
+        "evidence": "Estimei um burrito padrão com tortilha grande, porção moderada de frango, arroz, feijão e guacamole. O valor calórico e os macronutrientes refletem um item típico de delivery, com maior incerteza na quantidade de arroz, feijão e guacamole.",
+        "fat_g": 18.4,
+        "maximum": 780.0,
+        "method": "consensus",
+        "minimum": 383.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T11:48:52.849912Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 burrito de tamanho médio, com tortilha, frango, arroz, feijão e guacamole (~410 g, peso estimada)",
+        "portion_grams": 410.0,
+        "protein_g": 40.8,
+        "revisar": false,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
     "329daa6125c2": {
       "calculado_em": "2026-10-18T08:45:59.493612+00:00",
       "nome": "Bolos Caseiros Inteiros",
@@ -2228,6 +2261,39 @@
       },
       "versao_pipeline": "calorias-v4"
     },
+    "90f5f919047b": {
+      "calculado_em": "2026-10-18T11:49:48.964056+00:00",
+      "nome": "Frango ao curry",
+      "origem": "consensus",
+      "restaurante": "Casa do Curry (demo)",
+      "resultado": {
+        "assumptions": [
+          "Assumi uma porção individual padrão de restaurante, sem acompanhamento extra.",
+          "Assumi arroz branco simples e uma quantidade moderada de molho de curry com leite de coco.",
+          "Assumi que o frango foi preparado sem empanado.",
+          "Soma pela TACO cobrindo 100% da massa: arroz branco cozido→Arroz, tipo 1, cozido, frango cozido→Frango, inteiro, sem pele, cozido, molho de curry com leite de coco→Leite, de coco, óleo/temperos do preparo→Óleo, de soja."
+        ],
+        "calories": 663.0,
+        "carbs_g": 52.0,
+        "confidence": "medium",
+        "evidence": "Estimei uma porção típica de delivery com arroz branco, frango em cubos e molho de curry com leite de coco. O leite de coco e o óleo do preparo elevam bastante a gordura e as calorias, enquanto o arroz responde pela maior parte dos carboidratos.",
+        "fat_g": 33.4,
+        "maximum": 847.0,
+        "method": "consensus",
+        "minimum": 500.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T11:49:48.962683Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 prato/porção individual de frango ao curry com arroz (~420 g, peso estimada)",
+        "portion_grams": 420.0,
+        "protein_g": 34.0,
+        "revisar": false,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
     "a065ee1099d7": {
       "calculado_em": "2026-10-18T06:39:25.749523+00:00",
       "nome": "Marmita Parmegiana de carne",
@@ -2257,6 +2323,40 @@
         "portion_basis": "1 marmita de parmegiana de carne (~650 g) (~620 g, peso estimada)",
         "portion_grams": 620.0,
         "protein_g": 48.0,
+        "revisar": false,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "a07224b35b25": {
+      "calculado_em": "2026-10-18T11:48:21.632978+00:00",
+      "nome": "Arroz com pequi",
+      "origem": "consensus",
+      "restaurante": "Fogão Mineiro (demo)",
+      "resultado": {
+        "assumptions": [
+          "Arroz preparado com óleo/gordura compatível com prato mineiro caseiro.",
+          "Frango em porção moderada, sem pele e sem empanado.",
+          "Salada simples, sem molho cremoso.",
+          "Não há peso informado; usei uma porção individual típica de restaurante.",
+          "Soma pela TACO cobrindo 82% da massa: arroz cozido com pequi→Arroz, tipo 1, cozido, frango→Frango, caipira, inteiro, com pele, cozido."
+        ],
+        "calories": 682.0,
+        "carbs_g": 79.7,
+        "confidence": "medium",
+        "evidence": "Considerei uma porção típica de delivery com arroz como base, pequi em quantidade moderada, frango cozido/grelhado e uma pequena salada. O pequi e o preparo do arroz adicionam gordura e calorias, enquanto o frango eleva a proteína; a salada contribui pouco para calorias totais.",
+        "fat_g": 22.7,
+        "maximum": 932.0,
+        "method": "consensus",
+        "minimum": 500.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T11:48:21.631459Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 porção individual de arroz com pequi, frango e salada (~450 g) (~450 g, peso estimada)",
+        "portion_grams": 450.0,
+        "protein_g": 35.2,
         "revisar": false,
         "source_name": null,
         "source_url": null,
@@ -2842,6 +2942,39 @@
         "portion_grams": 300.0,
         "protein_g": 33.0,
         "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "de1ea6af32de": {
+      "calculado_em": "2026-10-18T11:49:36.473458+00:00",
+      "nome": "Poke de frango",
+      "origem": "consensus",
+      "restaurante": "Nori Bowl (demo)",
+      "resultado": {
+        "assumptions": [
+          "Assumi um bowl padrão de poke sem molhos cremosos, sementes, abacate ou crispy toppings.",
+          "Assumi frango grelhado em cubos, sem empanado.",
+          "Assumi proporção comum de arroz como base principal do poke.",
+          "Soma pela TACO cobrindo 100% da massa: arroz cozido→Arroz, tipo 1, cozido, frango grelhado→Frango, peito, sem pele, grelhado, pepino→Pepino, cru, cenoura→Cenoura, crua, manga→Manga, Haden, crua."
+        ],
+        "calories": 522.0,
+        "carbs_g": 64.9,
+        "confidence": "medium",
+        "evidence": "Estimei uma porção típica de poke com base em arroz como componente principal, frango grelhado em quantidade moderada e pequenas porções de pepino, cenoura e manga. Sem informação de molhos ou toppings extras, a estimativa fica em faixa intermediária, com calorias dominadas pelo arroz e pela proteína do frango.",
+        "fat_g": 9.8,
+        "maximum": 650.0,
+        "method": "consensus",
+        "minimum": 411.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T11:49:36.471705Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 poke de ~430 g (~430 g, peso estimada)",
+        "portion_grams": 430.0,
+        "protein_g": 39.9,
+        "revisar": false,
         "source_name": null,
         "source_url": null,
         "state": "ready"
