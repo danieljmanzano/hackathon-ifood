@@ -16,7 +16,7 @@ def resposta_json(**campos):
              "calorias": 1800, "faixa_min": 1700, "faixa_max": 1900, "proteina_g": 70, "carbo_g": 220,
              "gordura_g": 60, "porcao_g": 700, "porcao_base": "pizza inteira", "confianca": "alta",
              "fonte_nome": "Pizza Express", "fonte_url": "https://www.pizzaexpress.com.br/nutri",
-             "trecho_fonte": "Margherita: 1800 kcal", "ingredientes": [], "suposicoes": [],
+             "trecho_fonte": "Margherita: 1800 kcal", "ingredientes": [], "itens_na_foto": [], "suposicoes": [],
              "justificativa": "Tabela do site."}
     dados.update(campos)
     return dados
@@ -112,5 +112,27 @@ def test_foto_vai_para_a_pesquisa_e_o_prompt_avisa(tmp_path):
 
 
 def test_instrucoes_nao_mandam_achar_tabela_de_restaurante():
-    from app.services.nutrition.prompts import INSTRUCOES_WEB
+    from app.skills.nutricao_web import INSTRUCOES as INSTRUCOES_WEB
     assert "NÃO procure uma tabela do restaurante" in INSTRUCOES_WEB and "ESTIMATIVA" in INSTRUCOES_WEB
+
+
+def test_web_loga_o_que_viu_na_foto(tmp_path):
+    import logging
+    from tests.test_nutricao_logs import Coletor
+    coletor, logger = Coletor(), logging.getLogger("app.nutricao")
+    nivel = logger.level
+    logger.addHandler(coletor); logger.setLevel(logging.INFO)
+    try:
+        _buscar(tmp_path, _resposta(**{**PRATO, "itens_na_foto": ["hambúrguer", "bacon"]}), ["tabelanutri.com.br"], imagem=FOTO)
+        _buscar(tmp_path, _resposta(**PRATO), ["tabelanutri.com.br"], imagem=FOTO)  # foto enviada, nada listado
+        _buscar(tmp_path, _resposta(**PRATO), ["tabelanutri.com.br"])  # sem foto: nada a conferir
+    finally:
+        logger.removeHandler(coletor); logger.setLevel(nivel)
+    texto = " ".join("\n".join(coletor.linhas).split())
+    assert "web │ viu na foto: hambúrguer; bacon" in texto
+    assert texto.count("não listou nada visível na foto") == 1  # só no caso com foto e lista vazia
+
+
+def test_estimativa_pesquisada_guarda_os_itens_da_foto(tmp_path):
+    achado, _, _ = _buscar(tmp_path, _resposta(**{**PRATO, "itens_na_foto": ["hambúrguer"]}), ["tabelanutri.com.br"], imagem=FOTO)
+    assert achado.itens_na_imagem == ["hambúrguer"]

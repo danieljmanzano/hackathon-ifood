@@ -152,3 +152,44 @@ def test_modelo_que_diz_nao_ter_informacao_nao_falha_em_silencio(capturar):
     assert leitura_de_json(dados, "openai") is None
     texto = " ".join("\n".join(capturar).split())
     assert "estimar A │ o modelo (openai) respondeu que NÃO há informação suficiente: nome genérico" in texto
+
+
+# ---------- o que o modelo viu na foto ----------
+
+def test_log_mostra_o_que_o_modelo_viu_na_foto_o_link_e_os_ingredientes(tmp_path, capturar):
+    from tests.test_nutricao_pipeline import rodar
+    from tests.nutricao_comum import leitura
+    b = leitura("gemini", 985, peso=340, itens_na_imagem=["hambúrguer com queijo", "batata frita"])
+    rodar(settings(tmp_path), c=candidato(image_url="https://cdn.ifood.com.br/items/4592.jpg"),
+          b=b, imagem=(b"x" * 2048, "image/jpeg"), casados=None)
+    texto = " ".join("\n".join(capturar).split())
+    assert "imagem │ baixada (2 KB, image/jpeg) · abra para conferir: https://cdn.ifood.com.br/items/4592.jpg" in texto
+    assert "estimar B │ viu na foto: hambúrguer com queijo; batata frita" in texto
+    assert "estimar B │ ingredientes estimados: arroz 200 g, feijão 100 g" in texto
+
+
+def test_log_avisa_quando_o_modelo_nao_listou_nada_visivel(tmp_path, capturar):
+    from tests.test_nutricao_pipeline import rodar
+    from tests.nutricao_comum import leitura
+    rodar(settings(tmp_path), b=leitura("gemini", 985), imagem=(b"x", "image/jpeg"), casados=None)
+    texto = " ".join("\n".join(capturar).split())
+    assert "estimar B │ não listou nada visível na foto" in texto
+    assert any(" ! " in l and "não listou nada visível" in l for l in capturar)
+
+
+def test_estimativa_a_so_texto_nao_fala_de_foto(tmp_path, capturar):
+    from tests.test_nutricao_pipeline import rodar
+    from tests.nutricao_comum import leitura
+    rodar(settings(tmp_path), a=leitura("openrouter", 700), casados=None)
+    assert "viu na foto" not in "\n".join(capturar)
+
+
+def test_leitura_guarda_os_itens_vistos_do_json_e_ignora_vazios():
+    from app.services.nutrition.etapas.estimar import leitura_de_json
+    dados = {"suficiente": True, "calorias": 900, "faixa_min": 800, "faixa_max": 1000, "proteina_g": 40,
+             "carbo_g": 80, "gordura_g": 40, "peso_estimado_g": 350, "confianca": "media", "porcao_base": "prato",
+             "justificativa": "j", "ingredientes": [], "suposicoes": [],
+             "itens_visiveis_na_imagem": ["pizza ", "", "borda recheada"]}
+    assert leitura_de_json(dados, "gemini").itens_na_imagem == ["pizza", "borda recheada"]
+    del dados["itens_visiveis_na_imagem"]  # modelo que omitiu o campo: não quebra
+    assert leitura_de_json(dados, "gemini").itens_na_imagem == []

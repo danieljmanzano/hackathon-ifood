@@ -1,14 +1,12 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from app.agent.skills import Skill, load_skill, render_skills
-from app.services.openrouter import Message, chat_completion
+from app.agent.skills import Skill, load_skill
+from app.services.llm_texto import chat_completion_fallback as chat_completion
+from app.services.openrouter import Message
+from app.skills import agente_pedidos
 
-BASE_SYSTEM_PROMPT = (
-    "Você é o assistente de pedidos do iFood focado em nutrição. "
-    "Macros são estimativas, não aconselhamento médico. "
-    "Nunca finalize um pedido sem confirmação explícita do usuário."
-)
+BASE_SYSTEM_PROMPT = agente_pedidos.BASE  # o texto fica em app/skills/agente_pedidos.py
 
 
 @dataclass
@@ -18,9 +16,7 @@ class McpAction:
 
 
 def build_system_prompt(skills: list[Skill]) -> str:
-    if not skills:
-        return BASE_SYSTEM_PROMPT
-    return f"{BASE_SYSTEM_PROMPT}\n\n# Skills disponíveis\n\n{render_skills(skills)}"
+    return agente_pedidos.montar_system([(s.name, s.description, s.content) for s in skills])
 
 
 async def ask_llm(

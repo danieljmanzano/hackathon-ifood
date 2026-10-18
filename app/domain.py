@@ -34,6 +34,15 @@ def search_terms(request: MealRequest) -> tuple[str, int | None]:
     return intent.provider_query, intent.budget_cents
 
 
+def _motivos_em_portugues(excluded: Counter, budget: int | None) -> dict[str, int]:
+    """Descartes do ranking com rótulos legíveis (vão no diagnóstico que o planejador de busca lê)."""
+    rotulos = {"unavailable": "restaurante fechado/indisponível", "vegetarian": "não vegetariano",
+               "dislike": "contém algo que você não gosta", "restriction": "bate com uma restrição",
+               "search_mismatch": "sem relação com a busca",
+               "budget": f"acima do orçamento de R$ {budget / 100:.2f}" if budget is not None else "acima do orçamento"}
+    return {rotulos.get(motivo, motivo): n for motivo, n in excluded.items()}
+
+
 def rank(
     candidates: list[MealCandidate],
     request: MealRequest,
@@ -44,7 +53,9 @@ def rank(
     intent: MealIntent | None = None,
     nutrition_by_item: dict[tuple[str, str], NutritionResult] | None = None,
     limit: int = 3,
+    diagnostico: dict | None = None,
 ) -> list[Recommendation]:
+    """`diagnostico` (opcional) recebe quantos candidatos cada filtro descartou, em português, para o planejador."""
     started = time.perf_counter()
     excluded = Counter()
     details = {}
@@ -58,12 +69,13 @@ def rank(
 
     intent = apply_profile_preferences(intent or parse_intent(request), profile)
     nutrition_by_item = nutrition_by_item or {}
-    query = intent.food_query
+    query = " ".join([intent.food_query, *intent.search_queries])  # o modelo pode ter proposto vários termos
     generic = {"almoco", "jantar", "comida", "comer", "algo", "opcao", "opcoes", "refeicao", "com", "por", "favor", "uma", "que", "tem"}
     words = [w for w in normalized(query).split() if len(w) > 2 and w not in generic]
     recently_shown = recently_shown or []
     ranked = []
     has_search_matches = False
+
     for candidate in candidates:
         text = normalized(candidate.name + " " + candidate.description)
         search_text = text + " " + normalized(" ".join(
@@ -164,6 +176,8 @@ def rank(
             if entry[0] == 0:
                 reject(entry[3].candidate, "search_mismatch")
         ranked = [entry for entry in ranked if entry[0] > 0]
+    if diagnostico is not None:
+        diagnostico.update(_motivos_em_portugues(excluded, budget))
     ordered = [r for _, _, _, r in sorted(ranked, key=lambda entry: (
         -entry[0], -entry[1], -entry[2], entry[3].candidate.merchant_id, entry[3].candidate.item_id
     ))]

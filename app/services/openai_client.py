@@ -66,8 +66,10 @@ def _fontes(dados: dict[str, Any]) -> list[str]:
 
 
 async def responder(
-    entrada: str,
+    entrada: str | list[dict],
     *,
+    json_mode: bool = True,
+    log_content: bool = True,
     instrucoes: str = "",
     web: bool = False,
     schema: dict | None = None,
@@ -95,7 +97,7 @@ async def responder(
     if schema is not None:
         payload["text"] = {"format": {"type": "json_schema", "name": "saida", "schema": _estrito(schema),
                                       "strict": True}}
-    elif not web:
+    elif not web and json_mode:
         payload["text"] = {"format": {"type": "json_object"}}
     if instrucoes:
         payload["instructions"] = instrucoes
@@ -120,9 +122,12 @@ async def responder(
                     except ValueError as exc:
                         raise OpenAIError("Resposta inesperada da OpenAI") from exc
                     texto, fontes = _texto(dados), _fontes(dados)
-                    logs.detalhe("openai", f"resposta: {logs.curto(texto, 300)} · fontes: {len(fontes)}")
+                    if tentativa > 0:
+                        logs.info("openai", f"{modelo} respondeu na tentativa {tentativa + 1}/{TENTATIVAS} em {t.texto}")
+                    if log_content:
+                        logs.detalhe("openai", f"resposta: {logs.curto(texto, 300)} · fontes: {len(fontes)}")
                     return texto, fontes
-                erro = f"{resposta.status_code} {resposta.text}"
+                erro = f"{resposta.status_code} {resposta.text if log_content else 'conteúdo omitido'}"
                 if resposta.status_code not in RETRYABLE_STATUS:
                     raise OpenAIError(f"OpenAI {logs.curto(erro, 300)}")
             logs.aviso("openai", f"tentativa {tentativa + 1}/{TENTATIVAS} falhou: {logs.curto(erro)}")

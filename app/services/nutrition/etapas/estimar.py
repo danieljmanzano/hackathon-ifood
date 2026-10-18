@@ -1,6 +1,5 @@
 """Estimativas independentes: A (OpenRouter, só texto) e B (Gemini, texto + imagem)."""
 import asyncio
-import json
 import logging
 import math
 
@@ -12,7 +11,7 @@ from app.schemas.macro import MealCandidate
 from app.services.gemini import analyze_image
 from ..entrada import extrair_json, montar_prompt
 from ..modelos import Ingrediente, Leitura, Macros
-from ..prompts import (INSTRUCOES_DECOMPOR, INSTRUCOES_ESTIMATIVA, SCHEMA_DECOMPOR, SCHEMA_ESTIMATIVA)
+from app.skills import nutricao_estimativa, nutricao_ingredientes
 from .consenso import consenso
 from .llm import perguntar_json
 
@@ -50,6 +49,7 @@ def leitura_de_json(dados: dict, fonte: str) -> Leitura | None:
         faixa_min=min(minimo, kcal), faixa_max=max(maximo, kcal),
         confianca=CONFIANCA[dados["confianca"]], porcao_base=dados["porcao_base"],
         peso_g=_numero(dados["peso_estimado_g"]), ingredientes=ingredientes,
+        itens_na_imagem=[str(i).strip() for i in dados.get("itens_visiveis_na_imagem", []) if str(i).strip()],
         suposicoes=list(dados["suposicoes"]), justificativa=dados["justificativa"],
     )
 
@@ -57,11 +57,11 @@ def leitura_de_json(dados: dict, fonte: str) -> Leitura | None:
 async def estimar_a(settings: Settings, candidate: MealCandidate, opcoes: list[str] | None,
                     peso_g: float | None) -> Leitura | None:
     """OpenRouter, só texto. Com N amostras, devolve o consenso entre elas."""
-    prompt = f"Estime as calorias e macros deste item.\n\n{montar_prompt(candidate, opcoes, peso_g)}"
+    pedido = nutricao_estimativa.pedido_a(montar_prompt(candidate, opcoes, peso_g))
     temperatura = 0.2 if settings.calorias_amostras == 1 else 0.7
 
     async def uma() -> Leitura | None:
-        dados = await perguntar_json(settings, INSTRUCOES_ESTIMATIVA, prompt, SCHEMA_ESTIMATIVA,
+        dados = await perguntar_json(settings, nutricao_estimativa.INSTRUCOES, pedido, nutricao_estimativa.SCHEMA,
                                      temperature=temperatura)
         return leitura_de_json(dados, settings.nutrition_provider)
 
@@ -88,19 +88,17 @@ async def estimar_b(settings: Settings, candidate: MealCandidate, opcoes: list[s
     """Gemini com texto + imagem (a única fonte que enxerga o prato). Sem imagem ou chave, não roda."""
     if imagem is None or not settings.gemini_api_key:
         return None
-    prompt = (f"{INSTRUCOES_ESTIMATIVA}\n\nResponda SOMENTE com um objeto JSON que siga este JSON Schema:\n"
-              f"{json.dumps(SCHEMA_ESTIMATIVA, ensure_ascii=False)}\n\n"
-              f"Estime as calorias e macros deste item.\n\n{montar_prompt(candidate, opcoes, peso_g)}")
+    prompt = nutricao_estimativa.pedido_b(montar_prompt(candidate, opcoes, peso_g))
     texto = await analyze_image(imagem[0], prompt, mime_type=imagem[1], json_mode=True, settings=settings)
     dados = extrair_json(texto)
-    validate(dados, SCHEMA_ESTIMATIVA)
+    validate(dados, nutricao_estimativa.SCHEMA)
     return leitura_de_json(dados, "gemini")
 
 
 async def decompor_ingredientes(settings: Settings, candidate: MealCandidate, opcoes: list[str] | None,
                                 peso_g: float | None) -> list[Ingrediente]:
     """Só usado quando nenhuma estimativa trouxe ingredientes."""
-    dados = await perguntar_json(settings, INSTRUCOES_DECOMPOR,
-                                 f"Decomponha este item.\n\n{montar_prompt(candidate, opcoes, peso_g)}",
-                                 SCHEMA_DECOMPOR)
+    dados = await perguntar_json(settings, nutricao_ingredientes.INSTRUCOES_DECOMPOR,
+                                 nutricao_ingredientes.pedido_decompor(montar_prompt(candidate, opcoes, peso_g)),
+                                 nutricao_ingredientes.SCHEMA_DECOMPOR)
     return [Ingrediente(i["nome"], float(i["gramas"])) for i in dados["ingredientes"] if i["gramas"] > 0]

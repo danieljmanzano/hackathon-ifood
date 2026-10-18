@@ -37,6 +37,11 @@ class MockIFood:
     ) -> list[MealCandidate]:
         return catalog()
 
+    async def search_many(
+        self, queries: list[str], address: Address, budget_cents: int | None, cuisine: str | None = None
+    ) -> list[MealCandidate]:
+        return catalog()
+
     async def item(
         self, merchant_id: str, item_id: str, address: Address
     ) -> MealCandidate:

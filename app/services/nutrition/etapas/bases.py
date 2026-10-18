@@ -12,7 +12,7 @@ from app.core import logs
 from app.core.config import Settings
 from app.schemas.macro import MealCandidate
 from ..modelos import InfoOnline, Macros
-from ..prompts import INSTRUCOES_JUIZ_BASE, SCHEMA_JUIZ_BASE
+from app.skills import nutricao_bases
 from .llm import perguntar_json
 
 
@@ -69,17 +69,12 @@ def candidatos(alimentos: tuple[Alimento, ...] | list[Alimento], consulta: str, 
     return [alimentos[indice] for _, _, indice in achados]
 
 
-def _linha(indice: int, a: Alimento) -> str:
-    return f"{indice}: {a.nome} ({a.categoria})"
-
-
 async def escolher_alimento(settings: Settings, descricao: str, opcoes: list[Alimento]) -> Alimento | None:
     """Juiz LLM: escolhe um candidato ou se abstém (None)."""
     if not opcoes:
         return None
-    lista = "\n".join(_linha(i, a) for i, a in enumerate(opcoes))
-    dados = await perguntar_json(settings, INSTRUCOES_JUIZ_BASE,
-                                 f"Item pedido:\n{descricao}\n\nCandidatos:\n{lista}", SCHEMA_JUIZ_BASE)
+    pedido = nutricao_bases.pedido(descricao, [(a.nome, a.categoria) for a in opcoes])
+    dados = await perguntar_json(settings, nutricao_bases.INSTRUCOES, pedido, nutricao_bases.SCHEMA)
     escolha = dados["escolha"]
     if escolha is None or not 0 <= escolha < len(opcoes):
         logs.info("bases", f"juiz se absteve: {logs.curto(dados['motivo'], 160)}")

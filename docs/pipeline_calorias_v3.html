@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pipeline de calorias v3</title>
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; background: #fafaf7; color: #222; }
+  header { padding: 12px 16px; border-bottom: 1px solid #ddd; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  h1 { font-size: 16px; margin: 0; flex: 1 1 auto; }
+  button { padding: 6px 12px; border: 1px solid #bbb; background: #fff; border-radius: 6px; cursor: pointer; }
+  #palco { overflow: auto; padding: 16px; height: calc(100vh - 60px); }
+  #palco svg { transform-origin: top left; }
+  #erro { color: #993c1d; padding: 16px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Pipeline de calorias v3 — Gemini + OpenRouter/OpenAI</h1>
+  <button id="menos">−</button><button id="mais">+</button><button id="ajustar">Ajustar à tela</button>
+  <button id="baixar">Baixar SVG</button>
+</header>
+<div id="palco">Carregando…</div>
+<script type="text/plain" id="dot">digraph pipeline_calorias_v3 {
+    rankdir=TB;
+    newrank=true;
+    nodesep=0.35;
+    ranksep=0.45;
+    node [shape=box, style="rounded,filled", fillcolor="#F1EFE8", fontname="Helvetica", fontsize=11];
+    edge [fontname="Helvetica", fontsize=10, color="#73726c"];
+
+    // ---------- Entrada ----------
+    carregar    [label="Item do MCP (getItem)\nou tests/fixtures/getItem_pizza.json"];
+    normalizar  [label="normalizar_item()\nMealCandidate: nome, restaurante,\ndescrição, imagem_url, opções"];
+    salvo       [label="consultar_produto_salvo()\ncache em memória + produtos.json\nchave: merchantId + itemId + optionIds", fillcolor="#FAEEDA"];
+    hit         [label="produto na base?\n(mesma versão do pipeline)", shape=diamond, fillcolor="#FAEEDA"];
+    porcao      [label="extrair_porcao()\npeso (g, kg, ml, l), tamanho (cm),\n\"serve N\" de nome e descrição (PT e EN)"];
+    imagem      [label="baixar_imagem()\nbytes + MIME (falhou: só texto;\nfoto ilustrativa é ignorada)", fillcolor="#E1F5EE"];
+    prompt      [label="montar_prompt()\ntexto + peso declarado\nJSON Schema (kcal, proteína, carbo, gordura)"];
+    modo        [label="CALORIAS_ESTIMAR_SEMPRE?\nligado: online e estimativas em paralelo\ndesligado: estimativas só se o online falhar", shape=diamond, fillcolor="#FAEEDA"];
+
+    // ---------- Fontes online: bases primeiro, web por último ----------
+    decisao1    [label="BUSCAR_BASES = True\ne chave do LLM?", shape=diamond, fillcolor="#FAEEDA"];
+    bases       [label="consultar_bases()\nTACO: busca por título (rapidfuzz)\n+ juiz com abstenção (LLM de texto)", fillcolor="#EEEDFE"];
+    decisaoB    [label="juiz aprovou\num candidato?", shape=diamond, fillcolor="#FAEEDA"];
+    decisaoW    [label="BUSCA_WEB = True, chave de busca\ne restaurante válido?\n(só se as bases falharam)", shape=diamond, fillcolor="#FAEEDA"];
+    busca       [label="[mudou] buscar_na_web() COM A FOTO\nOpenAI web_search | Gemini + Google Search\nclassifica: industrializado ou prato", fillcolor="#EEEDFE"];
+    tipo        [label="[novo] tipo_item", shape=diamond, fillcolor="#FAEEDA"];
+
+    // industrializado: tabela oficial
+    decisao2    [label="encontrado e fonte_url\nentre os sites consultados?", shape=diamond, fillcolor="#FAEEDA"];
+    juiz        [label="verificar_correspondencia()\nLLM juiz: MESMO produto\ne tamanho?", fillcolor="#EEEDFE"];
+    decisao3    [label="corresponde?", shape=diamond, fillcolor="#FAEEDA"];
+    oficial     [label="info_online\nmetodo = database | web\ntabela oficial ou TACO\nbase: item ou 100 g", fillcolor="#EEEDFE"];
+
+    // prato: estimativa pesquisada
+    decisaoP    [label="[novo] estimativa embasada e\nfonte_url entre os sites consultados?\n(pratos parecidos são aceitos)", shape=diamond, fillcolor="#FAEEDA"];
+    leitura_web [label="[novo] estimativa pesquisada\nLeitura(fonte = web): macros, faixa,\npeso, ingredientes, confiança <= 0,65", fillcolor="#EEEDFE"];
+
+    // ---------- Estimativas ----------
+    estimar     [label="estimar_calorias() A\nLLM de texto (OpenAI | OpenRouter)\nN amostras, só texto", fillcolor="#E1F5EE"];
+    estimar_b   [label="estimar_calorias_b() B\nGemini + texto + imagem\nmacros, peso e ingredientes", fillcolor="#E1F5EE"];
+    decompor    [label="decompor_ingredientes()\nsaem de B (ou A); LLM de texto\nsó se nenhum trouxe a lista", fillcolor="#E1F5EE"];
+    casar       [label="casar_taco()\nrapidfuzz + 1 chamada em lote\ndo juiz (com abstenção)", fillcolor="#E1F5EE"];
+    somar       [label="somar_ingredientes()\nTACO x gramas de cada um\n(exige 70% da massa casada)", fillcolor="#E1F5EE"];
+    consenso    [label="consenso_estimativas()\njunta: A + B + soma TACO + pesquisa web\n(qualquer subconjunto) mediana + dispersão", fillcolor="#FAECE7", color="#993C1D", penwidth=2, peripheries=2];
+    estimativa  [label="estimativa\nmedia, faixa_min, faixa_max,\npeso_g, dispersão", fillcolor="#E1F5EE"];
+
+    // ---------- Trilha das gramas ----------
+    gramas      [label="converter_em_gramas()\njunta: porção declarada\n> peso estimado (imagem, ingredientes, web)", fillcolor="#FAECE7", color="#993C1D", penwidth=2, peripheries=2];
+    calcular    [label="calcular_porcao()\nvalores x gramas\n(se a fonte for por 100 g)", fillcolor="#FAECE7", color="#993C1D", penwidth=2, peripheries=2];
+    descarta    [label="fonte por 100 g sem gramas:\ndescartada (vira aviso)"];
+
+    // ---------- Junções finais ----------
+    fundir      [label="fundir_fontes()\njunta: info_online > estimativa\n(guarda a divergência)", fillcolor="#FAECE7", color="#993C1D", penwidth=2, peripheries=2];
+    validar     [label="validar()\njunta: dispersão + divergência + porção\nAtwater, limites -> confiança 0..1", fillcolor="#FAECE7", color="#993C1D", penwidth=2, peripheries=2];
+    decisao4    [label="confiança >= limiar?\n(CALORIAS_LIMIAR_CONFIANCA)", shape=diamond, fillcolor="#FAEEDA"];
+    revisao     [label="marcar_revisao()\nrevisar = true + motivo"];
+    indisp      [label="state = unavailable\n(nenhuma fonte respondeu;\nnão é gravado)"];
+    gravar      [label="salvar_produto()\nsó state = ready (atômico;\nmanual nunca é sobrescrito)", fillcolor="#FAEEDA"];
+
+    saida       [label="NutritionResult (API) e markdown nos scripts\ncalorias + macros + faixa + confiança\n+ método + fontes + suposições"];
+
+    // ---------- Arestas sequenciais ----------
+    carregar -> normalizar -> salvo -> hit;
+    hit -> saida [label="sim"];
+    hit -> porcao [label="não"];
+    porcao -> imagem -> prompt;
+    prompt -> modo;
+    modo -> decisao1 [label="online"];
+    modo -> estimar  [label="ligado: paralelo", color="#2a7d5f"];
+    modo -> estimar_b [label="ligado: paralelo", color="#2a7d5f"];
+
+    // ---------- Bases primeiro, web por último ----------
+    decisao1 -> bases [label="sim"];
+    bases -> decisaoB;
+    decisaoB -> oficial [label="sim"];
+    decisaoB -> decisaoW [label="não", style=dashed];
+    decisao1 -> decisaoW [label="não", style=dashed];
+    decisaoW -> busca [label="sim"];
+    busca -> tipo;
+    tipo -> decisao2 [label="industrializado"];
+    tipo -> decisaoP [label="prato"];
+    decisao2 -> juiz [label="sim"];
+    juiz -> decisao3;
+    decisao3 -> oficial [label="sim"];
+    decisaoP -> leitura_web [label="sim"];
+
+    // ---------- Estimativas ----------
+    estimar   -> decompor;
+    estimar_b -> decompor;
+    decompor -> casar -> somar;
+    consenso -> estimativa;
+    modo -> estimar [label="desligado: só se o\nonline não achou nada", style=dashed];
+
+    // ---------- Arestas que entram em junções (coral) ----------
+    estimar     -> consenso [color="#993C1D", penwidth=1.5];
+    estimar_b   -> consenso [color="#993C1D", penwidth=1.5];
+    somar       -> consenso [color="#993C1D", penwidth=1.5];
+    leitura_web -> consenso [color="#993C1D", penwidth=1.5];
+
+    porcao     -> gramas [color="#993C1D", penwidth=1.5, label="peso declarado"];
+    estimativa -> gramas [color="#993C1D", penwidth=1.5, label="peso estimado"];
+
+    oficial -> calcular [color="#993C1D", penwidth=1.5];
+    gramas  -> calcular [color="#993C1D", penwidth=1.5];
+    calcular -> descarta [label="sem gramas", style=dashed];
+    descarta -> fundir [style=dashed];
+
+    calcular   -> fundir [color="#993C1D", penwidth=1.5];
+    estimativa -> fundir [color="#993C1D", penwidth=1.5];
+
+    fundir  -> validar [color="#993C1D", penwidth=1.5];
+    gramas  -> validar [color="#993C1D", penwidth=1.5, label="porção"];
+    fundir  -> indisp  [label="sem nenhuma fonte", style=dashed];
+
+    // ---------- Caminhos de falha das fontes (tracejados) ----------
+    decisao2 -> fundir [label="não", style=dashed];
+    decisao3 -> fundir [label="não", style=dashed];
+    decisaoP -> fundir [label="não", style=dashed];
+
+    // ---------- Decisão final ----------
+    validar -> decisao4;
+    decisao4 -> gravar  [label="sim"];
+    decisao4 -> revisao [label="não"];
+    revisao -> gravar;
+    gravar -> saida;
+    indisp -> saida;
+
+    { rank=same; decisao1; estimar; estimar_b; }
+
+    // ---------- Legenda ----------
+    subgraph cluster_legenda {
+        label="Legenda"; fontname="Helvetica"; fontsize=11; style="rounded"; color="#B4B2A9";
+        l1 [label="etapa: uma entrada", fontsize=10];
+        l2 [label="junção: várias saídas\nviram uma entrada", fontsize=10, fillcolor="#FAECE7", color="#993C1D", penwidth=2, peripheries=2];
+        l3 [label="[novo] / [mudou] = diferença\nem relação ao v2", fontsize=10];
+        la [label="", shape=point, width=0.05];
+        lb [label="", shape=point, width=0.05];
+        lc [label="", shape=point, width=0.05];
+        ld [label="", shape=point, width=0.05];
+        le [label="", shape=point, width=0.05];
+        lf [label="", shape=point, width=0.05];
+        la -> lb [label=" saída vira entrada"];
+        lc -> ld [label=" entra numa junção", color="#993C1D", penwidth=1.5];
+        le -> lf [label=" só se a anterior falhar", style=dashed];
+        l1 -> l2 -> l3 [style=invis];
+    }
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@viz-js/viz@3.2.4/lib/viz-standalone.js"></script>
+<script>
+  const palco = document.getElementById("palco");
+  let escala = 1, svg = null;
+  const aplicar = () => { if (svg) svg.style.transform = `scale(${escala})`; };
+  Viz.instance().then(viz => {
+    svg = viz.renderSVGElement(document.getElementById("dot").textContent);
+    palco.textContent = ""; palco.appendChild(svg);
+    document.getElementById("ajustar").onclick = () => {
+      const w = svg.viewBox.baseVal.width || svg.getBoundingClientRect().width;
+      escala = Math.min(1, (palco.clientWidth - 32) / w); aplicar();
+    };
+    document.getElementById("mais").onclick = () => { escala *= 1.2; aplicar(); };
+    document.getElementById("menos").onclick = () => { escala /= 1.2; aplicar(); };
+    document.getElementById("baixar").onclick = () => {
+      const blob = new Blob([new XMLSerializer().serializeToString(svg)], { type: "image/svg+xml" });
+      const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: "pipeline_calorias_v3.svg" });
+      a.click();
+    };
+  }).catch(e => { palco.innerHTML = '<div id="erro"></div>'; document.getElementById("erro").textContent =
+    "Não foi possível renderizar (precisa de internet para carregar o viz.js).\n" + e; });
+</script>
+</body>
+</html>
