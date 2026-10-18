@@ -172,6 +172,8 @@ class MealIntent(Model):
     cuisine: str | None = None  # ex.: "japonesa"; usada para achar restaurantes quando os itens não aparecem
     avoid_repeats: bool = False  # "diferente", "outro", "variado": não repetir pratos já mostrados e variar os tipos
     pesquisar_na_web: str = ""  # termo que o modelo não conhece bem: a busca pesquisa na web antes de consultar o iFood
+    alvo_item_id: str = ""  # sugestão mostrada que o modelo escolheu como alvo do pedido ("" = nenhuma)
+    motivo_da_decisao: str = ""  # por que o modelo leu o pedido assim (vai para o log)
     montar_pedido: bool = False  # o usuário pediu para o assistente montar o pedido (escolher complementos e quantidade)
     budget_cents: Cents | None = None
     labels: list[str] = Field(default_factory=list)

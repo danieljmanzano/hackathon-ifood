@@ -267,3 +267,38 @@ def test_log_da_decisao_explica_se_monta_a_sugestao_ou_busca(caplog):
     texto = "\n".join(caplog.messages)
     assert "MONTAR sugestão já mostrada" in texto and "palavras da mensagem no nome do prato" in texto
     assert "BUSCAR e depois MONTAR" in texto and "caiu por: invalid_response" in texto
+
+
+def test_conversa_leva_ao_modelo_os_dados_de_cada_sugestao_mostrada():
+    from app.services.conversa import montar as montar_conversa, resumo_para_log, sugestoes_mostradas
+    pronto = nutricao(404, prot=19, carb=44, gord=15)
+    recs = [Recommendation.model_construct(candidate=candidato(item_id="a1", name="Imperdíveis do Subway (Footlong 30cm)",
+                                                               price_cents=4040, description="Escolha sua proteína " * 40),
+                                           nutrition=pronto),
+            Recommendation.model_construct(candidate=candidato(item_id="a2", name="Combo"), nutrition=NutritionResult())]
+    s = sugestoes_mostradas(Session.model_construct(recommendations=recs))
+    assert s[0]["id"] == "a1" and s[0]["preco_reais"] == 40.4 and len(s[0]["descricao"]) <= 240
+    assert s[0]["nutricao"] == {"calorias": 404, "proteina_g": 19, "carboidrato_g": 44, "gordura_g": 15}
+    assert "nutricao" not in s[1]  # sem cálculo pronto não inventa
+    conversa = montar_conversa(Session.model_construct(recommendations=recs, messages=[], request_intent=None),
+                               settings(__import__("pathlib").Path("/tmp")))
+    assert resumo_para_log(conversa)["shown_count"] == 2
+
+
+def test_alvo_escolhido_pelo_modelo_vale_mais_que_o_casamento_de_palavras(caplog):
+    import logging, pathlib
+    from app.api.endpoints.macro import _explicar_decisao
+    from tests.nutricao_comum import settings as cfgs
+    recs = [Recommendation.model_construct(candidate=candidato(item_id=i, name=n)) for i, n in
+            [("a1", "Imperdíveis do Subway (Footlong 30cm)"), ("a2", "Combo Imperdíveis do Subway (Footlong 30cm)")]]
+    sessao = Session.model_construct(recommendations=recs)
+    cfg = cfgs(pathlib.Path("/tmp"), busca_log_conteudo=True)
+    with caplog.at_level(logging.INFO, logger="app.nutricao"):
+        alvo, caminho = _explicar_decisao(cfg, MealIntent(montar_pedido=True, alvo_item_id="a2", food_query="footlong",
+                                                          motivo_da_decisao="quer o combo"), sessao, "monte o footlong")
+        assert alvo.item_id == "a2" and caminho == "montar"  # as palavras sozinhas escolheriam a1
+        alvo, _ = _explicar_decisao(cfg, MealIntent(montar_pedido=True, alvo_item_id="inventado", food_query="footlong"),
+                                    sessao, "monte o footlong")
+        assert alvo.item_id == "a1"  # id fora das sugestões: volta ao casamento de palavras
+    texto = "\n".join(caplog.messages)
+    assert "o modelo escolheu este alvo" in texto and "quer o combo" in texto and "não está nas sugestões" in texto

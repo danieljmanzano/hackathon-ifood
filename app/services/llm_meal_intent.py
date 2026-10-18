@@ -34,6 +34,8 @@ class LLMIntent(Model):
     avoid_repeats: bool = False
     pesquisar_na_web: str = Field(default='', max_length=80, pattern=r'^[\w\s\-]*$')
     montar_pedido: bool = False
+    alvo_item_id: str = Field(default='', max_length=80)
+    motivo_da_decisao: str = Field(default='', max_length=300)
     context_summary: str = Field(min_length=1, max_length=400)
     inferences: list[str] = Field(default_factory=list, max_length=5)
     budget_cents: Cents | None = None
@@ -156,11 +158,12 @@ def merge_intent(base: MealIntent, result: LLMIntent, message: str = "", *, grou
         'avoid_repeats': base.avoid_repeats or result.avoid_repeats,
         'pesquisar_na_web': result.pesquisar_na_web.strip(),
         'montar_pedido': result.montar_pedido,
+        'alvo_item_id': result.alvo_item_id.strip(), 'motivo_da_decisao': result.motivo_da_decisao.strip(),
     })
 
 
 async def interpret_intent(request: MealRequest, settings: Settings, *, diet_context: DietContext | None = None,
-                           conversa: dict | None = None) -> MealIntent:
+                           conversa: dict | None = None, preferencias: str | None = None) -> MealIntent:
     started = time.perf_counter()
     base = parse_intent(request)
     if not settings.intent_llm_enabled:
@@ -172,7 +175,7 @@ async def interpret_intent(request: MealRequest, settings: Settings, *, diet_con
     agora = horario.agora(settings)
     key = digest([VERSION, request.model_dump(), agora['dia_da_semana'], agora['periodo'], settings.openrouter_model,
                   settings.openrouter_base_url, settings.openrouter_fallback_models,
-                  diet_context.model_dump(mode='json') if diet_context else None, conversa])
+                  diet_context.model_dump(mode='json') if diet_context else None, conversa, preferencias])
     cached = _cache.get(key)
     if cached and cached[0] > time.monotonic():
         _cache.move_to_end(key)
@@ -183,7 +186,7 @@ async def interpret_intent(request: MealRequest, settings: Settings, *, diet_con
             return await chat_completion(
                 [{'role': 'system', 'content': SYSTEM_PROMPT},
                  {'role': 'user', 'content': busca_intencao.mensagem_usuario(
-                     request.text, agora, diet_context.model_dump(mode='json') if diet_context else None, conversa)}],
+                     request.text, agora, diet_context.model_dump(mode='json') if diet_context else None, conversa, preferencias)}],
                 temperature=0, max_tokens=850, log_content=False,
                 prazo_primeiro=settings.intent_llm_timeout_seconds / 2,  # sobra metade para a reserva (GPT)
                 settings=settings.model_copy(update={'openrouter_timeout': settings.intent_llm_timeout_seconds}),

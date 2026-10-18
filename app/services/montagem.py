@@ -28,6 +28,7 @@ from app.services.nutrition_batch_search import QUALITATIVE
 from app.services.llm_texto import chat_completion_fallback as chat_completion
 from app.services.nutrition.entrada import extrair_json
 from app.services.review_processing import normalized
+from app.services.preferencias import preferencias_do_cliente
 from app.skills import montar_pedido
 
 log = logging.getLogger(__name__)
@@ -35,9 +36,6 @@ TETOS = {"preço", "calorias", "carboidrato", "gordura"}  # só aumentam ao adic
 MAX_QUANTIDADE = 5
 ROTULO_META = {"low_calorie": "pouco calórico", "high_protein": "muita proteína", "low_carb": "pouco carboidrato",
                "low_fat": "pouca gordura"}
-# Preferências do cliente entregues ao modelo, como texto. Valor fixo por enquanto: a feature de preferências
-# (gostos, aversões, restrições) vai trocar isto por um texto montado a partir do perfil.
-PREFERENCIAS_DO_CLIENTE = "Sem preferências registradas."
 _tarefas: dict[str, asyncio.Task] = {}
 
 
@@ -136,7 +134,8 @@ def _nutricao_para_o_modelo(n: NutritionResult) -> dict:
             "suposicoes": n.assumptions[:4], "evidencia": (n.evidence or "")[:300], "por_unidade": True}
 
 
-def _dados(candidate: MealCandidate, limites: AssemblyLimits, base: dict, tentativas: list[dict], pedido_texto: str = ""):
+def _dados(candidate: MealCandidate, limites: AssemblyLimits, profile: UserProfile, base: dict, tentativas: list[dict],
+           pedido_texto: str = ""):
     n = limites.nutrition
     return {
         "prato": {"nome": candidate.name, "descricao": candidate.description[:300],
@@ -150,7 +149,7 @@ def _dados(candidate: MealCandidate, limites: AssemblyLimits, base: dict, tentat
             "calorias_maximas": n.max_calories, "proteina_minima_g": n.min_protein_g,
             "carboidrato_maximo_g": n.max_carbs_g, "gordura_maxima_g": n.max_fat_g,
             "objetivos": list(n.goals) or None}.items() if v is not None},
-        "preferencias": PREFERENCIAS_DO_CLIENTE,
+        "preferencias": preferencias_do_cliente(profile),
         "pedido_do_cliente": pedido_texto[:400],
         "quantidade_maxima": MAX_QUANTIDADE,
         "pedido_base": base,
@@ -235,7 +234,7 @@ async def montar(settings: Settings, candidate: MealCandidate, limites: Assembly
         selecionado, erro = None, None
         for _ in range(2):  # uma correção se a proposta for inválida
             try:
-                resposta = await propor_fn(settings, _dados(candidate, limites, ref, tentativas, pedido_texto), erro)
+                resposta = await propor_fn(settings, _dados(candidate, limites, profile, ref, tentativas, pedido_texto), erro)
                 selecionado = _montar_selecao(candidate, resposta, proibidas)
                 break
             except (AppError, MacroError, ValueError, SchemaError, KeyError) as e:

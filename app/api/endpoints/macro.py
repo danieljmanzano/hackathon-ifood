@@ -58,6 +58,7 @@ from app.services.llm_meal_intent import interpret_intent
 from app.services.nutrition_preferences import apply_profile_preferences, update_explanation, meets_explicit_limits
 from app.services.nutrition.service import cached_candidates
 from app.services.diet_context import GOAL_LABELS, apply_diet_context, build_diet_context, local_date, split_daily_message
+from app.services.preferencias import preferencias_do_cliente
 from app.services.busca_agente import buscar
 from app.services.conversa import montar as montar_conversa, resumo_para_log as resumo_conversa
 
@@ -134,6 +135,16 @@ def _explicar_decisao(settings: Settings, intent, session: Session, texto: str) 
     if not session.recommendations:
         logs.info("decisão", "→ BUSCAR e depois MONTAR o primeiro resultado: não há sugestões anteriores para montar")
         return None, "buscar_e_montar"
+    if intent.motivo_da_decisao and conteudo:
+        logs.info("decisão", f"o modelo leu o pedido assim: {logs.curto(intent.motivo_da_decisao, 240)}")
+    escolhido = next((r.candidate for r in session.recommendations if r.candidate.item_id == intent.alvo_item_id), None) \
+        if intent.alvo_item_id else None
+    if escolhido is not None:
+        logs.info("decisão", f"→ MONTAR sugestão já mostrada «{logs.curto(escolhido.name, 60)}» ({escolhido.merchant_name}): "
+                             "o modelo escolheu este alvo entre as sugestões")
+        return escolhido, "montar"
+    if intent.alvo_item_id:
+        logs.aviso("decisão", "o modelo indicou um id que não está nas sugestões; usando o casamento de palavras")
     alvo, porque = _escolher_alvo(session.recommendations, texto, so_se_citado=bool(intent.food_query.strip()))
     if alvo is None:
         logs.info("decisão", f"→ BUSCAR e depois MONTAR o primeiro resultado: {porque}, e a mensagem pede comida nova")
@@ -431,7 +442,7 @@ async def search(
         event("conversation.ready", **resumo_conversa(conversa))
         interpreted = await interpret_intent(payload.model_copy(update={"text": meal_text}), settings,
                                             diet_context=diet_context if has_diet_context else None,
-                                            conversa=conversa)
+                                            conversa=conversa, preferencias=preferencias_do_cliente(session.profile))
         intent = apply_profile_preferences(apply_diet_context(interpreted, diet_context, meal_text), session.profile)
         event("intent.ready", source=intent.interpretation_source, goals=intent.goals,
               fallback_reason=intent.fallback_reason, duration_ms=elapsed_ms(started))
