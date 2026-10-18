@@ -33,7 +33,13 @@ class Settings(BaseSettings):
     ]
     openrouter_timeout: float = 60.0
 
-    # iFood MCP (live)
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-3.8-flash"
+    gemini_fallback_models: list[str] = ["gemini-flash-latest"]
+    gemini_retries: int = 3
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
+    gemini_timeout: float = 60.0
+
     ifood_mcp_url: str = "https://consumer-mcp.ifood.com.br/marketplace"
     ifood_client_id: str = ""
     ifood_client_secret: str = ""
