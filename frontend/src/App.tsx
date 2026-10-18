@@ -7,7 +7,7 @@ import { ChatPreferences } from "./ChatPreferences";
 import { AddressPicker } from "./Addresses";
 import { addressIntent, confirmsOrder, matchChoice, normalize, preferenceCommand, preferenceReply, reportsContext, requestedQuantity, wantsNewOrder } from "./chat-flow";
 import { consumptionMigrated, loadConsumption, markConsumptionMigrated, saveConsumption } from "./storage";
-import type { Address, Candidate, CheckoutChoices, NewAddress, Nutrition, OrderReviewInput, Recommendation, SelectedOption, Session } from "./types";
+import type { Address, Assembly, Candidate, SelectedItem, CheckoutChoices, NewAddress, Nutrition, OrderReviewInput, Recommendation, SelectedOption, Session } from "./types";
 
 type Phase = "address" | "discover" | "customize" | "delivery" | "payment" | "confirm" | "ordered";
 type ChatMessage = { id: string; role: "user" | "assistant"; text: string; recommendations?: Recommendation[] };
@@ -56,10 +56,13 @@ export default function App() {
   const [detail, setDetail] = useState<Candidate | null>(null);
   const [options, setOptions] = useState<SelectedOption[]>([]);
   const [quantity, setQuantity] = useState(1);
+  const [preview, setPreview] = useState<SelectedItem | null>(null);  // nutrientes do prato montado, sem comprar
+  const [previewBusy, setPreviewBusy] = useState(false);
   const [choices, setChoices] = useState<CheckoutChoices | null>(null);
   const [delivery, setDelivery] = useState("");
   const actionLock = useRef(false);
   const epoch = useRef(0);
+  const followedAssembly = useRef<{ id: string; seen: number } | null>(null);  // montagem pedida no chat que esta tela acompanha
   const announceCalories = useRef(false);  // modo live: avisar as calorias quando o cálculo do prato terminar
   const bottom = useRef<HTMLDivElement>(null);
   const latestTurn = useRef<HTMLDivElement>(null);
@@ -105,6 +108,7 @@ export default function App() {
       if (lastAssistant && current.recommendations.length) lastAssistant.recommendations = current.recommendations;
       setActiveSearch(lastAssistant?.id ?? null);
       setMessages(history);
+      if (current.assembly?.state === "running") followedAssembly.current = { id: current.assembly.id, seen: 0 };
       if (current.selected && !current.order && current.mode === "mock") setChoices(await api.choices());
     } catch (reason) { setError(errorText(reason)); }
     finally { setLoading(false); }
@@ -166,6 +170,41 @@ export default function App() {
     }, 3000);
     return () => { cancelled = true; clearInterval(timer); };
   }, [selectedNutritionPending, session?.selected?.candidate.item_id]);
+  // Montagem do pedido pelo assistente: acompanha os passos e, no fim, preenche a tela como se o cliente tivesse montado.
+  const assemblyRunning = session?.assembly?.state === "running";
+  useEffect(() => {
+    if (!assemblyRunning) return;
+    let cancelled = false;
+    const timer = window.setInterval(async () => {
+      if (actionLock.current) return;
+      const version = epoch.current;
+      try { const next = await api.assembly(); if (!cancelled && version === epoch.current) setSession(next); }
+      catch { /* tenta de novo no próximo ciclo */ }
+    }, 2500);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [assemblyRunning, session?.assembly?.id]);
+  useEffect(() => {
+    const followed = followedAssembly.current, assembly = session?.assembly;
+    if (!followed || !assembly || assembly.id !== followed.id) return;
+    assembly.events.slice(followed.seen).forEach(event => say("assistant", event));
+    followed.seen = assembly.events.length;
+    if (assembly.state === "running") return;
+    followedAssembly.current = null;
+    void finishAssembly(assembly);
+  }, [session?.assembly]);
+  async function finishAssembly(assembly: Assembly) {
+    if (assembly.state === "impossible" || !assembly.candidate) { say("assistant", assembly.message ?? "Não consegui montar o pedido."); return; }
+    setDetail(assembly.candidate); setOptions([]); setQuantity(assembly.state === "ready" ? assembly.quantity : 1); setPhase("customize");
+    if (assembly.state === "ready") {
+      for (const option of assembly.options) {  // replica a escolha, um complemento por vez, como se fosse o cliente
+        const name = assembly.candidate.option_groups.find(g => g.id === option.group_id)?.options.find(o => o.id === option.option_id)?.name ?? "Complemento";
+        await new Promise(resolve => setTimeout(resolve, 350));
+        setOptions(current => [...current, option]);
+        say("assistant", `${name}${option.quantity > 1 ? ` × ${option.quantity}` : ""}: selecionado.`);
+      }
+    }
+    say("assistant", assembly.message ?? "Monte o seu pedido pela tela.");
+  }
   useEffect(() => {
     const selected = session?.selected;
     if (!announceCalories.current || !selected || selected.nutrition.state === "pending") return;
@@ -217,6 +256,7 @@ export default function App() {
     const searched = next.last_chat_action === "search";
     const id = say("assistant", reply, searched ? next.recommendations : undefined);
     if (searched) { setActiveSearch(id); setPhase("discover"); setDetail(null); }
+    if (next.assembly?.state === "running") { followedAssembly.current = { id: next.assembly.id, seen: 0 }; setPhase("discover"); setDetail(null); }
   }
   async function choose(candidate: Candidate, echo = true) {
     if (!session || session.order || phase !== "discover" || busy) return;
@@ -238,6 +278,26 @@ export default function App() {
   }
   const selectionTotal = detail ? quantity * (detail.price_cents + options.reduce((sum, o) =>
     sum + (detail.option_groups.find(g => g.id === o.group_id)?.options.find(option => option.id === o.option_id)?.price_cents ?? 0) * o.quantity, 0)) : 0;
+  // Mudou prato, complemento ou quantidade: a prévia anterior não vale mais.
+  useEffect(() => { setPreview(null); }, [detail?.item_id, options, quantity]);
+  const previewPending = preview?.nutrition.state === "pending";
+  useEffect(() => {
+    if (!previewPending || !detail) return;
+    let cancelled = false, tries = 0;
+    const timer = window.setInterval(async () => {
+      if (++tries > 40) { clearInterval(timer); return; }
+      try { const next = await api.previewNutrition(detail, quantity, options, false); if (!cancelled) setPreview(next); }
+      catch { /* tenta no próximo ciclo */ }
+    }, 3000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [previewPending]);
+  async function calculateNutrition() {
+    if (!detail || !validOptions || previewBusy) return;
+    setPreviewBusy(true); setError("");
+    try { setPreview(await api.previewNutrition(detail, quantity, options)); }
+    catch (reason) { setError(errorText(reason)); }
+    finally { setPreviewBusy(false); }
+  }
   async function continueWithDish(echo = true) {
     if (!detail || !validOptions || busy) return;
     if (echo) say("user", `Continuar com ${quantity} unidade${quantity > 1 ? "s" : ""} de ${detail.name}.`);
@@ -428,7 +488,12 @@ export default function App() {
           })}</fieldset>)}
         <div className="quantity-row"><span>Quantidade</span><Stepper value={quantity} label="quantidade de pratos" onChange={setQuantity} /></div>
         <div className="action-footer"><span><strong>{money(selectionTotal)}</strong><small>Entrega calculada na próxima etapa</small></span>
-          <button className="primary-button" disabled={disabled || !validOptions} onClick={() => void continueWithDish()}>Continuar com este prato</button></div>
+          <span className="action-buttons">
+            <button className="secondary-button" disabled={disabled || !validOptions || previewBusy} onClick={() => void calculateNutrition()}>
+              {previewBusy ? "Calculando…" : "Calcular nutrientes"}</button>
+            <button className="primary-button" disabled={disabled || !validOptions} onClick={() => void continueWithDish()}>Continuar com este prato</button></span></div>
+        {preview && <div className="preview-nutrition"><SelectedNutrition nutrition={preview.nutrition} quantity={preview.quantity} />
+          <small className="muted">Só uma prévia: nada foi escolhido nem comprado.</small></div>}
       </section>}
       {phase === "delivery" && choices && <section className="chat-action" aria-label="Escolher entrega"><h2>Qual entrega combina com você?</h2>
         {choices.delivery.map((choice, index) => <button className="choice-button" key={choice.id} disabled={disabled} onClick={() => chooseDelivery(choice.id)}>

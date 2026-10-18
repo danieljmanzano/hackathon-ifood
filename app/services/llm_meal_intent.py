@@ -8,6 +8,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field, ValidationError
 
+from app.core import logs
 from app.core.config import Settings
 from app.core.exceptions import AppError
 from app.core.search_logs import elapsed_ms, event
@@ -32,12 +33,43 @@ class LLMIntent(Model):
     cuisine: str = Field(default='', max_length=40, pattern=r'^[\w\s\-]*$')
     avoid_repeats: bool = False
     pesquisar_na_web: str = Field(default='', max_length=80, pattern=r'^[\w\s\-]*$')
+    montar_pedido: bool = False
+    alvo_item_id: str = Field(default='', max_length=80)
+    motivo_da_decisao: str = Field(default='', max_length=300)
     context_summary: str = Field(min_length=1, max_length=400)
     inferences: list[str] = Field(default_factory=list, max_length=5)
     budget_cents: Cents | None = None
     party_size: int | None = Field(default=None, ge=1, le=20, strict=True)
     max_delivery_minutes: int | None = Field(default=None, ge=1, le=240, strict=True)
     nutrition_preferences: NutritionPreferences = Field(default_factory=NutritionPreferences)
+
+
+NUTRITION_GOALS = {"high_protein", "low_carb", "low_fat", "low_calorie"}
+APPETITE_GOALS = {"large_portion", "small_portion", "light", "cheap", "fast", "protein", "comfort", "indulgent", "vegetarian"}
+
+
+def sanear_objetivos(cleaned: str) -> str:
+    """O modelo às vezes põe "low_calorie" (objetivo nutricional) em `goals`. Em vez de recusar a resposta inteira
+    (e perder o resto: montar_pedido, orçamento, consultas), move para nutrition_preferences.goals e descarta o desconhecido."""
+    try:
+        dados = json.loads(cleaned)
+        goals = dados.get("goals")
+        if not isinstance(goals, list):
+            return cleaned
+    except (ValueError, AttributeError):
+        return cleaned
+    validos = [g for g in goals if g in APPETITE_GOALS]
+    nutri = dados.get("nutrition_preferences")
+    if not isinstance(nutri, dict):
+        return cleaned
+    movidos = [g for g in goals if g in NUTRITION_GOALS and g not in (nutri.get("goals") or [])]
+    if len(validos) == len(goals) and not movidos:
+        return cleaned
+    logs.info("intent", f"resposta do modelo corrigida: objetivos {[g for g in goals if g not in APPETITE_GOALS]} "
+                        f"fora de `goals` (nutricionais vão para nutrition_preferences.goals; o resto é descartado)")
+    nutri["goals"] = [*(nutri.get("goals") or []), *movidos][:4]
+    dados["goals"], dados["nutrition_preferences"] = validos, nutri
+    return json.dumps(dados, ensure_ascii=False)
 
 
 # O texto fica em app/skills/busca_intencao.py; aqui só se anexa o schema do LLMIntent.
@@ -123,11 +155,13 @@ def merge_intent(base: MealIntent, result: LLMIntent, message: str = "", *, grou
         'search_queries': _consultas(result, query, provider_query), 'cuisine': result.cuisine.strip() or None,
         'avoid_repeats': base.avoid_repeats or result.avoid_repeats,
         'pesquisar_na_web': result.pesquisar_na_web.strip(),
+        'montar_pedido': result.montar_pedido,
+        'alvo_item_id': result.alvo_item_id.strip(), 'motivo_da_decisao': result.motivo_da_decisao.strip(),
     })
 
 
 async def interpret_intent(request: MealRequest, settings: Settings, *, diet_context: DietContext | None = None,
-                           conversa: dict | None = None) -> MealIntent:
+                           conversa: dict | None = None, preferencias: str | None = None) -> MealIntent:
     started = time.perf_counter()
     base = parse_intent(request)
     if not settings.intent_llm_enabled:
@@ -139,7 +173,7 @@ async def interpret_intent(request: MealRequest, settings: Settings, *, diet_con
     agora = horario.agora(settings)
     key = digest([VERSION, request.model_dump(), agora['dia_da_semana'], agora['periodo'], settings.openrouter_model,
                   settings.openrouter_base_url, settings.openrouter_fallback_models,
-                  diet_context.model_dump(mode='json') if diet_context else None, conversa])
+                  diet_context.model_dump(mode='json') if diet_context else None, conversa, preferencias])
     cached = _cache.get(key)
     if cached and cached[0] > time.monotonic():
         _cache.move_to_end(key)
@@ -150,7 +184,7 @@ async def interpret_intent(request: MealRequest, settings: Settings, *, diet_con
             return await chat_completion(
                 [{'role': 'system', 'content': SYSTEM_PROMPT},
                  {'role': 'user', 'content': busca_intencao.mensagem_usuario(
-                     request.text, agora, diet_context.model_dump(mode='json') if diet_context else None, conversa)}],
+                     request.text, agora, diet_context.model_dump(mode='json') if diet_context else None, conversa, preferencias)}],
                 temperature=0, max_tokens=850, log_content=False,
                 prazo_primeiro=settings.intent_llm_timeout_seconds / 2,  # sobra metade para a reserva (GPT)
                 settings=settings.model_copy(update={'openrouter_timeout': settings.intent_llm_timeout_seconds}),
@@ -160,7 +194,7 @@ async def interpret_intent(request: MealRequest, settings: Settings, *, diet_con
         cleaned = raw.strip()
         if cleaned.startswith('```') and cleaned.endswith('```'):
             cleaned = cleaned.split('\n', 1)[1].rsplit('```', 1)[0].strip()
-        result = LLMIntent.model_validate_json(cleaned)
+        result = LLMIntent.model_validate_json(sanear_objetivos(cleaned))
         merged = merge_intent(base, result, request.text, ground_food_query=diet_context is not None)
         _cache[key] = (time.monotonic() + CACHE_SECONDS, result)
         _cache.move_to_end(key)
@@ -170,8 +204,12 @@ async def interpret_intent(request: MealRequest, settings: Settings, *, diet_con
         return merged
     except asyncio.TimeoutError:
         reason = 'timeout'
-    except (ValidationError, ValueError, TypeError, AttributeError, IndexError):
+    except (ValidationError, ValueError, TypeError, AttributeError, IndexError) as e:
         reason = 'invalid_response'
+        # Só o formato do erro (campo e tipo), nunca o conteúdo do pedido: explica por que as regras assumiram.
+        detalhe = ('; '.join(f"{'.'.join(map(str, x['loc']))}:{x['type']}" for x in e.errors()[:4])
+                   if isinstance(e, ValidationError) else f"{type(e).__name__}: {str(e)[:100]}")
+        logs.aviso('intent', f"resposta do modelo recusada ({detalhe}) → regras locais assumem")
     except (OpenRouterError, AppError):
         reason = 'unavailable'
     # Nunca registrar conteúdo do pedido, chave ou corpo do erro do provedor.

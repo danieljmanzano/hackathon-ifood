@@ -68,8 +68,8 @@ def test_montar_junta_os_dois_e_devolve_none_quando_nao_ha_nada(tmp_path):
 def test_resumo_para_log_so_tem_contagens(tmp_path):
     c = montar(sessao([("user", "segredo-do-usuario")], JAPONES), settings(tmp_path))
     resumo = resumo_para_log(c)
-    assert resumo == {"history_count": 1, "has_previous_search": True} and "segredo" not in str(resumo)
-    assert resumo_para_log(None) == {"history_count": 0, "has_previous_search": False}
+    assert resumo == {"history_count": 1, "has_previous_search": True, "shown_count": 0} and "segredo" not in str(resumo)
+    assert resumo_para_log(None) == {"history_count": 0, "has_previous_search": False, "shown_count": 0}
 
 
 # ---------- o que o modelo recebe ----------

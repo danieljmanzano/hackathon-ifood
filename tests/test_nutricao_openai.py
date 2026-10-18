@@ -161,6 +161,6 @@ def test_cli_padrao_e_openrouter(capsys):
 
 def test_responder_limita_o_raciocinio_e_usa_low_com_web(tmp_path):
     _, chamadas = _responder(tmp_path, [httpx.Response(200, json={"output_text": "{}"})])
-    assert json.loads(chamadas[0].content)["reasoning"] == {"effort": "minimal"}
+    assert json.loads(chamadas[0].content)["reasoning"] == {"effort": "none"}
     _, chamadas = _responder(tmp_path, [httpx.Response(200, json={"output_text": "{}"})], web=True)
-    assert json.loads(chamadas[0].content)["reasoning"] == {"effort": "low"}  # minimal não aceita web_search
+    assert json.loads(chamadas[0].content)["reasoning"] == {"effort": "low"}  # "none" não aceita web_search
