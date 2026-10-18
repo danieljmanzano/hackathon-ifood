@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     openrouter_timeout: float = 60.0
     # Quando a busca não acha nada, um modelo replaneja (outras consultas, relaxar o orçamento padrão) ou explica.
     busca_replanejar: bool = True
+    busca_web_timeout_seconds: float = Field(default=10, gt=0, le=20)
+    busca_web_identificar: bool = True  # pesquisar na web o que é um produto/nome que o pedido cita e o sistema não conhece
     busca_max_replanejamentos: int = Field(default=1, ge=0, le=2)
     busca_prazo_total_segundos: float = Field(default=28, gt=0, le=29)  # o frontend desiste aos 30 s
     busca_replanejar_timeout_seconds: float = Field(default=10, gt=0, le=20)
@@ -120,6 +122,7 @@ class Settings(BaseSettings):
     # Cascata de calorias (ver pipeline_calorias_v2.dot).
     calorias_estimar_sempre: bool = True  # False: só estima se bases e web não acharem (poupa cota)
     calorias_buscar_bases: bool = True
+    calorias_classificar: bool = True  # produto de marca: tabela oficial na web ANTES das bases genéricas
     calorias_busca_web: bool = True  # Gemini com Google Search; só roda se as bases não acharem
     calorias_log: Literal["off", "resumo", "detalhe"] = "resumo"  # ver app/core/logs.py
     calorias_amostras: int = Field(default=1, ge=1, le=5)

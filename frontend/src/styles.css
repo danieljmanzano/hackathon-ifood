@@ -40,7 +40,8 @@ svg { flex-shrink: 0; }
 .brand-mark svg { width: 22px; }
 .brand-dot { color: var(--red); }
 .ifood-context { border-left: 1px solid var(--line); padding-left: 20px; font-size: 12px; color: var(--muted); }
-.host-address { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+.host-address { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); background: none; padding: 8px 6px; border-radius: 8px; }
+.host-address:hover:not(:disabled) { background: var(--surface); color: var(--ink); }
 .host-address span { max-width: 165px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
 .context-button { display: flex; gap: 8px; align-items: center; background: var(--surface); border-radius: 8px; padding: 10px 12px; font-size: 12px; }
 .context-button[aria-expanded="true"] { background: #fff0f1; color: var(--red-dark); }
@@ -137,6 +138,16 @@ summary { cursor: pointer; font-weight: 600; font-size: 12px; }
 .choice-button { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: #fff; margin-top: 12px; text-align: left; font-size: 13px; }
 .choice-button:hover:not(:disabled) { border-color: var(--red); background: #fff9f9; }
 .choice-button small { color: var(--muted); }
+.choice-button.selected { border-color: var(--red); background: #fff9f9; }
+.choice-button .address-formatted { display: block; margin-top: 4px; font-size: 11px; }
+.address-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.chat-action > .small { margin-top: 14px; }
+.new-address { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 4px; }
+.new-address .form-field small { color: var(--muted); font-weight: 400; font-size: 11px; }
+.new-address > form > .small { margin-top: 16px; }
+.address-candidates { display: grid; gap: 8px; margin-top: 10px; }
+.address-choice { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; cursor: pointer; }
+.address-choice.selected { border-color: var(--red); background: #fff9f9; }
 .panel-title { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .panel-title h2 { font-size: 18px; margin: 0; }
 .summary-item { border-bottom: 1px solid var(--line); padding: 18px 0; font-size: 14px; }

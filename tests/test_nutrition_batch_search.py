@@ -236,6 +236,7 @@ def test_chat_api_returns_progress_then_three_verified_candidates(settings,monke
     from fastapi.testclient import TestClient
     cs=candidates(6)
     class Provider:
+        simulated = False
         pages=[]
         details=[]
         async def addresses(self):

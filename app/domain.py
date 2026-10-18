@@ -4,6 +4,8 @@ import logging
 import time
 from collections import Counter
 
+from app.core import logs
+from app.core.config import get_settings
 from app.core.exceptions import MacroError
 from app.core.search_logs import elapsed_ms, event
 from app.schemas.macro import (
@@ -85,6 +87,34 @@ def _motivos_em_portugues(excluded: Counter, budget: int | None) -> dict[str, in
     return {rotulos.get(motivo, motivo): n for motivo, n in excluded.items()}
 
 
+_ROTULO_CURTO = {"unavailable": "restaurante fechado", "vegetarian": "não vegetariano", "dislike": "algo que não gosta",
+                 "restriction": "restrição", "search_mismatch": "nenhuma palavra da busca", "already_shown": "já mostrado",
+                 "budget": "acima do orçamento"}
+
+
+def _logar_filtro(candidates, words, achou, veredito, ranked, mostrar_termos) -> None:
+    """Mostra o que o ranking viu, o que cortou e por quê (uma linha por item), para conferir se a busca faz sentido."""
+    termos = ", ".join(sorted(set(words))) if mostrar_termos else f"{len(set(words))} palavras (oculto: BUSCA_LOG_CONTEUDO=false)"
+    logs.info("ranking", f"{len(candidates)} itens do iFood · palavras da busca: {termos}")
+    logs.info("ranking", "regras, nesta ordem: fechado → já mostrado (se pediu variedade) → vegetariano → não gosta → restrição "
+                         "→ acima do orçamento → [se algum item casa com as palavras] sem nenhuma palavra = descartado "
+                         "→ ordena por nº de palavras casadas, depois intenção, depois pontos")
+    mantidos = {(r.candidate.merchant_id, r.candidate.item_id) for _, _, _, r in ranked}
+    for c in candidates[:60]:
+        chave = (c.merchant_id, c.item_id)
+        palavras = achou.get(chave, [])
+        casou = f"casou {len(palavras)}" + (f" [{', '.join(palavras)}]" if mostrar_termos and palavras else "")
+        if chave in mantidos:
+            destino = "ok"
+        else:
+            motivo = veredito.get(chave, "?")
+            destino = "descartado: " + (_ROTULO_CURTO.get(motivo) or motivo)
+        logs.info("ranking", f"  {destino:<40.40} · {logs.curto(c.name, 38)} @ {logs.curto(c.merchant_name, 28)} · "
+                             f"R$ {c.price_cents / 100:.2f} · {casou}")
+    if len(candidates) > 60:
+        logs.info("ranking", f"  … e mais {len(candidates) - 60} itens")
+
+
 def rank(
     candidates: list[MealCandidate],
     request: MealRequest,
@@ -106,8 +136,11 @@ def rank(
     event("ranking.started", candidate_count=len(candidates), preference_count=len(profile.preferences),
           restriction_count=len(profile.restrictions) + len(request.restrictions))
 
+    veredito: dict[tuple[str, str], str] = {}  # (restaurante, item) -> motivo do descarte, para o log legível
+
     def reject(candidate, reason):
         excluded[reason] += 1
+        veredito[(candidate.merchant_id, candidate.item_id)] = reason
         event("ranking.rejected", level=logging.DEBUG, merchant_id=candidate.merchant_id,
               item_id=candidate.item_id, reason=reason)
 
@@ -122,13 +155,17 @@ def rank(
     recently_shown = recently_shown or []
     ranked = []
     has_search_matches = False
+    achou: dict[tuple[str, str], list[str]] = {}  # palavras da busca encontradas em cada item
+    mostrar_termos = get_settings().busca_log_conteudo  # os termos vêm do pedido do usuário
 
     for candidate in candidates:
         text = normalized(candidate.name + " " + candidate.description)
         search_text = text + " " + normalized(" ".join(
             review_context.cuisines.get(candidate.merchant_id, []) if review_context else []
         ))
-        relevance = sum(bool(re.search(r"\b" + re.escape(w) + r"s?\b", search_text)) for w in set(words))
+        achadas = sorted(w for w in set(words) if re.search(r"\b" + re.escape(w) + r"s?\b", search_text))
+        achou[(candidate.merchant_id, candidate.item_id)] = achadas
+        relevance = len(achadas)
         has_search_matches = has_search_matches or relevance > 0
         if not candidate.available:
             reject(candidate, "unavailable")
@@ -231,6 +268,7 @@ def rank(
         ranked = [entry for entry in ranked if entry[0] > 0]
     if diagnostico is not None:
         diagnostico.update(_motivos_em_portugues(excluded, budget))
+    _logar_filtro(candidates, words, achou, veredito, ranked, mostrar_termos)
     ordered = [r for _, _, _, r in sorted(ranked, key=lambda entry: (
         -entry[0],
         -(int(meets_explicit_limits(entry[3].nutrition, intent.nutrition_preferences) is True) if strict_nutrition else 0),
@@ -249,6 +287,9 @@ def rank(
             if len(chosen) == limit:
                 break
         chosen = (chosen + [r for r in ordered if r not in chosen])[:limit]
+    logs.info("ranking", f"escolhidos ({'variedade: 1 por tipo e restaurante' if intent.avoid_repeats else 'restaurantes diferentes primeiro'}): "
+              + " | ".join(f"{i + 1}. {rec.candidate.name} @ {rec.candidate.merchant_name} (relev. {details[id(rec)]['relevance']}, "
+                           f"pontos {details[id(rec)]['score']})" for i, rec in enumerate(chosen)))
     event("ranking.completed", candidate_count=len(candidates), eligible_count=len(ordered),
           excluded=dict(excluded), result_count=len(chosen),
           selected=[dict(position=i + 1, **details[id(rec)]) for i, rec in enumerate(chosen)],

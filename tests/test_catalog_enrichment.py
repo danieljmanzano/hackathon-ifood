@@ -193,6 +193,8 @@ def test_live_api_search_queue_polling_and_limits(config, monkeypatch):
     from app.core.config import get_settings
     from app.schemas.macro import Address
     class Provider:
+        simulated = False
+
         async def addresses(self):
             return [Address(id='real-address',label='Casa',formatted='Endereço de teste',latitude=-23,longitude=-46)]
         async def search(self, *args):

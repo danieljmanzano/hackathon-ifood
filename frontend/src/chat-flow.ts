@@ -2,6 +2,14 @@
 export const normalize = (text: string) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 export const confirmsOrder = (text: string) => /^(?:confirmar|confirmo|pode confirmar)(?: o)? pedido[.!]?$/.test(normalize(text));
 export const wantsNewOrder = (text: string) => /^(?:novo pedido|nova busca|buscar outra refeicao|recomecar)[.!]?$/.test(normalize(text));
+/** "add" abre o cadastro; "change" abre a lista de endereços para trocar. */
+export function addressIntent(text: string): "add" | "change" | undefined {
+  const value = normalize(text).replace(/[.!?]$/, "");
+  if (/^(?:quero )?(?:adicionar|cadastrar|incluir|novo|criar)(?: um)?(?: novo)? endereco(?: de entrega)?$/.test(value)) return "add";
+  if (/^(?:quero )?(?:trocar|mudar|alterar|escolher|selecionar|ver)(?: o| de| meu| meus)? enderecos?(?: de entrega)?$/.test(value)
+    || /^(?:entregar|entrega) em outro (?:endereco|lugar)$/.test(value) || /^(?:outro|meus) enderecos?$/.test(value)) return "change";
+  return undefined;
+}
 export const reportsContext = (text: string) => /\b(?:comi|consumi|tomei|almocei|jantei|objetivo|ganhar massa|hipertrofia|emagrecer|perder peso|manter (?:o )?peso)\b/.test(normalize(text));
 
 export function matchChoice<T>(text: string, items: T[], label: (item: T) => string): T | undefined {
