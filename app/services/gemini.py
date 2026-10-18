@@ -5,6 +5,7 @@ from typing import Any
 import httpx
 
 from app.core import logs
+from app.core.nutrition_budget import reserve_call, output_limit, check_input
 from app.core.config import Settings, get_settings
 from app.core.exceptions import AppError
 
@@ -23,6 +24,9 @@ async def _gerar(payload: dict[str, Any], model: str | None, settings: Settings)
     if not settings.gemini_api_key:
         raise GeminiError("GEMINI_API_KEY não configurada", status_code=500)
 
+    check_input([p.get("text", "") for c in payload.get("contents", []) for p in c.get("parts", [])])
+    if output_limit():
+        payload.setdefault("generationConfig", {})["maxOutputTokens"] = output_limit()
     models = list(dict.fromkeys([model or settings.gemini_model, *settings.gemini_fallback_models]))
     errors: list[str] = []
 
@@ -32,6 +36,7 @@ async def _gerar(payload: dict[str, Any], model: str | None, settings: Settings)
             for attempt in range(settings.gemini_retries):
                 with logs.Cronometro() as t:
                     try:
+                        reserve_call("gemini")
                         response = await client.post(url, json=payload,
                                                      headers={"x-goog-api-key": settings.gemini_api_key})
                     except httpx.HTTPError as exc:

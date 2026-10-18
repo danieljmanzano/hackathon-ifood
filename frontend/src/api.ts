@@ -1,5 +1,6 @@
 import type {
   Address,
+  SelectedItem,
   Candidate,
   CheckoutChoices,
   GeocodeResult,
@@ -82,12 +83,21 @@ export const api = {
   merchants: () => request<MerchantSummary[]>("/merchants"),
   menu: (merchantId: string) =>
     request<Candidate[]>(`/merchants/${encodeURIComponent(merchantId)}/menu`),
+  assembly: () => request<Session>("/assembly"),
   selectionNutrition: () => request<Session>("/selection/nutrition"),
   recommendationsNutrition: () =>
     request<Session>("/recommendations/nutrition"),
   item: (item: Candidate) =>
     request<Candidate>(
       `/items/${encodeURIComponent(item.merchant_id)}/${encodeURIComponent(item.item_id)}`,
+    ),
+  /** Calorias e macros do prato montado, sem escolhê-lo. aguardar=false só consulta um cálculo em andamento. */
+  previewNutrition: (item: Candidate, quantity: number, options: SelectedOption[], aguardar = true) =>
+    request<SelectedItem>(
+      `/selection/preview?aguardar=${aguardar}`,
+      { merchant_id: item.merchant_id, item_id: item.item_id, quantity, options },
+      "POST",
+      60_000,
     ),
   select: (item: Candidate, quantity: number, options: SelectedOption[]) =>
     request<Session>(

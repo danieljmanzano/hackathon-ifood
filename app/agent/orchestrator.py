@@ -26,7 +26,7 @@ async def ask_llm(
     history: list[Message] | None = None,
     model: str | None = None,
 ) -> str:
-    """Envia a mensagem ao OpenRouter com as skills (por nome ou objeto) no system prompt."""
+    """Envia a mensagem ao LLM de texto (NUTRITION_PROVIDER) com as skills (por nome ou objeto) no system prompt."""
     resolved = [s if isinstance(s, Skill) else load_skill(s) for s in (skills or [])]
     messages: list[Message] = [
         {"role": "system", "content": build_system_prompt(resolved)},

@@ -1,7 +1,7 @@
 """Pipeline nutricional como serviço.
 
 Fachada usada pela API: base local de produtos → pipeline (bases, web, estimativas, validação).
-Gemini vê a imagem; o OpenRouter faz o texto. Veja pipeline.py e pipeline_calorias_v2.dot.
+A OpenAI faz o texto, lê a imagem e busca na web. Veja pipeline.py e pipeline_calorias_v2.dot.
 
 Sempre devolve um NutritionResult: falhas viram state="error" para não derrubar a busca.
 """
@@ -19,7 +19,7 @@ from app.core.config import Settings
 from app.core.exceptions import AppError
 from app.schemas.macro import MealCandidate, NutritionResult, Recommendation, SelectedItem
 from .etapas.estimar import EstimativaInvalida
-from .pipeline import PIPELINE_VERSION, calcular
+from .pipeline import PIPELINE_VERSION, VERSOES_SEM_OPCOES, calcular
 from .produtos import chave_produto, repositorio
 
 LIMITACAO_SEM_NUTRICAO = "Informação nutricional indisponível"
@@ -27,6 +27,7 @@ LIMITACAO_SEM_NUTRICAO = "Informação nutricional indisponível"
 # Resultados prontos por item; estimativas que passam do prazo da resposta terminam aqui em segundo plano.
 _cache: dict[str, NutritionResult] = {}
 _em_andamento: dict[str, asyncio.Task] = {}
+_catalog_lanes: dict[tuple[int, str], asyncio.Semaphore] = {}
 _limites: dict[int, asyncio.Semaphore] = {}  # estimativas simultâneas por loop (limite de uso do provedor)
 
 
@@ -53,10 +54,15 @@ def _partes(item: MealCandidate | SelectedItem) -> tuple[MealCandidate, list[str
 
 
 def _chave(candidate: MealCandidate, opcoes: list[str] | None) -> str:
-    bruto = json.dumps([PIPELINE_VERSION, candidate.merchant_id, candidate.merchant_name, candidate.simulated,
-                        candidate.item_id, candidate.name, candidate.description, candidate.image_url, opcoes],
+    bruto = json.dumps([PIPELINE_VERSION, chave_produto(candidate), sorted(opcoes) if opcoes else opcoes],
                        ensure_ascii=False)
     return hashlib.sha256(bruto.encode()).hexdigest()
+
+
+def _item_key(item: MealCandidate | SelectedItem) -> str:
+    if isinstance(item, SelectedItem):
+        return hashlib.sha256(f"{PIPELINE_VERSION}:{chave_produto(item)}".encode()).hexdigest()
+    return _chave(item, None)
 
 
 def pipeline_disponivel(settings: Settings) -> bool:
@@ -66,7 +72,7 @@ def pipeline_disponivel(settings: Settings) -> bool:
 def cached_candidates(candidates: list[MealCandidate], settings: Settings) -> dict[tuple[str, str], NutritionResult]:
     """Dados já disponíveis para o ranking; nunca inicia cálculos de todo o catálogo."""
     saved = repositorio(str(settings.calorias_base_path)).get_many(
-        [chave_produto(c) for c in candidates], PIPELINE_VERSION
+        [chave_produto(c) for c in candidates], VERSOES_SEM_OPCOES  # catálogo: sempre sem opções
     )
     result = {}
     for candidate in candidates:
@@ -77,16 +83,25 @@ def cached_candidates(candidates: list[MealCandidate], settings: Settings) -> di
 
 
 async def estimate_nutrition(item: MealCandidate | SelectedItem, settings: Settings) -> NutritionResult:
+    if settings.catalog_enrichment_enabled and settings.ifood_mode == "live":
+        key = (id(asyncio.get_running_loop()), str(settings.database_path.resolve()))
+        lane = _catalog_lanes.setdefault(key, asyncio.Semaphore(min(3, settings.nutrition_concurrency)))
+        async with lane:
+            return await _estimate_nutrition(item, settings)
+    return await _estimate_nutrition(item, settings)
+
+
+async def _estimate_nutrition(item: MealCandidate | SelectedItem, settings: Settings) -> NutritionResult:
     """Calorias de uma unidade do item (a quantidade comprada é aplicada por quem chama)."""
     candidate, opcoes = _partes(item)
     logs.iniciar_item(candidate.name)
-    chave = _chave(candidate, opcoes)
+    chave = _item_key(item)
     if chave in _cache:
         logs.info("cache", "HIT na memória → resultado pronto, nada recalculado")
         return _cache[chave]
 
     base = repositorio(str(settings.calorias_base_path))
-    salvo = base.get(chave_produto(item), PIPELINE_VERSION)
+    salvo = base.get(chave_produto(item), PIPELINE_VERSION if opcoes else VERSOES_SEM_OPCOES)
     if salvo is not None:
         _cache[chave] = salvo
         logs.info("base local", f"HIT ({chave_produto(item)}) → {salvo.calories:.0f} kcal, método {salvo.method}; "
@@ -94,9 +109,15 @@ async def estimate_nutrition(item: MealCandidate | SelectedItem, settings: Setti
         return salvo
     if not pipeline_disponivel(settings):
         return _resultado("unavailable",
-                          evidence="Pipeline nutricional não configurada (sem chave do provedor de texto nem do Gemini).")
+                          evidence="Pipeline nutricional não configurada (sem chave do provedor de texto).")
     logs.info("base local", f"MISS ({chave_produto(item)}) → calculando")
 
+    from app.core.nutrition_budget import Budget, current_budget
+    from app.storage.catalog import CatalogStore
+    token = None
+    if settings.catalog_enrichment_enabled and settings.ifood_mode == "live" and not candidate.simulated and current_budget.get() is None:
+        token = current_budget.set(Budget(CatalogStore(settings.database_path), settings,
+                                          f"{PIPELINE_VERSION}:{chave_produto(item)}"))
     try:
         resultado = await asyncio.wait_for(calcular(settings, candidate, opcoes), settings.nutrition_timeout_seconds)
     except (asyncio.TimeoutError, AppError, json.JSONDecodeError, SchemaError, KeyError, ValidationError,
@@ -104,6 +125,9 @@ async def estimate_nutrition(item: MealCandidate | SelectedItem, settings: Setti
         causa = "tempo esgotado (NUTRITION_TIMEOUT_SECONDS)" if isinstance(e, asyncio.TimeoutError) else logs.curto(e)
         logs.aviso("ERRO", f"estimativa falhou: {causa}")
         return _resultado("error", evidence="Não foi possível obter a informação nutricional agora.")
+    finally:
+        if token is not None:
+            current_budget.reset(token)
     if resultado.state == "ready":  # indisponível por queda temporária não pode ficar preso no cache
         _cache[chave] = resultado
         base.put(chave_produto(item), resultado, candidate)
@@ -135,6 +159,9 @@ async def enrich_recommendations(recommendations: list[Recommendation], settings
     O que não termina a tempo volta como "pending" e continua em segundo plano, indo para o cache;
     refresh_recommendations entrega o resultado quando ficar pronto.
     """
+    if settings.catalog_enrichment_enabled and settings.ifood_mode == "live":
+        from app.services.catalog_enrichment import enrichment_results
+        return enrichment_results(recommendations, settings)
     if not pipeline_disponivel(settings) or not recommendations:
         return [_com_nutricao(r, await estimate_nutrition(r.candidate, settings)) for r in recommendations]
     tarefas = [_iniciar(rec, settings) for rec in recommendations]
@@ -149,6 +176,17 @@ def refresh_recommendations(recommendations: list[Recommendation], settings: Set
 
     Se o cálculo se perdeu (ex.: o servidor reiniciou), ele é iniciado de novo em segundo plano.
     """
+    if settings.catalog_enrichment_enabled and settings.ifood_mode == "live":
+        # Polling só lê a base: nunca recoloca produtos na fila nem reinicia cálculos pagos.
+        known = cached_candidates([r.candidate for r in recommendations], settings)
+        from app.services.catalog_enrichment import job_key
+        from app.storage.catalog import CatalogStore
+        with CatalogStore(settings.database_path).connection() as db:
+            states = {r['id']: r['state'] for r in db.execute('SELECT id,state FROM nutrition_jobs')}
+        return [_com_nutricao(r, known.get((r.candidate.merchant_id, r.candidate.item_id)) or
+                  (_resultado('unavailable', evidence='Enriquecimento pausado ou sem dados suficientes.')
+                   if states.get(job_key(r.candidate)) not in ('queued','running') else r.nutrition))
+                for r in recommendations]
     if not pipeline_disponivel(settings):
         return list(recommendations)
     try:
@@ -175,7 +213,7 @@ async def estimate_selected(selected: SelectedItem, settings: Settings, aguardar
     """
     if not pipeline_disponivel(settings):
         return await estimate_nutrition(selected, settings)
-    chave = _chave(*_partes(selected))
+    chave = _item_key(selected)
     if chave in _cache:
         return _cache[chave]
     if not aguardar and chave not in _em_andamento:

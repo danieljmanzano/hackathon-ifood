@@ -16,12 +16,20 @@ PATTERNS = {
     "low_calorie": r"(?:menos|poucas|baixas) calorias|baix[oa] (?:em |teor de )calorias|hipocaloric[oa]",
 }
 NUMBER = r"(\d+(?:[.,]\d+)?)"
-LIMITS = {
-    "max_calories": rf"(?:ate|no maximo|menos de|abaixo de|limite de)\s*{NUMBER}\s*(?:kcal|calorias)",
-    "min_protein_g": rf"(?:pelo menos|no minimo|minimo de|mais de|acima de)\s*{NUMBER}\s*g(?:ramas)?\s*(?:de\s+)?proteina[s]?",
-    "max_carbs_g": rf"(?:ate|no maximo|menos de|abaixo de|limite de)\s*{NUMBER}\s*g(?:ramas)?\s*(?:de\s+)?carboidratos?",
-    "max_fat_g": rf"(?:ate|no maximo|menos de|abaixo de|limite de)\s*{NUMBER}\s*g(?:ramas)?\s*(?:de\s+)?gordura[s]?",
-}
+LIMIT_SPECS = (
+    ("max_calories", "calories", "kcal", False), ("min_protein_g", "protein_g", "g de proteína", True),
+    ("max_carbs_g", "carbs_g", "g de carboidratos", False), ("max_fat_g", "fat_g", "g de gordura", False),
+    ("min_calories", "calories", "kcal", True), ("max_protein_g", "protein_g", "g de proteína", False),
+    ("min_carbs_g", "carbs_g", "g de carboidratos", True), ("min_fat_g", "fat_g", "g de gordura", True),
+)
+UNIT_PATTERNS = {"calories": r"(?:kcal|calorias)", "protein_g": r"g(?:ramas)?\s*(?:de\s+)?proteinas?",
+                 "carbs_g": r"g(?:ramas)?\s*(?:de\s+)?carboidratos?", "fat_g": r"g(?:ramas)?\s*(?:de\s+)?gorduras?"}
+NAMES = {"calories": r"calorias|kcal", "protein_g": r"proteinas?", "carbs_g": r"carboidratos?", "fat_g": r"gorduras?"}
+LOWER = r"(?:pelo menos|no minimo|minimo de|mais de|acima de)"
+UPPER = r"(?:ate|no maximo|maximo de|menos de|abaixo de|limite de)"
+LIMITS = {field: rf"{LOWER if minimum else UPPER}\s*{NUMBER}\s*{UNIT_PATTERNS[metric]}"
+          for field, metric, _, minimum in LIMIT_SPECS}
+
 
 
 def without_daily_targets(text: str) -> str:
@@ -29,6 +37,8 @@ def without_daily_targets(text: str) -> str:
     # Metas diárias pertencem ao acompanhamento, não ao limite de um prato.
     working = re.sub(r"\b(?:minha )?meta (?:diaria|do dia)(?: de)?\s*(?:ate\s*)?\d+(?:[.,]\d+)?\s*(?:kcal|calorias)\b", " ", working)
     working = re.sub(r"\b(?:ate\s*)?\d+(?:[.,]\d+)?\s*(?:kcal|calorias)\s*(?:por dia|diarias|/\s*dia)\b", " ", working)
+    for unit in UNIT_PATTERNS.values():
+        working = re.sub(r"\b(?:(?:pelo menos|no minimo|ate|no maximo)\s*)?\d+(?:[.,]\d+)?\s*"+unit+r"\s*(?:por dia|diari[oa]s?|/\s*dia)\b", " ", working)
     return working
 
 
@@ -36,6 +46,19 @@ def extract_preferences(text: str) -> tuple[str, NutritionPreferences]:
     """Retira metas do texto antes de interpretar orçamento ou alimentos."""
     working = without_daily_targets(text)
     fields, goals = {}, []
+    for metric, names in NAMES.items():
+        suffix = "calories" if metric == "calories" else metric
+        # "proteína entre 20 e 40 g" ou "entre 20 e 40 g de proteína".
+        unit = r"(?:kcal|calorias)" if metric == "calories" else r"g(?:ramas)?"
+        range_patterns = [rf"(?:{names})\s+(?:entre|de)\s*{NUMBER}\s*(?:{unit})?\s*(?:e|a|ate|-)\s*{NUMBER}\s*{unit}\b",
+                          rf"(?:entre|de)\s*{NUMBER}\s*(?:{unit})?\s*(?:e|a|ate|-)\s*{NUMBER}\s*{UNIT_PATTERNS[metric]}\b"]
+        for pattern in range_patterns:
+            def bounds(match):
+                if not re.search(r"\bnao (?:quero |preciso )?$", working[:match.start()]):
+                    fields["min_"+suffix] = float(match[1].replace(",", "."))
+                    fields["max_"+suffix] = float(match[2].replace(",", "."))
+                return " "
+            working = re.sub(pattern, bounds, working)
     for field, pattern in LIMITS.items():
         def limit(match):
             prefix = working[:match.start()]
@@ -43,6 +66,14 @@ def extract_preferences(text: str) -> tuple[str, NutritionPreferences]:
                 fields[field] = float(match[1].replace(",", "."))
             return " "
         working = re.sub(r"\b(?:" + pattern + r")\b", limit, working)
+    for field, metric, _, minimum in LIMIT_SPECS:
+        direction = 'minimo|minima' if minimum else 'maximo|maxima|limite'
+        pattern = rf"(?:{direction})(?: de)?\s*(?:{NAMES[metric]})\s*(?:agora\s+)?(?:para|de|e|:|=)?\s*{NUMBER}\s*(?:kcal|calorias|g(?:ramas)?)?"
+        def reversed_limit(match):
+            if not re.search(r"\bnao (?:quero |preciso )?$", working[:match.start()]):
+                fields[field] = float(match[1].replace(",", "."))
+            return " "
+        working = re.sub(pattern, reversed_limit, working)
     for goal, pattern in PATTERNS.items():
         def preference(match):
             if not re.search(r"\b(?:nao|sem)(?:\s+\w+){0,2}\s+$", working[:match.start()]):
@@ -65,15 +96,10 @@ def merge_preferences(base: NutritionPreferences, override: NutritionPreferences
 
 def preference_labels(preferences: NutritionPreferences) -> list[str]:
     labels = [LABELS[g] for g in dict.fromkeys(preferences.goals)]
-    for field, template in (
-        ("max_calories", "até {:g} kcal por prato"),
-        ("min_protein_g", "pelo menos {:g} g de proteína por prato"),
-        ("max_carbs_g", "até {:g} g de carboidratos por prato"),
-        ("max_fat_g", "até {:g} g de gordura por prato"),
-    ):
+    for field, metric, unit, minimum in LIMIT_SPECS:
         value = getattr(preferences, field)
         if value is not None:
-            labels.append(template.format(value))
+            labels.append(f"{'pelo menos' if minimum else 'até'} {value:g} {unit} por prato")
     return labels
 
 
@@ -117,12 +143,7 @@ def assess_nutrition(nutrition: NutritionResult, preferences: NutritionPreferenc
         scores.append(value / (value + scale) if higher else scale / (scale + value))
         unit = "kcal" if field == "calories" else "g"
         reasons.append(f"Sua preferência por {LABELS[goal]} entrou na comparação: estimativa de {value:g} {unit}{'' if field == 'calories' else ' de ' + label} por prato.")
-    for field, metric, label, minimum in (
-        ("max_calories", "calories", "kcal", False),
-        ("min_protein_g", "protein_g", "g de proteína", True),
-        ("max_carbs_g", "carbs_g", "g de carboidratos", False),
-        ("max_fat_g", "fat_g", "g de gordura", False),
-    ):
+    for field, metric, label, minimum in LIMIT_SPECS:
         target = getattr(preferences, field)
         if target is None:
             continue
@@ -153,3 +174,21 @@ def update_explanation(before: Recommendation, after: Recommendation,
         "reasons": current.reasons + [r for r in after.reasons if r not in previous.reasons],
         "limitations": [l for l in after.limitations if l not in previous.limitations] + current.limitations,
     })
+
+
+def meets_explicit_limits(nutrition: NutritionResult, preferences: NutritionPreferences) -> bool | None:
+    """False: violação conhecida; None: não verificável; True: valores conhecidos atendem.
+
+    Os valores podem ser estimados; True não transforma uma estimativa em garantia.
+    """
+    unknown = False
+    for field, metric, _, minimum in LIMIT_SPECS:
+        target = getattr(preferences, field)
+        if target is None:
+            continue
+        value = getattr(nutrition, metric) if nutrition.state == 'ready' else None
+        if value is None:
+            unknown = True
+        elif (value < target if minimum else value > target):
+            return False
+    return None if unknown else True

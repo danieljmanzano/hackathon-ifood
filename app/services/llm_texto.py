@@ -43,7 +43,7 @@ async def chat_completion_fallback(
     temperature: float = 0.2,
     max_tokens: int | None = None,
     json_mode: bool = False,
-    preferido: Provedor = "openrouter",
+    preferido: Provedor | None = None,
     prazo_primeiro: float | None = None,
     log_content: bool = True,
     settings: Settings | None = None,
@@ -54,6 +54,7 @@ async def chat_completion_fallback(
     deve passar uma fração dele, senão o principal consome tudo e a reserva nunca roda.
     """
     settings = settings or get_settings()
+    preferido = preferido or settings.nutrition_provider  # padrão: o provedor escolhido (NUTRITION_PROVIDER)
     tentativas = ordem(settings, preferido)
     if not tentativas:
         raise ERRO[preferido](f"Nenhuma chave de LLM configurada ({preferido}"

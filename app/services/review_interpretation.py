@@ -1,4 +1,4 @@
-"""Interpretação da avaliação livre do pedido via OpenRouter, em segundo plano e validada por schema.
+"""Interpretação da avaliação livre do pedido via LLM de texto (NUTRITION_PROVIDER), em segundo plano e validada por schema.
 
 Sem LLM (não configurado, tempo esgotado ou resposta inválida) vale só o que o usuário preencheu:
 o texto como digitado e a nota se ele escolheu uma. Nada é inferido por regras.
@@ -12,7 +12,8 @@ from pydantic import ValidationError
 from app.core.config import Settings
 from app.schemas.macro import OrderReview, ReviewInterpretation, Session, now
 from app.schemas.reviews import Review, ReviewAspects
-from app.services.openrouter import OpenRouterError, chat_completion
+from app.core.exceptions import AppError
+from app.services.llm_texto import chat_completion_fallback as chat_completion
 from app.services.review_recommendations import review_context
 from app.storage.database import Database
 
@@ -43,7 +44,7 @@ _tasks: set[asyncio.Task] = set()
 
 
 def llm_available(settings: Settings) -> bool:
-    return settings.review_llm_enabled and bool(settings.openrouter_api_key)
+    return settings.review_llm_enabled and bool(settings.llm_api_key)
 
 
 async def interpret(review: OrderReview, item_name: str, merchant_name: str, settings: Settings) -> ReviewInterpretation:
@@ -87,7 +88,7 @@ def schedule_interpretation(db: Database, session_id: str, settings: Settings) -
             result, state = await interpret(review, candidate.name, candidate.merchant_name, settings), 'done'
         except asyncio.TimeoutError:
             result, state = None, 'failed'
-        except (ValidationError, ValueError, TypeError, OpenRouterError) as exc:
+        except (ValidationError, ValueError, TypeError, AppError) as exc:
             log.warning('Interpretação da avaliação falhou: %s', exc)
             result, state = None, 'failed'
         with db.transaction() as connection:

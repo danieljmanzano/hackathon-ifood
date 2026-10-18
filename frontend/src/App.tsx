@@ -5,9 +5,9 @@ import { Brand, MealCard, SelectedNutrition, Spinner, Stepper } from "./componen
 import { OrderReviewCard } from "./Reviews";
 import { ChatPreferences } from "./ChatPreferences";
 import { AddressPicker } from "./Addresses";
-import { addressIntent, confirmsOrder, matchChoice, normalize, reportsContext, requestedQuantity, wantsNewOrder } from "./chat-flow";
+import { addressIntent, confirmsOrder, matchChoice, normalize, preferenceCommand, preferenceReply, reportsContext, requestedQuantity, wantsNewOrder } from "./chat-flow";
 import { consumptionMigrated, loadConsumption, markConsumptionMigrated, saveConsumption } from "./storage";
-import type { Address, Candidate, CheckoutChoices, NewAddress, OrderReviewInput, Recommendation, SelectedOption, Session } from "./types";
+import type { Address, Assembly, Candidate, SelectedItem, CheckoutChoices, NewAddress, Nutrition, OrderReviewInput, Recommendation, SelectedOption, Session } from "./types";
 
 type Phase = "address" | "discover" | "customize" | "delivery" | "payment" | "confirm" | "ordered";
 type ChatMessage = { id: string; role: "user" | "assistant"; text: string; recommendations?: Recommendation[] };
@@ -18,7 +18,27 @@ const phaseLabels: Record<Phase, string> = {
   delivery: "Entrega", payment: "Pagamento", confirm: "Revisão do pedido", ordered: "Pedido confirmado",
 };
 const errorText = (error: unknown) => error instanceof Error ? error.message : "Não foi possível concluir. Tente novamente.";
-const restoredPhase = (session: Session): Phase => !session.address ? "address" : session.order ? "ordered" : session.summary ? "confirm" : session.selected ? "delivery" : "discover";
+// Frase com as calorias do prato montado (vezes a quantidade), ou "" se ainda não estão prontas.
+const caloriesText = (nutrition: Nutrition | undefined, quantity: number) =>
+  nutrition?.state === "ready" && nutrition.calories != null
+    ? `cerca de ${Math.round(nutrition.calories * quantity)} kcal` + (nutrition.minimum != null && nutrition.maximum != null
+      ? ` (entre ${Math.round(nutrition.minimum * quantity)} e ${Math.round(nutrition.maximum * quantity)} kcal)` : "")
+    : "";
+// Macros, confiança e suposições do prato, em linhas para a bolha do chat (que respeita quebras de linha).
+const nutritionDetails = (nutrition: Nutrition | undefined, quantity: number) => {
+  if (nutrition?.state !== "ready") return "";
+  const grams = (v: number | null | undefined) => v == null ? "—" : `${Math.round(v * quantity)} g`;
+  const lines = [`Proteínas: ${grams(nutrition.protein_g)} · Carboidratos: ${grams(nutrition.carbs_g)} · Gorduras: ${grams(nutrition.fat_g)}`];
+  if (nutrition.confidence) {
+    const level = { low: "baixa", medium: "média", high: "alta" }[nutrition.confidence];
+    lines.push(`Confiança: ${level} (qualitativa, não é probabilidade de acerto)`);
+  }
+  if (nutrition.revisar && nutrition.motivo_revisao) lines.push(`Atenção: ${nutrition.motivo_revisao}`);
+  if (nutrition.portion_basis) lines.push(`Porção considerada: ${nutrition.portion_basis}${quantity > 1 ? ` (× ${quantity})` : ""}`);
+  if (nutrition.assumptions.length) lines.push("Suposições:", ...nutrition.assumptions.map(a => `• ${a}`));
+  return "\n\n" + lines.join("\n");
+};
+const restoredPhase = (session: Session): Phase => !session.address ? "address" : session.order ? "ordered" : session.summary ? "confirm" : session.selected && session.mode === "mock" ? "delivery" : "discover";
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -36,10 +56,14 @@ export default function App() {
   const [detail, setDetail] = useState<Candidate | null>(null);
   const [options, setOptions] = useState<SelectedOption[]>([]);
   const [quantity, setQuantity] = useState(1);
+  const [preview, setPreview] = useState<SelectedItem | null>(null);  // nutrientes do prato montado, sem comprar
+  const [previewBusy, setPreviewBusy] = useState(false);
   const [choices, setChoices] = useState<CheckoutChoices | null>(null);
   const [delivery, setDelivery] = useState("");
   const actionLock = useRef(false);
   const epoch = useRef(0);
+  const followedAssembly = useRef<{ id: string; seen: number } | null>(null);  // montagem pedida no chat que esta tela acompanha
+  const announceCalories = useRef(false);  // modo live: avisar as calorias quando o cálculo do prato terminar
   const bottom = useRef<HTMLDivElement>(null);
   const latestTurn = useRef<HTMLDivElement>(null);
   const composer = useRef<HTMLTextAreaElement>(null);
@@ -84,6 +108,7 @@ export default function App() {
       if (lastAssistant && current.recommendations.length) lastAssistant.recommendations = current.recommendations;
       setActiveSearch(lastAssistant?.id ?? null);
       setMessages(history);
+      if (current.assembly?.state === "running") followedAssembly.current = { id: current.assembly.id, seen: 0 };
       if (current.selected && !current.order && current.mode === "mock") setChoices(await api.choices());
     } catch (reason) { setError(errorText(reason)); }
     finally { setLoading(false); }
@@ -94,18 +119,23 @@ export default function App() {
     else bottom.current?.scrollIntoView({ behavior: "auto", block: "end" });
   }, [messages.length, phase, busy]);
 
-  const pendingNutrition = session?.recommendations.some(r => r.nutrition.state === "pending");
+  const pendingNutrition = session?.nutrition_search?.state === "pending" || session?.recommendations.some(r => r.nutrition.state === "pending");
   useEffect(() => {
     if (!pendingNutrition) return;
     let cancelled = false, tries = 0;
+    const adaptive = session?.nutrition_search?.state === "pending";
     const timer = window.setInterval(async () => {
-      if (actionLock.current || ++tries > 40) { if (tries > 40) clearInterval(timer); return; }
+      if (actionLock.current) return;
+      if (!adaptive && ++tries > 40) { clearInterval(timer); return; }
       const version = epoch.current;
       try {
         const next = await api.recommendationsNutrition();
         if (cancelled || version !== epoch.current) return;
         setSession(next);
-        setMessages(current => current.map(m => m.id === activeSearch ? { ...m, recommendations: next.recommendations } : m));
+        setMessages(current => current.map(m => m.id === activeSearch ? {
+          ...m, recommendations: next.recommendations,
+          text: next.nutrition_search || next.recommendations.length === 0 ? (next.messages.at(-1)?.text ?? m.text) : m.text,
+        } : m));
       } catch { /* A busca continua disponível mesmo sem estimativa. */ }
     }, 3000);
     return () => { cancelled = true; clearInterval(timer); };
@@ -130,14 +160,59 @@ export default function App() {
   useEffect(() => {
     if (!selectedNutritionPending) return;
     let cancelled = false, tries = 0;
+    const adaptive = session?.nutrition_search?.state === "pending";
     const timer = window.setInterval(async () => {
-      if (actionLock.current || ++tries > 40) { if (tries > 40) clearInterval(timer); return; }
+      if (actionLock.current) return;
+      if (!adaptive && ++tries > 40) { clearInterval(timer); return; }
       const version = epoch.current;
       try { const next = await api.selectionNutrition(); if (!cancelled && version === epoch.current) setSession(next); }
       catch { /* O pedido não depende da estimativa. */ }
     }, 3000);
     return () => { cancelled = true; clearInterval(timer); };
   }, [selectedNutritionPending, session?.selected?.candidate.item_id]);
+  // Montagem do pedido pelo assistente: acompanha os passos e, no fim, preenche a tela como se o cliente tivesse montado.
+  const assemblyRunning = session?.assembly?.state === "running";
+  useEffect(() => {
+    if (!assemblyRunning) return;
+    let cancelled = false;
+    const timer = window.setInterval(async () => {
+      if (actionLock.current) return;
+      const version = epoch.current;
+      try { const next = await api.assembly(); if (!cancelled && version === epoch.current) setSession(next); }
+      catch { /* tenta de novo no próximo ciclo */ }
+    }, 2500);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [assemblyRunning, session?.assembly?.id]);
+  useEffect(() => {
+    const followed = followedAssembly.current, assembly = session?.assembly;
+    if (!followed || !assembly || assembly.id !== followed.id) return;
+    assembly.events.slice(followed.seen).forEach(event => say("assistant", event));
+    followed.seen = assembly.events.length;
+    if (assembly.state === "running") return;
+    followedAssembly.current = null;
+    void finishAssembly(assembly);
+  }, [session?.assembly]);
+  async function finishAssembly(assembly: Assembly) {
+    if (assembly.state === "impossible" || !assembly.candidate) { say("assistant", assembly.message ?? "Não consegui montar o pedido."); return; }
+    setDetail(assembly.candidate); setOptions([]); setQuantity(assembly.state === "ready" ? assembly.quantity : 1); setPhase("customize");
+    if (assembly.state === "ready") {
+      for (const option of assembly.options) {  // replica a escolha, um complemento por vez, como se fosse o cliente
+        const name = assembly.candidate.option_groups.find(g => g.id === option.group_id)?.options.find(o => o.id === option.option_id)?.name ?? "Complemento";
+        await new Promise(resolve => setTimeout(resolve, 350));
+        setOptions(current => [...current, option]);
+        say("assistant", `${name}${option.quantity > 1 ? ` × ${option.quantity}` : ""}: selecionado.`);
+      }
+    }
+    say("assistant", assembly.message ?? "Monte o seu pedido pela tela.");
+  }
+  useEffect(() => {
+    const selected = session?.selected;
+    if (!announceCalories.current || !selected || selected.nutrition.state === "pending") return;
+    announceCalories.current = false;
+    const kcal = caloriesText(selected.nutrition, selected.quantity);
+    say("assistant", kcal ? `Calorias do seu prato: ${kcal}.${nutritionDetails(selected.nutrition, selected.quantity)}`
+      : "Não consegui calcular as calorias deste prato agora.");
+  }, [session?.selected?.nutrition.state]);
 
   async function openAddresses(add = false) {
     if (!session || busy) return;
@@ -181,6 +256,7 @@ export default function App() {
     const searched = next.last_chat_action === "search";
     const id = say("assistant", reply, searched ? next.recommendations : undefined);
     if (searched) { setActiveSearch(id); setPhase("discover"); setDetail(null); }
+    if (next.assembly?.state === "running") { followedAssembly.current = { id: next.assembly.id, seen: 0 }; setPhase("discover"); setDetail(null); }
   }
   async function choose(candidate: Candidate, echo = true) {
     if (!session || session.order || phase !== "discover" || busy) return;
@@ -202,16 +278,45 @@ export default function App() {
   }
   const selectionTotal = detail ? quantity * (detail.price_cents + options.reduce((sum, o) =>
     sum + (detail.option_groups.find(g => g.id === o.group_id)?.options.find(option => option.id === o.option_id)?.price_cents ?? 0) * o.quantity, 0)) : 0;
+  // Mudou prato, complemento ou quantidade: a prévia anterior não vale mais.
+  useEffect(() => { setPreview(null); }, [detail?.item_id, options, quantity]);
+  const previewPending = preview?.nutrition.state === "pending";
+  useEffect(() => {
+    if (!previewPending || !detail) return;
+    let cancelled = false, tries = 0;
+    const timer = window.setInterval(async () => {
+      if (++tries > 40) { clearInterval(timer); return; }
+      try { const next = await api.previewNutrition(detail, quantity, options, false); if (!cancelled) setPreview(next); }
+      catch { /* tenta no próximo ciclo */ }
+    }, 3000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [previewPending]);
+  async function calculateNutrition() {
+    if (!detail || !validOptions || previewBusy) return;
+    setPreviewBusy(true); setError("");
+    try { setPreview(await api.previewNutrition(detail, quantity, options)); }
+    catch (reason) { setError(errorText(reason)); }
+    finally { setPreviewBusy(false); }
+  }
   async function continueWithDish(echo = true) {
     if (!detail || !validOptions || busy) return;
     if (echo) say("user", `Continuar com ${quantity} unidade${quantity > 1 ? "s" : ""} de ${detail.name}.`);
     await perform(async () => {
       const next = await api.select(detail, quantity, options);
-      setSession(next); setPhase("delivery"); setDelivery("");
+      setSession(next);
       if (next.mode !== "mock") {
-        say("assistant", "Seu prato foi selecionado. A compra real ainda não está habilitada nesta integração; a consulta e as recomendações continuam disponíveis.");
+        // Sem compra real: volta para a descoberta em vez de travar na fase de entrega sem opções.
+        setPhase("discover"); setDetail(null);
+        const nutrition = next.selected?.nutrition;
+        const kcal = caloriesText(nutrition, quantity);
+        announceCalories.current = nutrition?.state === "pending";
+        say("assistant", "Seu prato foi selecionado"
+          + (kcal ? ` e tem ${kcal}.` : announceCalories.current ? ". Estou calculando as calorias e aviso aqui assim que ficarem prontas." : ".")
+          + " A compra real ainda não está habilitada nesta integração; a consulta e as recomendações continuam disponíveis."
+          + nutritionDetails(nutrition, quantity));
         return;
       }
+      setPhase("delivery"); setDelivery("");
       setChoices(await api.choices());
       say("assistant", "Prato escolhido. Qual opção de entrega você prefere?");
     });
@@ -240,7 +345,9 @@ export default function App() {
     const next = await perform(() => api.confirm(version));
     if (!next) return;
     setSession(next); setPhase("ordered");
-    say("assistant", "Pedido de demonstração confirmado! Nenhuma cobrança foi realizada. Você pode deixar uma avaliação aqui na conversa: escolha uma nota, escreva um comentário, ou os dois.");
+    const kcal = next.selected ? caloriesText(next.selected.nutrition, next.selected.quantity) : "";
+    say("assistant", `Pedido de demonstração confirmado!${kcal ? ` Seu pedido tem ${kcal}.` : ""} Nenhuma cobrança foi realizada. Você pode deixar uma avaliação aqui na conversa: escolha uma nota, escreva um comentário, ou os dois.`
+      + (next.selected ? nutritionDetails(next.selected.nutrition, next.selected.quantity) : ""));
   }
   async function startNewOrder() {
     const next = await perform(api.newOrder);
@@ -274,6 +381,7 @@ export default function App() {
       else await saveOrderReview({ rating: null, comment });
       return;
     }
+    if (preferenceReply(value, !!session.pending_preference_update) || preferenceCommand(value)) { await search(value); return; }
     if (reportsContext(value)) { await search(value); return; }
     if (phase === "address") {
       const option = matchChoice(value, addresses, a => a.label);
@@ -343,7 +451,7 @@ export default function App() {
     </div></header>
     <main id="conversation" className="chat-main">
       {session?.mode === "mock" && <p className="demo-note">Demonstração: pratos, preços e pedidos fictícios. Sem cobrança.</p>}
-      {preferencesOpen && session && <div id="chat-preferences"><ChatPreferences profile={session.profile} busy={busy} onClose={() => setPreferencesOpen(false)}
+      {preferencesOpen && session && <div id="chat-preferences"><ChatPreferences key={JSON.stringify(session.profile)} profile={session.profile} busy={busy} onClose={() => setPreferencesOpen(false)}
         onSave={async profile => {
           const next = await perform(() => api.profile(profile));
           if (!next) return false;
@@ -380,7 +488,12 @@ export default function App() {
           })}</fieldset>)}
         <div className="quantity-row"><span>Quantidade</span><Stepper value={quantity} label="quantidade de pratos" onChange={setQuantity} /></div>
         <div className="action-footer"><span><strong>{money(selectionTotal)}</strong><small>Entrega calculada na próxima etapa</small></span>
-          <button className="primary-button" disabled={disabled || !validOptions} onClick={() => void continueWithDish()}>Continuar com este prato</button></div>
+          <span className="action-buttons">
+            <button className="secondary-button" disabled={disabled || !validOptions || previewBusy} onClick={() => void calculateNutrition()}>
+              {previewBusy ? "Calculando…" : "Calcular nutrientes"}</button>
+            <button className="primary-button" disabled={disabled || !validOptions} onClick={() => void continueWithDish()}>Continuar com este prato</button></span></div>
+        {preview && <div className="preview-nutrition"><SelectedNutrition nutrition={preview.nutrition} quantity={preview.quantity} />
+          <small className="muted">Só uma prévia: nada foi escolhido nem comprado.</small></div>}
       </section>}
       {phase === "delivery" && choices && <section className="chat-action" aria-label="Escolher entrega"><h2>Qual entrega combina com você?</h2>
         {choices.delivery.map((choice, index) => <button className="choice-button" key={choice.id} disabled={disabled} onClick={() => chooseDelivery(choice.id)}>
@@ -407,7 +520,9 @@ export default function App() {
       </section>}
       {phase === "ordered" && session?.order && <section className="chat-action order-receipt" aria-label="Pedido confirmado">
         <div className="receipt-heading"><CheckCircle2 size={25} /><div><h2>Pedido confirmado</h2><p>Demonstração · sem cobrança</p></div></div>
-        {session.selected && <p>{session.selected.quantity} × {session.selected.candidate.name}</p>}
+        {session.selected && <div className="summary-item"><p>{session.selected.quantity} × {session.selected.candidate.name}</p>
+          {/* session.selected é o que a consulta de calorias atualiza enquanto ainda está "pending". */}
+          <SelectedNutrition nutrition={session.selected.nutrition} quantity={session.selected.quantity} /></div>}
         {session.summary && <p className="receipt-total">Total: {money(session.summary.total_cents)}</p>}
         {session.order.review ? <OrderReviewCard review={session.order.review} busy={busy} onSave={async (rating, aspects) => {
           const next = await perform(() => api.editOrderReview(rating, aspects));

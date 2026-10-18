@@ -27,6 +27,18 @@ class NutritionPreferences(Model):
     min_protein_g: NonNegative | None = None
     max_carbs_g: NonNegative | None = None
     max_fat_g: NonNegative | None = None
+    min_calories: NonNegative | None = None
+    max_protein_g: NonNegative | None = None
+    min_carbs_g: NonNegative | None = None
+    min_fat_g: NonNegative | None = None
+
+    @model_validator(mode="after")
+    def valid_ranges(self):
+        for lower, upper in (("min_calories", "max_calories"), ("min_protein_g", "max_protein_g"),
+                             ("min_carbs_g", "max_carbs_g"), ("min_fat_g", "max_fat_g")):
+            if getattr(self, lower) is not None and getattr(self, upper) is not None and getattr(self, lower) > getattr(self, upper):
+                raise ValueError("O mínimo nutricional não pode ser maior que o máximo.")
+        return self
 
     @property
     def active(self) -> bool:
@@ -171,6 +183,10 @@ class MealIntent(Model):
     search_queries: list[str] = Field(default_factory=list, max_length=6)
     cuisine: str | None = None  # ex.: "japonesa"; usada para achar restaurantes quando os itens não aparecem
     avoid_repeats: bool = False  # "diferente", "outro", "variado": não repetir pratos já mostrados e variar os tipos
+    pesquisar_na_web: str = ""  # termo que o modelo não conhece bem: a busca pesquisa na web antes de consultar o iFood
+    alvo_item_id: str = ""  # sugestão mostrada que o modelo escolheu como alvo do pedido ("" = nenhuma)
+    motivo_da_decisao: str = ""  # por que o modelo leu o pedido assim (vai para o log)
+    montar_pedido: bool = False  # o usuário pediu para o assistente montar o pedido (escolher complementos e quantidade)
     budget_cents: Cents | None = None
     labels: list[str] = Field(default_factory=list)
     interpretation_source: Literal["rules", "llm"] = "rules"
@@ -274,6 +290,7 @@ class MerchantSummary(Model):
 
 
 class ReviewSignal(Model):
+    simulated: bool = False
     source: Literal["personalized", "community", "unavailable"]
     score: float
     history_count: int = Field(ge=0)
@@ -287,6 +304,8 @@ class ReviewSignal(Model):
 
 
 class Recommendation(Model):
+    approximate_match: bool = False
+    match_confidence: Literal["normal", "low"] = "normal"
     candidate: MealCandidate
     nutrition: NutritionResult = Field(default_factory=NutritionResult)
     reasons: list[str]
@@ -437,7 +456,44 @@ class AddressCreated(Model):
     addresses: list[Address]
 
 
+class NutritionSearchProgress(Model):
+    id: str
+    state: Literal["pending", "complete"] = "pending"
+    tested: int = Field(default=0, ge=0, le=15)
+    accepted: int = Field(default=0, ge=0, le=3)
+    approximate: int = Field(default=0, ge=0, le=3)
+    batches: int = Field(default=0, ge=0, le=5)
+    reason: str | None = None
+
+
+class AssemblyLimits(Model):
+    """O que o cliente exigiu do pedido montado (valores numéricos ditos por ele; o resto só orienta a escolha)."""
+    max_price_cents: Cents | None = None
+    nutrition: NutritionPreferences = Field(default_factory=NutritionPreferences)
+
+
+class Assembly(Model):
+    """Montagem do pedido pelo assistente, em segundo plano. A UI acompanha `events` e, no fim, replica a montagem."""
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    state: Literal["running", "ready", "impossible", "failed"] = "running"
+    candidate: MealCandidate | None = None
+    options: list[SelectedOption] = Field(default_factory=list)
+    quantity: Quantity = 1
+    limits: AssemblyLimits = Field(default_factory=AssemblyLimits)
+    attempt: int = 0
+    events: list[str] = Field(default_factory=list, max_length=60)
+    nutrition: NutritionResult | None = None
+    message: str | None = None
+
+
+class PendingPreferenceUpdate(Model):
+    source_message: str = Field(min_length=1, max_length=4000)
+
+
 class Session(Model):
+    assembly: Assembly | None = None
+    pending_preference_update: PendingPreferenceUpdate | None = None
+    nutrition_search: NutritionSearchProgress | None = None
     id: str = Field(default_factory=lambda: str(uuid4()))
     mode: Literal["mock", "live"]
     profile: UserProfile
@@ -446,7 +502,7 @@ class Session(Model):
     recommendations: list[Recommendation] = Field(default_factory=list)
     recent_recommendations: list[tuple[str, str]] = Field(default_factory=list, max_length=18)
     request_intent: MealIntent | None = None
-    last_chat_action: Literal['search', 'context'] | None = None
+    last_chat_action: Literal['search', 'context', 'preferences', 'assembly'] | None = None
     selected: SelectedItem | None = None
     summary: CheckoutSummary | None = None
     order: OrderRecord | None = None

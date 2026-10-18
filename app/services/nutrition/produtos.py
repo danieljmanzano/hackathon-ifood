@@ -16,14 +16,22 @@ _lock = threading.Lock()
 
 
 def chave_produto(item: MealCandidate | SelectedItem) -> str:
-    """Item do restaurante + opções escolhidas. A ordem das opções não muda a chave."""
+    """Item do restaurante + opções escolhidas E suas quantidades. A ordem das opções não muda a chave."""
     if isinstance(item, SelectedItem):
         candidate = item.candidate
-        opcoes = sorted(o.option_id for o in item.options) or sorted(item.option_labels)
+        # "2 × Nutella" e "1 × Nutella" são pratos diferentes; a quantidade entra na chave.
+        opcoes = sorted(f"{o.option_id}×{o.quantity}" for o in item.options) or sorted(item.option_labels)
     else:
         candidate, opcoes = item, None
-    base = [candidate.merchant_id, candidate.item_id or candidate.name, candidate.simulated, opcoes]
-    return hashlib.sha1(json.dumps(base, ensure_ascii=False).encode()).hexdigest()[:12]
+    # Preço/disponibilidade/imagem com URL temporária não alteram a composição.
+    # Nomes de adicionais e quantidades fazem parte da receita, inclusive para um ID já conhecido.
+    grupos = [(g.id, [(o.id, o.name) for o in g.options]) for g in candidate.option_groups]
+    quantidades = sorted((o.option_id, o.quantity) for o in item.options) if isinstance(item, SelectedItem) else None
+    base = [candidate.merchant_id, candidate.item_id or candidate.name, candidate.simulated,
+            candidate.name, candidate.description,
+            [candidate.features.portion_size, candidate.features.serves, candidate.features.weight_grams],
+            grupos, opcoes, quantidades]
+    return hashlib.sha256(json.dumps(base, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:24]
 
 
 class RepositorioProdutos:
@@ -47,21 +55,24 @@ class RepositorioProdutos:
             pass
         return {"versao": VERSAO_ARQUIVO, "produtos": {}}
 
-    def get(self, chave: str, versao_pipeline: str) -> NutritionResult | None:
-        """Resultado salvo, ou None se não há ou foi calculado por outra versão do pipeline (e não é manual)."""
+    def get(self, chave: str, versao_pipeline: str | tuple[str, ...]) -> NutritionResult | None:
+        """Resultado salvo, ou None se não há ou foi calculado por outra versão do pipeline (e não é manual).
+
+        `versao_pipeline` pode ser uma tupla de versões aceitas (resultados ainda compatíveis)."""
         return self.get_many([chave], versao_pipeline).get(chave)
 
-    def get_many(self, chaves: list[str], versao_pipeline: str) -> dict[str, NutritionResult]:
+    def get_many(self, chaves: list[str], versao_pipeline: str | tuple[str, ...]) -> dict[str, NutritionResult]:
         """Lê a base uma vez para consultar um catálogo inteiro, sem chamadas externas."""
         registros = self._ler()["produtos"]
         return {chave: resultado for chave in chaves
                 if (resultado := self._validar(registros.get(chave), versao_pipeline)) is not None}
 
     @staticmethod
-    def _validar(registro, versao_pipeline: str) -> NutritionResult | None:
+    def _validar(registro, versao_pipeline: str | tuple[str, ...]) -> NutritionResult | None:
         if not registro:
             return None
-        if registro.get("origem") != "manual" and registro.get("versao_pipeline") != versao_pipeline:
+        aceitas = (versao_pipeline,) if isinstance(versao_pipeline, str) else versao_pipeline
+        if registro.get("origem") != "manual" and registro.get("versao_pipeline") not in aceitas:
             return None
         try:
             return NutritionResult.model_validate(registro["resultado"])

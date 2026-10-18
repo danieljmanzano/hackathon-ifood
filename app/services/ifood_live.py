@@ -23,12 +23,14 @@ from app.core.config import Settings
 from app.core.exceptions import MacroError
 from app.schemas.macro import (Address, AddressCandidate, CreateAddressInput, GeocodeResult, MealCandidate,
                                MerchantSummary, Option, OptionGroup)
-from app.services.ifood_mcp import FileTokenStorage
+from app.services.ifood_mcp import FileTokenStorage, client_metadata
 
 READ_TOOLS = {"listAddresses", "searchOffers", "browseOffers", "getItem", "getMerchant", "listItemTaxonomy"}
 MAX_CONSULTAS = 4  # consultas por busca (cada uma é uma chamada ao iFood)
 RESTAURANTES_RESERVA = 3  # restaurantes lidos quando nenhum item aparece
 MENU_PAGES = 3  # até 75 itens por restaurante
+DESCRICAO_PENDENTE = "Consulte os detalhes para ver a composição."  # busca/cardápio não trazem a descrição
+MAX_DESCRICOES = 12  # getItem por rodada (só os pratos que vão para o cálculo nutricional)
 # Única escrita liberada: salvar endereço (não cobra nem cria pedido). Carrinho e checkout seguem bloqueados.
 ADDRESS_TOOL = "createAddress"
 CAMPOS_ENDERECO = {"complement": "complemento", "reference": "ponto de referência", "neighborhood": "bairro"}
@@ -96,11 +98,7 @@ async def live_session(settings: Settings):
     """Sessão MCP autenticada com os tokens salvos, sem fluxo interativo de login."""
     auth = OAuthClientProvider(
         server_url=settings.ifood_mcp_url,
-        client_metadata=OAuthClientMetadata(
-            client_name="hackaton-ifood", redirect_uris=[settings.ifood_redirect_uri],
-            grant_types=["authorization_code", "refresh_token"], response_types=["code"],
-            scope=settings.ifood_scopes,
-            token_endpoint_auth_method="client_secret_post" if settings.ifood_client_secret else "none"),
+        client_metadata=client_metadata(settings),
         storage=FileTokenStorage(settings),
         redirect_handler=_no_browser,
         callback_handler=_no_browser,
@@ -290,7 +288,7 @@ class MCPIFood:
     def _itens(data: dict) -> list[MealCandidate]:
         try:
             return [MealCandidate(merchant_id=i["merchant"]["merchantId"], merchant_name=i["merchant"]["merchantName"],
-                                  item_id=i["itemId"], name=i["itemName"], description="Consulte os detalhes para ver a composição.",
+                                  item_id=i["itemId"], name=i["itemName"], description=DESCRICAO_PENDENTE,
                                   image_url=i.get("itemImageUrl"), available=i["merchant"].get("isOpen") is True,
                                   price_cents=cents(i.get("promotionalUnitPrice") if i.get("promotionalUnitPrice") is not None else i["unitPrice"]))
                     for i in data["results"]]
@@ -340,6 +338,31 @@ class MCPIFood:
         itens = [c for p in paginas if not isinstance(p, BaseException) for c in p]
         logs.info("ifood", f"{len(itens)} itens lidos dos cardápios desses restaurantes")
         return itens
+
+    async def search_page(self, queries, address, budget_cents, cuisine=None, refinamentos=None, cursor=None):
+        """Página de três ofertas, usando somente tokens devolvidos pelo MCP."""
+        queries = list(dict.fromkeys(q for q in queries if q.strip()))[:MAX_CONSULTAS] or ["refeição"]
+        index = (cursor or {}).get("query_index", 0)
+        token = (cursor or {}).get("next_page_token")
+        seen = (cursor or {}).get("seen_tokens", [])
+        if index >= len(queries):
+            return {"candidates": [], "cursor": None}
+        refinements = {"onlyOpen": True, **(refinamentos or {})}
+        if budget_cents is not None:
+            refinements["maxItemPrice"] = budget_cents / 100
+        args = {"query": queries[index], "resultKind": "ITEM", "merchantType": "RESTAURANT",
+                "pageSize": 3, "userLocation": {"latitude": address.latitude, "longitude": address.longitude},
+                "refinements": refinements}
+        if token:
+            args["nextPageToken"] = token
+        async with self.connection() as session:
+            data = await self._call_in(session, await self.tools(session), "searchOffers", args)
+        next_token = data.get("nextPageToken") if data.get("hasMore", bool(data.get("nextPageToken"))) else None
+        if next_token and next_token not in [token, *seen]:
+            continuation = {"query_index": index, "next_page_token": next_token, "seen_tokens": [*seen, next_token]}
+        else:
+            continuation = {"query_index": index + 1} if index + 1 < len(queries) else None
+        return {"candidates": self._itens(data), "cursor": continuation}
 
     async def search_many(self, queries: list[str], address: Address, budget_cents: int | None,
                           cuisine: str | None = None, refinamentos: dict | None = None) -> list[MealCandidate]:
@@ -443,6 +466,30 @@ class MCPIFood:
             except (KeyError, TypeError, ValueError, ArithmeticError):
                 raise MacroError("Cardápio difere do contrato documentado.", 502) from None
         return itens
+
+    async def descricoes(self, candidates: list[MealCandidate], address: Address) -> dict[tuple[str, str], str]:
+        """Descrição real (getItem) dos itens que a busca trouxe sem ela, numa só conexão; falha de um não derruba os outros.
+
+        A descrição traz marca, sabor e peso ("Bolo Ana Maria 70g"), o que decide se vale buscar a tabela oficial.
+        """
+        alvo = [c for c in candidates if c.description in ("", DESCRICAO_PENDENTE)][:MAX_DESCRICOES]
+        if not alvo:
+            return {}
+        async with self.connection() as session:
+            tools = await self.tools(session)
+
+            async def uma(c: MealCandidate):
+                args = {"merchantId": c.merchant_id, "itemId": c.item_id,
+                        "userLocation": {"latitude": address.latitude, "longitude": address.longitude}}
+                try:
+                    dados = await self._call_in(session, tools, "getItem", args)
+                    return (c.merchant_id, c.item_id), str(dados.get("itemDescription") or "").strip()
+                except (MacroError, AttributeError) as e:
+                    logs.aviso("getItem", f"sem descrição de {logs.curto(c.name, 40)}: {logs.curto(e, 100)}")
+                    return (c.merchant_id, c.item_id), ""
+            achados = dict(await asyncio.gather(*(uma(c) for c in alvo)))
+        logs.info("getItem", f"descrição lida em {sum(bool(v) for v in achados.values())}/{len(alvo)} itens")
+        return {k: v for k, v in achados.items() if v}
 
     async def item(self, merchant_id: str, item_id: str, address: Address):
         args = {"merchantId": merchant_id, "userLocation": {"latitude": address.latitude, "longitude": address.longitude}}

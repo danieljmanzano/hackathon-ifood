@@ -41,7 +41,7 @@ def client(tmp_path, monkeypatch, records):
     import app.main as main
     settings = Settings(_env_file=None, database_path=tmp_path / 'logs.sqlite3',
                         ifood_mode='mock', intent_llm_enabled=False, busca_log='detalhe', calorias_log='off',
-                        openrouter_api_key='', openai_api_key='', gemini_api_key='')
+                        openrouter_api_key='', openai_api_key='')
     monkeypatch.setattr(main, 'get_settings', lambda: settings)
     application = main.create_app()
     application.dependency_overrides[get_settings] = lambda: settings

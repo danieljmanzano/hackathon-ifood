@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import time
 from collections import Counter
 from datetime import date, timedelta
@@ -8,8 +9,9 @@ from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Request, Response
-from pydantic import Field
+from pydantic import Field, ValidationError
 
+from app.core import logs
 from app.core.config import Settings, get_settings
 from app.core.exceptions import MacroError
 from app.core.search_logs import elapsed_ms, event, trace_search
@@ -18,6 +20,8 @@ from app.schemas.macro import (
     Address,
     AddressCreated,
     AddressInput,
+    Assembly,
+    AssemblyLimits,
     CheckoutInput,
     ChatInput,
     CheckoutSummary,
@@ -27,12 +31,14 @@ from app.schemas.macro import (
     GeocodeResult,
     MealCandidate,
     MealRequest,
+    NutritionSearchProgress,
     MerchantSummary,
     Message,
     OrderRecord,
     OrderReview,
     OrderReviewEdit,
     OrderReviewInput,
+    SelectedItem,
     SelectionInput,
     Session,
     UserProfile,
@@ -43,21 +49,153 @@ from app.schemas.macro import (
 if TYPE_CHECKING:
     from app.services.ifood_live import MCPIFood
 from app.services.mock_ifood import MockIFood
-from app.services.nutrition import enrich_recommendations, estimate_selected, refresh_recommendations
+from app.services import montagem
+from app.services.nutrition import enrich_recommendations, estimate_nutrition, estimate_selected, refresh_recommendations
 from app.schemas.reviews import Review, ReviewInput, UserTastes
 from app.schemas.macro import now
 from app.services.review_interpretation import llm_available, schedule_interpretation, sync_taste_review
 from app.services.review_recommendations import review_context
 from app.services.llm_meal_intent import interpret_intent
-from app.services.nutrition_preferences import apply_profile_preferences, update_explanation
+from app.services.nutrition_preferences import apply_profile_preferences, update_explanation, meets_explicit_limits
 from app.services.nutrition.service import cached_candidates
 from app.services.diet_context import GOAL_LABELS, apply_diet_context, build_diet_context, local_date, split_daily_message
+from app.services.preferencias import preferencias_do_cliente
 from app.services.busca_agente import buscar
 from app.services.conversa import montar as montar_conversa, resumo_para_log as resumo_conversa
 
 router = APIRouter()
 _mock_provider = MockIFood()
 _live_provider: MCPIFood | None = None
+
+
+async def _com_descricoes(provider, recommendations, address):
+    """Troca a descrição vazia da busca pela do getItem antes da nutrição (marca e peso vêm dela)."""
+    ler = getattr(provider, "descricoes", None)
+    if ler is None or not recommendations:
+        return recommendations
+    try:
+        achadas = await ler([r.candidate for r in recommendations], address)
+    except Exception as e:  # a nutrição segue com o que já tem
+        logs.aviso("getItem", f"descrições indisponíveis: {logs.curto(e, 120)}")
+        return recommendations
+    return [r.model_copy(update={"candidate": r.candidate.model_copy(update={"description": achadas[chave]})})
+            if (chave := (r.candidate.merchant_id, r.candidate.item_id)) in achadas else r
+            for r in recommendations]
+
+
+ORDINAIS = {"primeiro": 0, "primeira": 0, "1": 0, "segundo": 1, "segunda": 1, "2": 1, "terceiro": 2, "terceira": 2, "3": 2}
+
+
+def _escolher_alvo(recomendacoes, texto: str, so_se_citado: bool = False) -> tuple[MealCandidate | None, str]:
+    """Prato que o cliente quer montar e POR QUE (para o log): nome inteiro, posição, melhor casamento de palavras.
+
+    Sem citação devolve o primeiro da lista, ou None com `so_se_citado` (aí a mensagem pede outra busca).
+    """
+    from app.services.review_processing import normalized
+    pedido = normalized(texto)
+    for r in recomendacoes:
+        if normalized(r.candidate.name) in pedido:
+            return r.candidate, "o nome inteiro do prato aparece na mensagem"
+    palavras_do_pedido = re.findall(r"\w+", pedido)
+    for palavra in palavras_do_pedido:
+        if palavra in ORDINAIS and ORDINAIS[palavra] < len(recomendacoes):
+            return recomendacoes[ORDINAIS[palavra]].candidate, f"posição citada (“{palavra}”)"
+    palavras = {p for p in palavras_do_pedido if len(p) > 3 and p not in {"pedido", "monte", "pegue", "coloque", "voce", "mostrou"}}
+    do_nome = lambda r: set(re.findall(r"\w+", normalized(r.candidate.name)))  # "(Footlong 30cm)" -> footlong, 30cm
+    melhor = max(recomendacoes, key=lambda r: len(palavras & do_nome(r)), default=None)
+    comuns = palavras & do_nome(melhor) if melhor is not None else set()
+    if comuns:
+        return melhor.candidate, f"palavras da mensagem no nome do prato: {sorted(comuns)}"
+    if so_se_citado or not recomendacoes:
+        return None, "nenhuma sugestão mostrada foi citada na mensagem"
+    return recomendacoes[0].candidate, "nada citado e sem comida nova: primeira sugestão"
+
+
+def _alvo_da_montagem(recomendacoes, texto: str, so_se_citado: bool = False) -> MealCandidate | None:
+    return _escolher_alvo(recomendacoes, texto, so_se_citado)[0]
+
+
+def _explicar_decisao(settings: Settings, intent, session: Session, texto: str) -> tuple[MealCandidate | None, str]:
+    """Decide entre MONTAR uma sugestão já mostrada e BUSCAR (e talvez montar), e registra o raciocínio no log."""
+    nomes = [r.candidate.name for r in session.recommendations]
+    conteudo = settings.busca_log_conteudo
+    logs.info("decisão", f"interpretação={intent.interpretation_source}"
+                         + (f" (caiu por: {intent.fallback_reason})" if intent.fallback_reason else "")
+                         + f" · montar_pedido={intent.montar_pedido} · sugestões na sessão={len(nomes)}"
+                         + (f" · comida pedida={intent.food_query!r}" if conteudo else "")
+                         + (f" · orçamento={intent.budget_cents / 100:.2f}" if intent.budget_cents is not None else "")
+                         + (f" · metas={intent.nutrition_preferences.model_dump(exclude_none=True)}"
+                            if intent.nutrition_preferences.active else ""))
+    if conteudo and nomes:
+        logs.info("decisão", f"sugestões mostradas: {nomes}")
+    if not intent.montar_pedido:
+        logs.info("decisão", "→ BUSCAR: a mensagem não foi lida como pedido de montagem"
+                             + (" (a interpretação por regras não reconheceu o verbo de montar)"
+                                if intent.interpretation_source == "rules" else ""))
+        return None, "buscar"
+    if not session.recommendations:
+        logs.info("decisão", "→ BUSCAR e depois MONTAR o primeiro resultado: não há sugestões anteriores para montar")
+        return None, "buscar_e_montar"
+    if intent.motivo_da_decisao and conteudo:
+        logs.info("decisão", f"o modelo leu o pedido assim: {logs.curto(intent.motivo_da_decisao, 240)}")
+    escolhido = next((r.candidate for r in session.recommendations if r.candidate.item_id == intent.alvo_item_id), None) \
+        if intent.alvo_item_id else None
+    if escolhido is not None:
+        logs.info("decisão", f"→ MONTAR sugestão já mostrada «{logs.curto(escolhido.name, 60)}» ({escolhido.merchant_name}): "
+                             "o modelo escolheu este alvo entre as sugestões")
+        return escolhido, "montar"
+    if intent.alvo_item_id:
+        logs.aviso("decisão", "o modelo indicou um id que não está nas sugestões; usando o casamento de palavras")
+    alvo, porque = _escolher_alvo(session.recommendations, texto, so_se_citado=bool(intent.food_query.strip()))
+    if alvo is None:
+        logs.info("decisão", f"→ BUSCAR e depois MONTAR o primeiro resultado: {porque}, e a mensagem pede comida nova")
+        return None, "buscar_e_montar"
+    logs.info("decisão", f"→ MONTAR sugestão já mostrada «{logs.curto(alvo.name, 60)}» ({alvo.merchant_name}): {porque}")
+    return alvo, "montar"
+
+
+def _limites_da_montagem(intent, session: Session, alvo: MealCandidate) -> AssemblyLimits:
+    """Limites ditos agora; o que o cliente não repetiu vem da montagem anterior do mesmo prato ("agora até 600 kcal")."""
+    antes = session.assembly.limits if session.assembly and session.assembly.candidate \
+        and session.assembly.candidate.item_id == alvo.item_id else AssemblyLimits()
+    novo = intent.nutrition_preferences
+    campos = {c: getattr(novo, c) if getattr(novo, c) is not None else getattr(antes.nutrition, c)
+              for c in ("max_calories", "min_protein_g", "max_carbs_g", "max_fat_g")}
+    return AssemblyLimits(max_price_cents=intent.budget_cents if intent.budget_cents is not None else antes.max_price_cents,
+                          nutrition=novo.model_copy(update=campos))
+
+
+def _texto_dos_limites(l: AssemblyLimits) -> str:
+    n, partes = l.nutrition, []
+    if l.max_price_cents is not None:
+        partes.append(f"preço até R$ {l.max_price_cents / 100:.2f}".replace(".", ","))
+    for rotulo, v, un in (("até", n.max_calories, "kcal"), ("proteína mínima de", n.min_protein_g, "g"),
+                          ("carboidrato até", n.max_carbs_g, "g"), ("gordura até", n.max_fat_g, "g")):
+        if v is not None:
+            partes.append(f"{rotulo} {v:g} {un}" if rotulo == "até" else f"{rotulo} {v:g} {un}")
+    return ", ".join(partes) or "sem limites numéricos"
+
+
+async def _iniciar_montagem(request: Request, session: Session, provider, settings: Settings, intent, alvo: MealCandidate,
+                            payload: MealRequest, com_usuario: bool) -> Session:
+    """Abre o prato, registra a montagem e a deixa rodando em segundo plano (GET /assembly acompanha)."""
+    detalhe = await provider.item(alvo.merchant_id, alvo.item_id, session.address)
+    limites = _limites_da_montagem(intent, session, alvo)
+    assembly = Assembly(candidate=detalhe, limits=limites)
+    aviso = (f"Vou montar o pedido de {detalhe.name} ({detalhe.merchant_name}) com: {_texto_dos_limites(limites)}. "
+             "Acompanhe os passos aqui; no final você confere e continua.")
+
+    def update(s: Session):
+        s.assembly = assembly
+        s.selected = s.summary = None
+        s.last_chat_action = "assembly"
+        novas = ([Message(role="user", text=payload.text)] if com_usuario else []) + [Message(role="assistant", text=aviso)]
+        s.messages = (s.messages + novas)[-40:]
+
+    resultado = mutate_session(request, session, update)
+    montagem.iniciar(request.app.state.db, settings, resultado.id, assembly.id, detalhe, limites, resultado.profile,
+                     payload.restrictions, lambda sel: estimate_nutrition(sel, settings), payload.text)
+    return resultado
 
 
 def get_provider(settings: Settings = Depends(get_settings)):
@@ -108,6 +246,32 @@ def mutate_session(request: Request, snapshot: Session, operation) -> Session:
         operation(session)
         db.save(session, connection)
         return session
+
+
+@router.get("/assembly", response_model=Session)
+def assembly_status(request: Request, session: Session = Depends(current_session)):
+    """Progresso da montagem. Se o servidor reiniciou no meio, encerra como falha em vez de deixar a UI esperando."""
+    a = session.assembly
+    if a is None or a.state != "running" or montagem.em_andamento(a.id):
+        return session
+
+    def perdeu(s: Session):
+        if s.assembly and s.assembly.id == a.id and s.assembly.state == "running":
+            s.assembly.state = "failed"
+            s.assembly.message = "A montagem foi interrompida. Monte o seu pedido pela tela."
+    return mutate_session(request, session, perdeu)
+
+
+@router.get("/catalog/enrichment/status")
+def enrichment_status(settings: Settings = Depends(get_settings)):
+    from app.storage.catalog import CatalogStore
+    return {**CatalogStore(settings.database_path).status(),
+            "enabled": settings.catalog_enrichment_enabled and settings.ifood_mode == "live",
+            "reviews_simulated": settings.live_mock_reviews,
+            "limits": {"calls_per_day": settings.catalog_calls_per_day,
+                       "products_per_day": settings.catalog_products_per_day,
+                       "calls_per_product": settings.catalog_calls_per_product,
+                       "products_per_search": settings.catalog_products_per_search}}
 
 
 @router.get("/health")
@@ -197,6 +361,7 @@ async def create_address(
             raise MacroError("Endereço salvo no iFood, mas ainda não apareceu na lista. Recarregue os endereços.", 502)
 
     def update(s: Session):
+        s.nutrition_search = None
         s.address = created
         s.selected = None
         s.summary = None
@@ -218,6 +383,7 @@ async def set_address(
         raise MacroError("Selecione um endereço da lista atual.", 422)
 
     def update(s: Session):
+        s.nutrition_search = None
         s.address = address
         s.selected = None
         s.summary = None
@@ -236,7 +402,9 @@ def update_profile(
         raise MacroError("Perfil não pertence à sessão.", 403)
 
     def update(s: Session):
+        s.nutrition_search = None
         s.profile = payload
+        s.pending_preference_update = None
 
     updated = mutate_session(request, session, update)
     review_context(request.app.state.db, updated.profile.id, updated.mode == "mock", updated.profile)
@@ -256,6 +424,8 @@ async def search(
     with trace_search(session.mode) as trace:
         response.headers["X-Search-Id"] = trace.id
         editable(session)
+        if session.nutrition_search and session.nutrition_search.state == "pending":
+            session = mutate_session(request, session, lambda s: setattr(s, "nutrition_search", None))
         if session.address is None:
             raise MacroError("Selecione o endereço antes de buscar.", 422)
         trace.stage = "diet_context"
@@ -272,13 +442,29 @@ async def search(
         # O agente lê as últimas mensagens e a busca anterior para entender "mais barato", "outra opção"...
         conversa = montar_conversa(session, settings)
         event("conversation.ready", **resumo_conversa(conversa))
-        interpreted = await interpret_intent(payload.model_copy(update={"text": meal_text}), settings,
-                                            diet_context=diet_context if has_diet_context else None,
-                                            conversa=conversa)
-        intent = apply_profile_preferences(apply_diet_context(interpreted, diet_context, meal_text), session.profile)
+        try:
+            interpreted = await interpret_intent(payload.model_copy(update={"text": meal_text}), settings,
+                                                diet_context=diet_context if has_diet_context else None,
+                                                conversa=conversa, preferencias=preferencias_do_cliente(session.profile))
+            intent = apply_profile_preferences(apply_diet_context(interpreted, diet_context, meal_text), session.profile)
+        except (ValueError, ValidationError):
+            raise MacroError("Os limites nutricionais se contradizem. Confira os mínimos e máximos do pedido e das preferências.", 422) from None
         event("intent.ready", source=intent.interpretation_source, goals=intent.goals,
               fallback_reason=intent.fallback_reason, duration_ms=elapsed_ms(started))
+        # "pegue o footlong de 30cm": se cita uma das sugestões já mostradas (ou não pede comida nova), monta ela
+        # sem nova busca; com comida nova, busca e monta o primeiro resultado. O raciocínio vai para o log.
+        alvo, caminho = _explicar_decisao(settings, intent, session, payload.text)
+        if alvo is not None:
+            return await _iniciar_montagem(request, session, provider, settings, intent, alvo, payload, True)
         nutritional = intent.nutrition_preferences.active
+        batch_mode = nutritional and session.mode == "live" and settings.catalog_enrichment_enabled
+        paging = {}
+
+        async def first_page(queries, address, budget, cuisine, refinements):
+            page = await provider.search_page(queries, address, budget, cuisine, refinements)
+            paging.clear()
+            paging.update({"cursor": page["cursor"], "refinements": refinements})
+            return page["candidates"]
         avaliacoes = {}
 
         def contexto_de_avaliacoes():
@@ -292,25 +478,41 @@ async def search(
                 avaliacoes["contexto"] = ctx
             return avaliacoes["contexto"]
 
+        def prepare_catalog(found):
+            ctx = contexto_de_avaliacoes()
+            if session.mode == "live" and settings.live_mock_reviews:
+                from app.services.catalog_reviews import attach_reviews
+                attach_reviews(ctx, found[:10], settings, request.app.state.db, session.profile)
+            return {
+                "nutrition_by_item": cached_candidates(found, settings) if nutritional and not batch_mode else {},
+                "limit": 15 if batch_mode else (12 if nutritional else 3),
+                "strict_nutrition": not batch_mode,
+                "ignore_nutrition": batch_mode,
+            }
+
         # Busca com laço de agente (app/services/busca_agente.py): sem resultado, um modelo replaneja ou explica.
         # O ranking nutricional do catálogo (cache) entra por `rank_extra`, a cada rodada.
         resultado = await buscar(
             payload, session, provider, settings, intent, contexto_de_avaliacoes, inicio, texto_pedido=meal_text,
             conversa=conversa, trace=trace,
-            rank_extra=lambda found: {
-                "nutrition_by_item": cached_candidates(found, settings) if nutritional else {},
-                "limit": 12 if nutritional else 3,
-            })
+            rank_extra=prepare_catalog,
+            catalog_search=first_page if batch_mode and hasattr(provider, "search_page") else None)
         candidates, budget, recommendations = resultado.candidates, resultado.budget, resultado.recommendations
         nutrition_by_item = resultado.extra.get("nutrition_by_item", {})
         aviso_vazio, aviso_adaptacao = resultado.aviso_vazio, resultado.aviso_adaptacao
         trace.stage = "nutrition"
         started = time.perf_counter()
-        recommendations = await enrich_recommendations(
-            recommendations, settings, prazo=settings.nutrition_search_budget_seconds
-        )
+        batch_pool = recommendations
+        batch_pending = batch_mode and bool(batch_pool or paging.get("cursor"))
+        if batch_mode:
+            recommendations = []
+        else:
+            recommendations = await _com_descricoes(provider, recommendations, session.address)
+            recommendations = await enrich_recommendations(
+                recommendations, settings, prazo=settings.nutrition_search_budget_seconds
+            )
 
-        if nutritional:
+        if nutritional and not batch_mode:
             # Estima um conjunto limitado, compara com todo o catálogo já em cache
             # e só então escolhe os três pratos. Não envia o catálogo inteiro ao LLM.
             nutrition_by_item.update({(r.candidate.merchant_id, r.candidate.item_id): r.nutrition
@@ -321,13 +523,15 @@ async def search(
             trace.stage = "ranking"
             recommendations = rank(candidates, payload, session.profile, budget, contexto_de_avaliacoes(),
                                    session.recent_recommendations, intent=intent,
-                                   nutrition_by_item=nutrition_by_item)
+                                   nutrition_by_item=nutrition_by_item, strict_nutrition=True)
             trace.stage = "nutrition"
 
         event("nutrition.prepared", states=dict(Counter(r.nutrition.state for r in recommendations)),
               duration_ms=elapsed_ms(started))
 
         def update(s: Session):
+            s.assembly = None
+            s.nutrition_search = NutritionSearchProgress(id=str(uuid4())) if batch_pending else None
             s.budget_cents = budget
             s.request_intent = intent
             s.recommendations = recommendations
@@ -343,6 +547,8 @@ async def search(
                 if recommendations
                 else aviso_vazio  # por que não houve resultado (app/services/busca_agente.py)
             )
+            if batch_pending:
+                message = "Estou avaliando a nutrição em lotes de três, até encontrar três opções adequadas ou testar 15 candidatos."
             if recommendations and aviso_adaptacao:
                 message = aviso_adaptacao + " " + message
             if recommendations and intent.context_summary:
@@ -357,6 +563,13 @@ async def search(
 
         trace.stage = "session"
         result = mutate_session(request, session, update)
+        if intent.montar_pedido and result.recommendations and not batch_pending:
+            # Pediu a comida e a montagem juntas: monta o primeiro prato encontrado.
+            result = await _iniciar_montagem(request, result, provider, settings, intent,
+                                             result.recommendations[0].candidate, payload, False)
+        if batch_pending:
+            from app.services.nutrition_batch_search import enqueue
+            enqueue(result, payload, candidates, batch_pool, resultado.queries, paging, settings)
         trace.result_count = len(result.recommendations)
         return result
 
@@ -366,6 +579,25 @@ async def chat(payload: ChatInput, request: Request, response: Response,
                session: Session = Depends(current_session), provider: MockIFood = Depends(get_provider),
                settings: Settings = Depends(get_settings)):
     """Guarda o contexto relatado na conversa; pedidos de comida seguem o motor existente."""
+    from app.services.preference_updates import interpret_update
+    preference_update = await interpret_update(payload.text, session.profile, settings,
+                                              pending=session.pending_preference_update, messages=session.messages)
+    if preference_update is not None:
+        def save_preferences(s: Session):
+            s.profile = preference_update.profile
+            s.pending_preference_update = preference_update.pending
+            s.nutrition_search = None
+            s.last_chat_action = 'preferences'
+            s.messages = (s.messages + [Message(role='user', text=payload.text),
+                          Message(role='assistant', text=preference_update.message)])[-40:]
+        updated = mutate_session(request, session, save_preferences)
+        if updated.profile != session.profile:
+            review_context(request.app.state.db, updated.profile.id, updated.mode == 'mock', updated.profile)
+        return updated
+    if session.pending_preference_update:
+        session = mutate_session(request, session, lambda s: setattr(s, 'pending_preference_update', None))
+    if session.nutrition_search and session.nutrition_search.state == "pending":
+        session = mutate_session(request, session, lambda s: setattr(s, "nutrition_search", None))
     meal_text, foods, goal = split_daily_message(payload.text)
     if goal:
         def update_goal(s: Session):
@@ -396,8 +628,11 @@ async def chat(payload: ChatInput, request: Request, response: Response,
                                       nutrition_preferences=payload.nutrition_preferences),
                           request, response, session, provider, settings)
     def mark_search(s: Session):
-        s.last_chat_action = 'search'
-        s.messages[-2] = Message(role='user', text=payload.text)
+        s.last_chat_action = 'assembly' if s.assembly and s.assembly.state == 'running' else 'search'
+        for i in range(len(s.messages) - 1, -1, -1):  # a montagem acrescenta mensagens depois da do usuário
+            if s.messages[i].role == 'user':
+                s.messages[i] = Message(role='user', text=payload.text)
+                break
     return mutate_session(request, result, mark_search)
 
 
@@ -407,6 +642,8 @@ def new_order(request: Request, session: Session = Depends(current_session)):
         raise MacroError("Aguarde a interpretação da avaliação antes de iniciar outro pedido.", 409)
     def reset(s: Session):
         s.selected = s.summary = s.order = s.request_intent = None
+        s.assembly = None
+        s.nutrition_search = None
         s.last_chat_action = None
         s.recommendations = []
         s.menu_merchant_id = None
@@ -538,12 +775,15 @@ async def recommendations_nutrition(  # async: reiniciar um cálculo perdido exi
     settings: Settings = Depends(get_settings),
 ):
     """Entrega as calorias das recomendações que estavam "pending" quando a busca respondeu."""
+    if session.nutrition_search is not None:
+        return session
     if not any(r.nutrition.state == "pending" for r in session.recommendations):
         return session
     updated = refresh_recommendations(session.recommendations, settings)
     if session.request_intent:
         updated = [update_explanation(before, after, session.request_intent.nutrition_preferences)
                    for before, after in zip(session.recommendations, updated)]
+        updated = [r for r in updated if meets_explicit_limits(r.nutrition, session.request_intent.nutrition_preferences) is not False]
     if [r.nutrition for r in updated] == [r.nutrition for r in session.recommendations]:
         return session
     ids = [(r.candidate.merchant_id, r.candidate.item_id) for r in session.recommendations]
@@ -552,6 +792,8 @@ async def recommendations_nutrition(  # async: reiniciar um cálculo perdido exi
         # Só aplica se a busca não mudou enquanto isso.
         if [(r.candidate.merchant_id, r.candidate.item_id) for r in s.recommendations] == ids:
             s.recommendations = updated
+            if not updated:
+                s.messages.append(Message(role="assistant", text="As estimativas disponíveis ficaram fora dos limites nutricionais informados. Posso buscar outras opções; seus limites foram mantidos."))
 
     return mutate_session(request, session, update)
 
@@ -587,12 +829,36 @@ async def selection(
     )
 
     def update(s: Session):
+        s.assembly = None
+        s.nutrition_search = None
         s.selected = selected_item
         s.summary = None
         s.messages = (s.messages + [Message(role='user', text=f'Escolhi {selected_item.quantity} unidade(s) de {candidate.name}.'),
                       Message(role='assistant', text='Prato escolhido. Vamos selecionar a entrega e o pagamento.')])[-40:]
 
     return mutate_session(request, session, update)
+
+
+@router.post("/selection/preview", response_model=SelectedItem)
+async def selection_preview(
+    payload: SelectionInput,
+    aguardar: bool = True,
+    session: Session = Depends(current_session),
+    provider: MockIFood = Depends(get_provider),
+    settings: Settings = Depends(get_settings),
+):
+    """Calorias e macros do prato com as opções escolhidas, SEM escolher o prato: a sessão não muda.
+
+    `aguardar=true` inicia o cálculo e espera o prazo da resposta; se ainda estiver "pending", a tela chama de novo com
+    `aguardar=false` até terminar (reaproveita o cálculo em andamento ou o resultado já guardado).
+    """
+    editable(session)
+    if not session.address or not offered(session, payload.merchant_id, payload.item_id):
+        raise MacroError("Escolha um item da busca atual ou do cardápio aberto.", 422)
+    candidate = await provider.item(payload.merchant_id, payload.item_id, session.address)
+    selected_item = select(candidate, payload)
+    nutrition = await estimate_selected(selected_item, settings, aguardar=aguardar)
+    return selected_item.model_copy(update={"nutrition": nutrition})
 
 
 @router.get("/selection/nutrition", response_model=Session)
