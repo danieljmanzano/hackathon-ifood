@@ -8,31 +8,21 @@ Sempre devolve um NutritionResult: falhas viram state="error" para não derrubar
 import asyncio
 import hashlib
 import json
-import logging
 from datetime import datetime, timezone
 
 import httpx
 from jsonschema import ValidationError as SchemaError
 from pydantic import ValidationError
 
+from app.core import logs
 from app.core.config import Settings
 from app.core.exceptions import AppError
 from app.schemas.macro import MealCandidate, NutritionResult, Recommendation, SelectedItem
-from .llm import LLMError, OpenAIBackend, OpenRouterBackend, criar_backend
-from .prompts import INSTRUCOES_BUSCA, INSTRUCOES_ESTIMATIVA, SCHEMA_BUSCA, SCHEMA_ESTIMATIVA
-
-Backend = OpenAIBackend | OpenRouterBackend
-
-PIPELINE_VERSION = "calorias-v1"
-CONFIANCA = {"baixa": "low", "media": "medium", "alta": "high"}
-RESTAURANTES_INVALIDOS = {"", "não informado", "nao informado", "desconhecido", "n/a", "na", "null", "none", "-"}
 from .etapas.estimar import EstimativaInvalida
 from .pipeline import PIPELINE_VERSION, calcular
 from .produtos import chave_produto, repositorio
 
 LIMITACAO_SEM_NUTRICAO = "Informação nutricional indisponível"
-
-log = logging.getLogger(__name__)
 
 # Resultados prontos por item; estimativas que passam do prazo da resposta terminam aqui em segundo plano.
 _cache: dict[str, NutritionResult] = {}
@@ -70,35 +60,44 @@ def _chave(candidate: MealCandidate, opcoes: list[str] | None) -> str:
 
 
 def pipeline_disponivel(settings: Settings) -> bool:
-    return bool(settings.gemini_api_key or settings.openrouter_api_key)
+    return settings.nutrition_enabled
 
 
 async def estimate_nutrition(item: MealCandidate | SelectedItem, settings: Settings) -> NutritionResult:
     """Calorias de uma unidade do item (a quantidade comprada é aplicada por quem chama)."""
     if not pipeline_disponivel(settings):
         return _resultado("unavailable",
-                          evidence="Pipeline nutricional não configurada (GEMINI_API_KEY e OPENROUTER_API_KEY ausentes).")
+                          evidence="Pipeline nutricional não configurada (sem chave do provedor de texto nem do Gemini).")
 
     candidate, opcoes = _partes(item)
+    logs.iniciar_item(candidate.name)
     chave = _chave(candidate, opcoes)
     if chave in _cache:
+        logs.info("cache", "HIT na memória → resultado pronto, nada recalculado")
         return _cache[chave]
 
     base = repositorio(str(settings.calorias_base_path))
     salvo = base.get(chave_produto(item), PIPELINE_VERSION)
     if salvo is not None:
         _cache[chave] = salvo
+        logs.info("base local", f"HIT ({chave_produto(item)}) → {salvo.calories:.0f} kcal, método {salvo.method}; "
+                                "nada recalculado")
         return salvo
+    logs.info("base local", f"MISS ({chave_produto(item)}) → calculando")
 
     try:
         resultado = await asyncio.wait_for(calcular(settings, candidate, opcoes), settings.nutrition_timeout_seconds)
     except (asyncio.TimeoutError, AppError, json.JSONDecodeError, SchemaError, KeyError, ValidationError,
             EstimativaInvalida) as e:
-        log.warning("Estimativa nutricional falhou para %s: %s", candidate.name, e)
+        causa = "tempo esgotado (NUTRITION_TIMEOUT_SECONDS)" if isinstance(e, asyncio.TimeoutError) else logs.curto(e)
+        logs.aviso("ERRO", f"estimativa falhou: {causa}")
         return _resultado("error", evidence="Não foi possível obter a informação nutricional agora.")
     if resultado.state == "ready":  # indisponível por queda temporária não pode ficar preso no cache
         _cache[chave] = resultado
         base.put(chave_produto(item), resultado, candidate)
+        logs.info("base local", f"gravado em {settings.calorias_base_path}")
+    else:
+        logs.info("base local", f"não gravado (estado {resultado.state}); será recalculado na próxima vez")
     return resultado
 
 
@@ -109,30 +108,44 @@ def _com_nutricao(rec: Recommendation, nutricao: NutritionResult) -> Recommendat
     return rec.model_copy(update={"nutrition": nutricao, "limitations": limitacoes})
 
 
-async def enrich_recommendations(recommendations: list[Recommendation], settings: Settings) -> list[Recommendation]:
-    """Preenche a nutrição das recomendações sem passar do prazo da resposta HTTP.
+def _iniciar(rec: Recommendation, settings: Settings) -> asyncio.Task:
+    """Calcula a nutrição de uma recomendação em segundo plano (no máximo N cálculos ao mesmo tempo)."""
+    async def uma() -> NutritionResult:
+        async with _semaforo(settings):
+            return await estimate_nutrition(rec.candidate, settings)
+    return _tarefa(rec.candidate, uma)
+
+
+async def enrich_recommendations(recommendations: list[Recommendation], settings: Settings,
+                                 prazo: float | None = None) -> list[Recommendation]:
+    """Inicia a nutrição das recomendações e espera no máximo `prazo` segundos.
 
     O que não termina a tempo volta como "pending" e continua em segundo plano, indo para o cache;
     refresh_recommendations entrega o resultado quando ficar pronto.
     """
     if not pipeline_disponivel(settings) or not recommendations:
         return [_com_nutricao(r, await estimate_nutrition(r.candidate, settings)) for r in recommendations]
+    tarefas = [_iniciar(rec, settings) for rec in recommendations]
+    espera = settings.nutrition_response_budget_seconds if prazo is None else prazo
+    if espera > 0:
+        await asyncio.wait(tarefas, timeout=espera)
+    return [_com_nutricao(rec, _estado_da_tarefa(t)) for rec, t in zip(recommendations, tarefas)]
 
 
-    async def uma(candidate: MealCandidate) -> NutritionResult:
-        async with limite:
-            return await estimate_nutrition(candidate, settings)
+def refresh_recommendations(recommendations: list[Recommendation], settings: Settings) -> list[Recommendation]:
+    """Atualiza, sem esperar, as recomendações ainda "pending".
 
     Se o cálculo se perdeu (ex.: o servidor reiniciou), ele é iniciado de novo em segundo plano.
     """
-    client = client or criar_cliente(settings)
+    if not pipeline_disponivel(settings):
+        return list(recommendations)
     atualizadas = []
     for rec in recommendations:
-        if rec.nutrition.state != "pending" or client is None:
+        if rec.nutrition.state != "pending":
             atualizadas.append(rec)
             continue
         chave = _chave(rec.candidate, None)
-        nutricao = _cache.get(chave) or _estado_da_tarefa(_iniciar(rec, settings, client))
+        nutricao = _cache.get(chave) or _estado_da_tarefa(_iniciar(rec, settings))
         atualizadas.append(_com_nutricao(rec, nutricao))
     return atualizadas
 
@@ -170,6 +183,6 @@ def _estado_da_tarefa(tarefa: asyncio.Task) -> NutritionResult:
     if not tarefa.done():
         return NutritionResult(state="pending", pipeline_version=PIPELINE_VERSION)
     if tarefa.exception() is not None:
-        log.error("Erro inesperado na pipeline nutricional", exc_info=tarefa.exception())
+        logs.aviso("ERRO", f"erro inesperado na pipeline: {logs.curto(tarefa.exception())}")
         return _resultado("error", evidence="Não foi possível obter a informação nutricional agora.")
     return tarefa.result()

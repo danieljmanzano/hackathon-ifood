@@ -1,15 +1,13 @@
 import asyncio
 import base64
-import logging
 from typing import Any
 
 import httpx
 
+from app.core import logs
 from app.core.config import Settings, get_settings
 from app.core.exceptions import AppError
 
-
-log = logging.getLogger(__name__)
 
 # Falhas transitórias: vale tentar de novo / trocar de modelo.
 RETRYABLE_STATUS = {404, 429, 500, 503, 504}
@@ -32,11 +30,17 @@ async def _gerar(payload: dict[str, Any], model: str | None, settings: Settings)
         for current in models:
             url = f"{settings.gemini_base_url}/models/{current}:generateContent"
             for attempt in range(settings.gemini_retries):
-                try:
-                    response = await client.post(url, json=payload, headers={"x-goog-api-key": settings.gemini_api_key})
-                except httpx.HTTPError as exc:
-                    errors.append(f"{current}: rede ({exc})")
+                with logs.Cronometro() as t:
+                    try:
+                        response = await client.post(url, json=payload,
+                                                     headers={"x-goog-api-key": settings.gemini_api_key})
+                    except httpx.HTTPError as exc:
+                        response = None
+                        errors.append(f"{current}: rede ({exc})")
+                        logs.aviso("gemini", f"{current}: falha de rede ({logs.curto(exc, 100)}) → próximo modelo")
+                if response is None:
                     break
+                logs.detalhe("gemini", f"{current} → {response.status_code} em {t.texto} (tentativa {attempt + 1})")
 
                 if response.status_code == 200:
                     try:
@@ -45,7 +49,7 @@ async def _gerar(payload: dict[str, Any], model: str | None, settings: Settings)
                         raise GeminiError("Resposta inesperada do Gemini") from exc
 
                 errors.append(f"{current}: {response.status_code} {response.text[:150]}")
-                log.warning("Gemini: %s", errors[-1])
+                logs.aviso("gemini", f"{current}: {response.status_code} {logs.curto(response.text, 110)}")
                 if response.status_code not in RETRYABLE_STATUS:
                     raise GeminiError("\n".join(errors))
                 if response.status_code == 404:

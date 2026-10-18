@@ -1,16 +1,14 @@
 """Entrada do pipeline: prompt do item, imagem e leitura do JSON dos modelos."""
 import json
-import logging
 import re
 
 import httpx
 
+from app.core import logs
 from app.schemas.macro import MealCandidate
 
 MAX_IMAGEM_BYTES = 5 * 1024 * 1024
 RESTAURANTES_INVALIDOS = {"", "não informado", "nao informado", "desconhecido", "n/a", "na", "null", "none", "-"}
-
-log = logging.getLogger(__name__)
 
 
 def restaurante_valido(candidate: MealCandidate) -> bool:
@@ -51,7 +49,7 @@ async def baixar_imagem(url: str | None, timeout: float) -> tuple[bytes, str] | 
             resp = await http.get(url)
             resp.raise_for_status()
     except httpx.HTTPError as e:
-        log.info("Imagem indisponível (%s); estimando sem ela.", e)
+        logs.aviso("imagem", f"download falhou: {logs.curto(e, 120)}")
         return None
     tipo = resp.headers.get("Content-Type", "").split(";")[0]
     if not tipo.startswith("image/") or len(resp.content) > MAX_IMAGEM_BYTES:

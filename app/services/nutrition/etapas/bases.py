@@ -8,6 +8,7 @@ from pathlib import Path
 
 from rapidfuzz import fuzz, process
 
+from app.core import logs
 from app.core.config import Settings
 from app.schemas.macro import MealCandidate
 from ..modelos import InfoOnline, Macros
@@ -81,14 +82,24 @@ async def escolher_alimento(settings: Settings, descricao: str, opcoes: list[Ali
                                  f"Item pedido:\n{descricao}\n\nCandidatos:\n{lista}", SCHEMA_JUIZ_BASE)
     escolha = dados["escolha"]
     if escolha is None or not 0 <= escolha < len(opcoes):
+        logs.info("bases", f"juiz se absteve: {logs.curto(dados['motivo'], 160)}")
         return None
+    logs.info("bases", f"juiz escolheu: {opcoes[escolha].nome} ({logs.curto(dados['motivo'], 120)})")
     return opcoes[escolha]
 
 
 async def consultar_bases(settings: Settings, candidate: MealCandidate, descricao: str) -> InfoOnline | None:
     """Procura o item pelo título nas bases locais; só devolve se o juiz confirmar."""
     alimentos = carregar_taco(str(settings.calorias_dados_dir))
+    if not alimentos:
+        logs.aviso("bases", f"taco.csv não encontrado em {settings.calorias_dados_dir}")
+        return None
     achados = candidatos(alimentos, candidate.name)
+    if not achados:
+        logs.info("bases", f"nenhum candidato parecido com \"{candidate.name}\" entre {len(alimentos)} alimentos da TACO")
+        return None
+    logs.info("bases", f"{len(achados)} candidatos na TACO para \"{candidate.name}\"")
+    logs.detalhe("bases", "candidatos: " + "; ".join(a.nome for a in achados))
     alimento = await escolher_alimento(settings, descricao, achados)
     if alimento is None:
         return None

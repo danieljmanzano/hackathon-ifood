@@ -1,13 +1,12 @@
-import logging
 from typing import Any
 
 import httpx
 
+from app.core import logs
 from app.core.config import Settings, get_settings
 from app.core.exceptions import AppError
 
 Message = dict[str, Any]
-log = logging.getLogger(__name__)
 
 # Erros em que vale tentar o próximo modelo (limite, modelo removido, falha do provedor).
 RETRYABLE_STATUS = {404, 408, 429, 500, 502, 503, 504}
@@ -42,25 +41,34 @@ async def chat_completion(
                 payload["max_tokens"] = max_tokens
             if json_mode:
                 payload["response_format"] = {"type": "json_object"}
-            try:
-                response = await client.post(
-                    "/chat/completions",
-                    json=payload,
-                    headers={"Authorization": f"Bearer {settings.openrouter_api_key}"},
-                )
-            except httpx.HTTPError as exc:
-                errors.append(f"{current}: rede ({exc})")
+            with logs.Cronometro() as t:
+                try:
+                    response = await client.post(
+                        "/chat/completions",
+                        json=payload,
+                        headers={"Authorization": f"Bearer {settings.openrouter_api_key}"},
+                    )
+                except httpx.HTTPError as exc:
+                    response = None
+                    errors.append(f"{current}: rede ({exc})")
+                    logs.aviso("openrouter", f"{current}: falha de rede ({logs.curto(exc, 100)}) → próximo modelo")
+            if response is None:
                 continue
+            logs.detalhe("openrouter", f"{current} → {response.status_code} em {t.texto}")
 
             if response.status_code == 200:
                 try:
-                    return response.json()["choices"][0]["message"]["content"] or ""
+                    texto = response.json()["choices"][0]["message"]["content"] or ""
+                    logs.detalhe("openrouter", f"resposta: {logs.curto(texto, 300)}")
+                    return texto
                 except (KeyError, IndexError, ValueError):
                     errors.append(f"{current}: resposta inesperada")
+                    logs.aviso("openrouter", f"{current}: resposta sem conteúdo → próximo modelo")
                     continue
 
             errors.append(f"{current}: {response.status_code} {response.text[:150]}")
-            log.warning("OpenRouter: %s", errors[-1])
+            logs.aviso("openrouter", f"{current}: {response.status_code} {logs.curto(response.text, 110)}"
+                                     f"{'' if response.status_code not in RETRYABLE_STATUS else ' → próximo modelo'}")
             if response.status_code not in RETRYABLE_STATUS:
                 break
 

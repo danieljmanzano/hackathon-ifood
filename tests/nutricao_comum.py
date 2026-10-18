@@ -11,7 +11,7 @@ DADOS = Path(__file__).resolve().parents[1] / "app/services/nutrition/dados"
 
 
 def settings(tmp_path, **extra):
-    base = dict(gemini_api_key="k", openrouter_api_key="k", calorias_base_path=tmp_path / "produtos.json",
+    base = dict(gemini_api_key="k", openrouter_api_key="k", nutrition_provider="openrouter", calorias_base_path=tmp_path / "produtos.json",
                 calorias_dados_dir=DADOS, calorias_busca_web=True, calorias_buscar_bases=True,
                 calorias_estimar_sempre=True, calorias_amostras=1)
     base.update(extra)

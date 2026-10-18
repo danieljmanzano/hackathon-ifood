@@ -1,0 +1,207 @@
+{
+  "produtos": {
+    "0a2988246eeb": {
+      "calculado_em": "2026-10-18T06:10:36.505756+00:00",
+      "nome": "Carne de panela",
+      "origem": "estimated",
+      "restaurante": "Cozinha do treino (demo)",
+      "resultado": {
+        "assumptions": [
+          "Assumi que a base mais provável é arroz integral, por ser a opção mais comum e equilibrada.",
+          "Assumi uma porção padrão de carne cozida com molho, sem excesso de óleo.",
+          "Considerei salada simples, sem molho cremoso.",
+          "A faixa inclui a possibilidade de troca da base por purê de batata e de adição de feijão e/ou legumes assados.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 517.0,
+        "carbs_g": 42.0,
+        "confidence": "medium",
+        "evidence": "Estimei um prato típico de delivery com porção moderada de carne de panela, um pouco de cenoura e salada, mais uma base obrigatória. O cenário central assume arroz integral, com variação para purê de batata e para inclusão opcional de feijão/legumes, o que explica a faixa ampla.",
+        "fat_g": 21.0,
+        "maximum": 650.0,
+        "method": "estimated",
+        "minimum": 420.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T06:10:36.505674Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 prato individual (~450 g) com carne de panela, cenoura, salada e 1 base escolhida (cenário mais provável: arroz integral) (~450 g, peso estimada)",
+        "portion_grams": 450.0,
+        "protein_g": 35.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "4c3221aa9b32": {
+      "calculado_em": "2026-10-18T06:10:36.505090+00:00",
+      "nome": "Prato de grão-de-bico",
+      "origem": "estimated",
+      "restaurante": "Cozinha do treino (demo)",
+      "resultado": {
+        "assumptions": [
+          "Base estimada como arroz integral por ser a opção mais provável em um prato de treino.",
+          "Não incluí legumes assados nem feijão na estimativa central.",
+          "Considerei preparo com pouco óleo no refogado e na assadura.",
+          "Porção total estimada a partir de um prato individual padrão de restaurante por quilo/fit delivery.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 515.0,
+        "carbs_g": 78.0,
+        "confidence": "medium",
+        "evidence": "Considerei um prato com grão-de-bico refogado, abóbora assada, couve e uma base de arroz integral, em porções típicas de delivery. A faixa reflete a troca possível da base por purê de batata e a inclusão opcional de legumes assados e/ou feijão, que alteram principalmente carboidratos e calorias.",
+        "fat_g": 13.0,
+        "maximum": 620.0,
+        "method": "estimated",
+        "minimum": 430.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T06:10:36.505007Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 prato individual (~420 g), assumindo a base mais provável de arroz integral e sem complementos extras (~420 g, peso estimada)",
+        "portion_grams": 420.0,
+        "protein_g": 18.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "682fe99c80f6": {
+      "calculado_em": "2026-10-18T06:18:07.793582+00:00",
+      "nome": "Coca-Cola Zero Açúcar 400ml",
+      "origem": "consensus",
+      "restaurante": "Mcdonald's - Cambuí (ccb)",
+      "resultado": {
+        "assumptions": [
+          "Considerei a bebida como 400 ml ≈ 400 g.",
+          "Assumi composição nutricional típica de refrigerante zero sem açúcar, sem adição relevante de calorias.",
+          "Considerado refrigerante zero padrão servido com gelo",
+          "Calorias fora do plausível (0 kcal).",
+          "Macros não fecham com as calorias (Atwater: 0 vs 0 kcal)."
+        ],
+        "calories": 0.0,
+        "carbs_g": 0.0,
+        "confidence": "low",
+        "evidence": "Coca-Cola Zero Açúcar é uma bebida sem açúcar e praticamente sem calorias. Como o peso informado é de 400 g, a estimativa considera a garrafa/lata de 400 ml consumida integralmente.",
+        "fat_g": 0.0,
+        "maximum": 2.0,
+        "method": "consensus",
+        "minimum": 0.0,
+        "motivo_revisao": "Calorias fora do plausível (0 kcal).; Macros não fecham com as calorias (Atwater: 0 vs 0 kcal).",
+        "obtained_at": "2026-10-18T06:18:07.793395Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 unidade de 400 ml (~400 g, peso declarada)",
+        "portion_grams": 400.0,
+        "protein_g": 0.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "e7c8f5d4e77c": {
+      "calculado_em": "2026-10-18T06:10:36.505470+00:00",
+      "nome": "Frango grelhado da casa",
+      "origem": "database",
+      "restaurante": "Cozinha do treino (demo)",
+      "resultado": {
+        "assumptions": [
+          "Assumi que a porção de frango é um filé/prato típico de delivery, já grelhado, com cerca de 160 g cozidos.",
+          "Assumi que a base mais provável é arroz integral e que os complementos opcionais não foram incluídos na estimativa central.",
+          "A salada foi considerada sem molho cremoso relevante; tempero leve com impacto calórico pequeno.",
+          "A faixa superior considera a possibilidade de purê de batata no lugar do arroz e inclusão de um ou dois complementos opcionais.",
+          "Soma pela TACO cobrindo 84% da massa: frango grelhado→Frango, peito, sem pele, grelhado, arroz integral cozido→Arroz, integral, cozido.",
+          "Fonte e estimativa divergem 25%."
+        ],
+        "calories": 620.0,
+        "carbs_g": 0.0,
+        "confidence": "medium",
+        "evidence": "“Frango, peito, sem pele, grelhado” (Carnes e derivados): 159 kcal por 100 g na Tabela TACO.",
+        "fat_g": 9.8,
+        "maximum": 775.0,
+        "method": "database",
+        "minimum": 465.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T06:10:36.505370Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "100 g (~390 g, peso estimada)",
+        "portion_grams": 390.0,
+        "protein_g": 124.8,
+        "revisar": false,
+        "source_name": "TACO",
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "eefa6ddcb46e": {
+      "calculado_em": "2026-10-18T06:18:09.611989+00:00",
+      "nome": "Coca-Cola Original 2l",
+      "origem": "consensus",
+      "restaurante": "Carol Coxinhas Campinas",
+      "resultado": {
+        "assumptions": [
+          "Considerei densidade próxima de 1 g/mL para converter 2 L em 2000 g.",
+          "Usei valores nutricionais típicos de Coca-Cola Original, cerca de 42 kcal e 10,5 g de carboidratos por 100 mL.",
+          "Considerada a tabela nutricional padrão brasileira de Coca-Cola sabor original (aprox. 85 kcal e 21 g de açúcar por 200 ml)"
+        ],
+        "calories": 845.0,
+        "carbs_g": 210.0,
+        "confidence": "medium",
+        "evidence": "A descrição identifica claramente uma Coca-Cola Original de 2 litros e o peso informado confirma o volume total do item. Usei composição típica de refrigerante comum, praticamente todo carboidrato proveniente de açúcar, sem proteína ou gordura relevantes.",
+        "fat_g": 0.0,
+        "maximum": 880.0,
+        "method": "consensus",
+        "minimum": 740.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T06:18:09.611800Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "garrafa de 2 L de Coca-Cola Original (~2000 g, peso declarada)",
+        "portion_grams": 2000.0,
+        "protein_g": 0.0,
+        "revisar": false,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "f019de1b5944": {
+      "calculado_em": "2026-10-18T06:18:04.712936+00:00",
+      "nome": "Refrigerante Coca Cola Zero 350ml",
+      "origem": "database",
+      "restaurante": "Ponto da Esfiha - Marechal Carmona",
+      "resultado": {
+        "assumptions": [
+          "Considerei que a bebida é a versão zero açúcar, sem adição relevante de calorias.",
+          "Usei o peso informado de 350 g como o volume/peso total da unidade vendida.",
+          "Densidade considerada aproximadamente 1 g/ml para 350 ml de bebida",
+          "Soma pela TACO cobrindo 100% da massa: Refrigerante Coca-Cola Sem Açúcar→Refrigerante, tipo cola."
+        ],
+        "calories": 119.0,
+        "carbs_g": 30.4,
+        "confidence": "medium",
+        "evidence": "“Refrigerante, tipo cola” (Bebidas (alcoólicas e não alcoólicas)): 34 kcal por 100 g na Tabela TACO.",
+        "fat_g": 0.0,
+        "maximum": 149.0,
+        "method": "database",
+        "minimum": 89.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T06:18:04.712583Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "100 g (~350 g, peso declarada)",
+        "portion_grams": 350.0,
+        "protein_g": 0.0,
+        "revisar": false,
+        "source_name": "TACO",
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    }
+  },
+  "versao": 1
+}
