@@ -61,7 +61,7 @@ A pessoa escolhe, monta o prato, revisa o total e confirma, tudo na conversa. De
 ### Viabilidade
 
 - Funciona sobre o MCP do iFood que já existe: busca, cardápio, detalhes do item e endereços.
-- A estimativa nutricional usa fontes públicas (TACO) e modelos gratuitos ou baratos, com cache por item.
+- A estimativa nutricional usa fontes públicas (TACO) e modelos gratuitos ou baratos. Em produção, ela seria calculada uma vez, quando o restaurante cadastra o prato, e não a cada acesso (ver seção 05).
 - Os pontos que dependem do iFood para produção estão no entregável 06: checkout sem cobrança para testes, dados nutricionais declarados e leitura de avaliações.
 
 ---
@@ -232,7 +232,7 @@ flowchart LR
 | **Confirmação de pedido por regra fixa, não por LLM** | Um erro de interpretação não pode gerar uma compra. Cada revisão gera uma versão nova, e a confirmação só vale para a versão exibida: se entrega ou pagamento mudarem, é preciso revisar de novo. |
 | **LLM decide, código garante** | O modelo interpreta e replaneja, mas filtros de restrição, orçamento pedido e confirmação ficam no código e valem mesmo que o modelo peça o contrário. |
 | **Todo LLM tem fallback** | Cada chamada tem prazo e cadeia de reservas (vários modelos gratuitos no OpenRouter, depois OpenAI). Se tudo falhar, a intenção cai nas regras locais e a busca vazia cai numa mensagem fixa. A conversa nunca quebra por causa de um modelo. |
-| **Nutrição em segundo plano, com cache** | A pipeline pode levar segundos. As sugestões aparecem já, e o card atualiza depois. O resultado fica em cache por item. |
+| **Nutrição em segundo plano, com cache** | A pipeline pode levar segundos. As sugestões aparecem já, e o card atualiza depois. O resultado fica em cache por item e complementos. Em produção, o cálculo iria para o cadastro do prato (ver abaixo). |
 | **Ranking de avaliações determinístico** | Notas e aspectos entram numa fórmula explícita, com prior para amostras pequenas. É explicável, testável e não envia comentários a um modelo externo. |
 | **Privacidade nos logs** | Por padrão, os logs da busca só têm contagens. Texto do usuário e respostas dos modelos só aparecem com `BUSCA_LOG_CONTEUDO=true`. Segredos ficam em `.env`. |
 
@@ -246,6 +246,27 @@ Para cada prato, fontes em cascata e em paralelo (`app/services/nutrition/pipeli
 4. **Estimativas independentes:** um modelo só com o texto, outro com texto e foto (Gemini), e a soma dos ingredientes casados com a TACO.
 5. **Consenso** entre as estimativas, ajustado pela porção extraída da descrição.
 6. **Validação** por regras (fator de Atwater, limites plausíveis) e pela dispersão entre as fontes. O resultado é uma faixa com nível de confiança.
+
+### Nutrição em produção: calcular no cadastro, não no pedido
+
+**Como funciona no protótipo.** O cálculo é feito sob demanda: a pipeline roda na primeira vez que um prato aparece para alguém. O resultado vai para um cache em memória e para uma base local. A chave é o restaurante, o item, os complementos escolhidos e a versão da pipeline. Da segunda vez em diante, o prato não é recalculado. Funciona porque o protótipo lida com poucos pratos e precisa calcular itens que o iFood não descreve nutricionalmente.
+
+**Por que isso não escala.** Cada cálculo novo envolve várias consultas a modelos de IA e, às vezes, busca na web. Fazer isso no momento em que o cliente navega tem três problemas:
+- **custo:** no catálogo do iFood, o primeiro acesso a cada item e a cada combinação de complementos dispararia a pipeline inteira;
+- **latência:** o cliente espera segundos para ver um número que poderia já estar pronto;
+- **consistência:** dois servidores podem calcular o mesmo prato ao mesmo tempo e chegar a faixas diferentes.
+
+**Como seria em produção.** A informação nutricional passa a ser um atributo do produto, calculado no servidor quando o restaurante cadastra ou altera o item:
+
+1. O restaurante cadastra ou edita um prato (nome, descrição, foto, complementos).
+2. Um evento coloca o item numa fila de processamento.
+3. Um worker roda a mesma pipeline (TACO, web, estimativas, consenso, validação) para o item e para cada complemento.
+4. O resultado é gravado junto ao produto no catálogo, com a versão da pipeline e o nível de confiança.
+5. A busca e o `getItem` já devolvem a nutrição pronta. O cliente nunca dispara o cálculo.
+
+Complementos seriam calculados separadamente e somados na hora da montagem, uma conta simples. Assim não é preciso calcular cada combinação possível. A pipeline só roda de novo quando o item muda ou quando uma versão nova da pipeline justifica reprocessar o catálogo. Se o restaurante declarar a tabela nutricional, ela substitui a estimativa e a pipeline só valida os números.
+
+Esse desenho depende do iFood: é a mesma sugestão do entregável 06 de expor nutrição no `getItem`.
 
 ### Qualidade
 
