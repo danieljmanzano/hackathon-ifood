@@ -41,6 +41,35 @@ class Address(Model):
     longitude: float = Field(ge=-180, le=180, allow_inf_nan=False)
 
 
+ShortText = Annotated[str, Field(max_length=200, strip_whitespace=True)]
+
+
+class GeocodeInput(Model):
+    address: Annotated[str, Field(min_length=5, max_length=300, strip_whitespace=True)]
+
+
+class AddressCandidate(Model):
+    candidate_id: str
+    formatted: str
+    neighborhood: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+
+
+class GeocodeResult(Model):
+    match: Literal["SINGLE", "MULTIPLE"]
+    candidates: list[AddressCandidate]
+
+
+class CreateAddressInput(Model):
+    address: Annotated[str, Field(min_length=5, max_length=300, strip_whitespace=True)]
+    candidate_id: Annotated[str, Field(min_length=1, max_length=200)]
+    neighborhood: ShortText = ""
+    complement: ShortText = ""
+    reference: ShortText = ""
+    alias: Literal["", "CASA", "TRABALHO"] = ""
+
+
 class AddressInput(Model):
     address_id: str
 
@@ -95,14 +124,6 @@ class SelectionInput(Model):
     options: list[SelectedOption] = Field(default_factory=list, max_length=100)
 
 
-class SelectedItem(Model):
-    candidate: MealCandidate
-    quantity: Quantity
-    options: list[SelectedOption]
-    option_labels: list[str]
-    unit_total_cents: Cents
-
-
 class NutritionResult(Model):
     state: Literal["pending", "ready", "unavailable", "error"] = "unavailable"
     portion_basis: str | None = None
@@ -131,6 +152,31 @@ class NutritionResult(Model):
         elif any(n is not None for n in numbers):
             raise ValueError("Dados indisponíveis não podem conter calorias.")
         return self
+
+
+class SelectedItem(Model):
+    candidate: MealCandidate
+    quantity: Quantity
+    options: list[SelectedOption]
+    option_labels: list[str]
+    unit_total_cents: Cents
+    # Calorias de uma unidade com as opções escolhidas (a quantidade é aplicada na exibição).
+    nutrition: NutritionResult = Field(default_factory=NutritionResult)
+
+
+class MerchantSummary(Model):
+    merchant_id: str
+    name: str
+    logo_url: str | None = None
+    is_open: bool = True
+    distance_km: float | None = None
+    rating: float | None = None
+    rating_count: int | None = None
+    eta_min: int | None = None
+    eta_max: int | None = None
+    delivery_fee_cents: Cents | None = None
+    minimum_order_cents: Cents | None = None
+    simulated: bool = False
 
 
 class Recommendation(Model):
@@ -197,6 +243,11 @@ class Message(Model):
     text: str
 
 
+class AddressCreated(Model):
+    session: "Session"
+    addresses: list[Address]
+
+
 class Session(Model):
     id: str = Field(default_factory=lambda: str(uuid4()))
     mode: Literal["mock", "live"]
@@ -208,3 +259,9 @@ class Session(Model):
     summary: CheckoutSummary | None = None
     order: OrderRecord | None = None
     budget_cents: Cents | None = None
+    # Cardápio aberto pelo usuário: libera abrir e escolher esses itens, como as recomendações.
+    menu_merchant_id: str | None = None
+    menu_item_ids: list[str] = Field(default_factory=list)
+
+
+AddressCreated.model_rebuild()

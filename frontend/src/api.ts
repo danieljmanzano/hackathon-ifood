@@ -2,7 +2,10 @@ import type {
   Address,
   Candidate,
   CheckoutChoices,
+  GeocodeResult,
   Health,
+  MerchantSummary,
+  NewAddress,
   Profile,
   SelectedOption,
   Session,
@@ -42,10 +45,18 @@ export const api = {
   session: () => request<Session>("/session"),
   health: () => request<Health>("/health"),
   addresses: () => request<Address[]>("/addresses"),
+  geocode: (address: string) =>
+    request<GeocodeResult>("/addresses/geocode", { address }),
+  createAddress: (payload: NewAddress) =>
+    request<{ session: Session; addresses: Address[] }>("/addresses", payload),
   address: (address_id: string) =>
     request<Session>("/session/address", { address_id }, "PUT"),
   profile: (profile: Profile) => request<Session>("/profile", profile, "PUT"),
   search: (text: string) => request<Session>("/search", { text }),
+  merchants: () => request<MerchantSummary[]>("/merchants"),
+  menu: (merchantId: string) =>
+    request<Candidate[]>(`/merchants/${encodeURIComponent(merchantId)}/menu`),
+  selectionNutrition: () => request<Session>("/selection/nutrition"),
   item: (item: Candidate) =>
     request<Candidate>(
       `/items/${encodeURIComponent(item.merchant_id)}/${encodeURIComponent(item.item_id)}`,

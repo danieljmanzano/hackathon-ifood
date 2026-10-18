@@ -13,6 +13,25 @@ export interface Address {
   latitude: number;
   longitude: number;
 }
+export interface AddressCandidate {
+  candidate_id: string;
+  formatted: string;
+  neighborhood: string | null;
+  latitude: number | null;
+  longitude: number | null;
+}
+export interface GeocodeResult {
+  match: "SINGLE" | "MULTIPLE";
+  candidates: AddressCandidate[];
+}
+export interface NewAddress {
+  address: string;
+  candidate_id: string;
+  neighborhood: string;
+  complement: string;
+  reference: string;
+  alias: "" | "CASA" | "TRABALHO";
+}
 export interface Option {
   id: string;
   name: string;
@@ -71,6 +90,21 @@ export interface SelectedItem {
   options: SelectedOption[];
   option_labels: string[];
   unit_total_cents: number;
+  nutrition: Nutrition;
+}
+export interface MerchantSummary {
+  merchant_id: string;
+  name: string;
+  logo_url: string | null;
+  is_open: boolean;
+  distance_km: number | null;
+  rating: number | null;
+  rating_count: number | null;
+  eta_min: number | null;
+  eta_max: number | null;
+  delivery_fee_cents: number | null;
+  minimum_order_cents: number | null;
+  simulated: boolean;
 }
 export interface Delivery {
   id: string;
@@ -134,4 +168,10 @@ export interface Consumption {
   nutrition: Nutrition | null;
   feedback: string;
 }
-export type View = "home" | "chat" | "day" | "orders" | "profile";
+export type View =
+  | "home"
+  | "chat"
+  | "restaurants"
+  | "day"
+  | "orders"
+  | "profile";

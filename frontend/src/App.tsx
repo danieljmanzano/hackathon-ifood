@@ -26,6 +26,7 @@ import {
   ShoppingBag,
   SlidersHorizontal,
   Sparkles,
+  Store,
   Target,
   Trash2,
   Truck,
@@ -37,9 +38,12 @@ import {
   Brand,
   MealCard,
   MealImage,
+  MenuItemCard,
+  MerchantCard,
   Modal,
   NutritionDetails,
   photos,
+  SelectedNutrition,
   Spinner,
   Stepper,
 } from "./components";
@@ -49,7 +53,10 @@ import type {
   Candidate,
   CheckoutChoices,
   Consumption,
+  GeocodeResult,
   Health,
+  MerchantSummary,
+  NewAddress,
   Profile,
   Recommendation,
   SelectedOption,
@@ -60,6 +67,7 @@ import type {
 const nav = [
   { id: "home", name: "Visão geral", icon: Home },
   { id: "chat", name: "Pedir com o Macro", icon: MessageCircle },
+  { id: "restaurants", name: "Restaurantes perto", icon: Store },
   { id: "day", name: "Meu dia", icon: Flame },
   { id: "orders", name: "Meus pedidos", icon: ShoppingBag },
   { id: "profile", name: "Preferências", icon: SlidersHorizontal },
@@ -109,6 +117,11 @@ export default function App() {
   const [recommendation, setRecommendation] = useState<Recommendation | null>(
     null,
   );
+  const [merchants, setMerchants] = useState<MerchantSummary[] | null>(null);
+  const [activeMerchant, setActiveMerchant] = useState<MerchantSummary | null>(
+    null,
+  );
+  const [menu, setMenu] = useState<Candidate[]>([]);
   const [options, setOptions] = useState<SelectedOption[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [choices, setChoices] = useState<CheckoutChoices | null>(null);
@@ -222,8 +235,57 @@ export default function App() {
       setText("");
     }
   }
-  async function choose(rec: Recommendation) {
-    const item = await perform(() => api.item(rec.candidate));
+  async function loadMerchants() {
+    if (!session) return;
+    if (!session.address) {
+      open("address");
+      return;
+    }
+    const list = await perform(() => api.merchants());
+    if (list) setMerchants(list);
+  }
+  async function openMerchant(merchant: MerchantSummary) {
+    const items = await perform(() => api.menu(merchant.merchant_id));
+    if (items) {
+      setActiveMerchant(merchant);
+      setMenu(items);
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }
+  // Recarrega a lista quando o endereço muda.
+  useEffect(() => {
+    setMerchants(null);
+    setActiveMerchant(null);
+    setMenu([]);
+  }, [session?.address?.id]);
+  useEffect(() => {
+    if (view === "restaurants" && merchants === null && session?.address)
+      void loadMerchants();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, merchants, session?.address?.id]);
+  // A estimativa do prato escolhido pode terminar depois da resposta: consulta até ficar pronta.
+  const selectedNutritionState = session?.selected?.nutrition.state;
+  useEffect(() => {
+    if (selectedNutritionState !== "pending") return;
+    let tries = 0;
+    const timer = window.setInterval(async () => {
+      tries += 1;
+      try {
+        const next = await api.selectionNutrition();
+        if (next.selected?.nutrition.state !== "pending") {
+          setSession(next);
+          clearInterval(timer);
+        }
+      } catch {
+        // Tenta de novo no próximo ciclo; o pedido continua utilizável.
+      }
+      if (tries >= 30) clearInterval(timer);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [selectedNutritionState, session?.selected?.candidate.item_id]);
+
+  async function choose(candidate: Candidate, rec: Recommendation | null) {
+    const item = await perform(() => api.item(candidate));
     if (item) {
       setDetail(item);
       setRecommendation(rec);
@@ -269,7 +331,14 @@ export default function App() {
     if (next) {
       setSession(next);
       setDialog(null);
-      setToast("Prato adicionado. Revise a entrega e o pagamento.");
+      const nutrition = next.selected?.nutrition;
+      setToast(
+        nutrition?.state === "ready"
+          ? `Prato adicionado: ≈ ${Math.round(nutrition.calories! * next.selected!.quantity)} kcal no total.`
+          : nutrition?.state === "pending"
+            ? "Prato adicionado. Ainda calculando as calorias…"
+            : "Prato adicionado. Revise a entrega e o pagamento.",
+      );
     }
   }
   async function openCheckout() {
@@ -362,13 +431,15 @@ export default function App() {
     const previous = entries.find(
       (e) => e.order_id === session.order!.id && e.item_id === id,
     );
-    // Recommendation estimates are not estimates for a customized plate.
+    // Prefer the estimate of the plate as assembled; recommendation estimates do not describe a customized plate.
     const nutrition =
       previous?.nutrition ??
-      (session.selected.options.length === 0
-        ? session.recommendations.find((r) => r.candidate.item_id === id)
-            ?.nutrition || null
-        : null);
+      (session.selected.nutrition?.state === "ready"
+        ? session.selected.nutrition
+        : session.selected.options.length === 0
+          ? session.recommendations.find((r) => r.candidate.item_id === id)
+              ?.nutrition || null
+          : null);
     const entry: Consumption = {
       order_id: session.order.id,
       item_id: id,
@@ -820,7 +891,7 @@ export default function App() {
                             key={`${r.candidate.merchant_id}-${r.candidate.item_id}`}
                             recommendation={r}
                             index={index}
-                            onSelect={() => void choose(r)}
+                            onSelect={() => void choose(r.candidate, r)}
                             disabled={disabled || !!session.order}
                           />
                         ))}
@@ -914,6 +985,113 @@ export default function App() {
                     <span>Um pedido por vez, no seu controle.</span>
                   </div>
                 </>
+              )}
+
+              {view === "restaurants" && (
+                <section className="restaurants-view">
+                  <div className="page-heading">
+                    <div>
+                      <span className="greeting">
+                        Perto de{" "}
+                        {session.address?.label || "você"}
+                      </span>
+                      <h1>
+                        {activeMerchant
+                          ? activeMerchant.name
+                          : "Restaurantes abertos agora"}
+                      </h1>
+                    </div>
+                    {activeMerchant ? (
+                      <button
+                        className="secondary-button"
+                        onClick={() => {
+                          setActiveMerchant(null);
+                          setMenu([]);
+                        }}
+                        disabled={busy}
+                      >
+                        Ver todos os restaurantes
+                      </button>
+                    ) : (
+                      <button
+                        className="secondary-button"
+                        onClick={() => void loadMerchants()}
+                        disabled={disabled}
+                      >
+                        Atualizar lista
+                      </button>
+                    )}
+                  </div>
+                  {!session.address ? (
+                    <div className="empty-results">
+                      <MapPin size={25} />
+                      <h3>Escolha um endereço</h3>
+                      <p>Precisamos dele para mostrar quem entrega perto de você.</p>
+                      <button
+                        className="primary-button"
+                        onClick={() => open("address")}
+                      >
+                        Selecionar endereço
+                      </button>
+                    </div>
+                  ) : busy ? (
+                    <div className="search-loading">
+                      <Brand small />
+                      <Spinner
+                        text={
+                          activeMerchant || merchants
+                            ? "Carregando…"
+                            : "Procurando restaurantes perto de você…"
+                        }
+                      />
+                    </div>
+                  ) : activeMerchant ? (
+                    menu.length ? (
+                      <>
+                        <p className="section-footnote">
+                          <Info size={13} />
+                          Escolha um prato e as opções: o Macro calcula as
+                          calorias do prato montado ao adicionar ao pedido.
+                        </p>
+                        <div className="meal-grid">
+                          {menu.map((item) => (
+                            <MenuItemCard
+                              key={item.item_id}
+                              item={item}
+                              onSelect={() => void choose(item, null)}
+                              disabled={disabled || !!session.order}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="empty-results">
+                        <Utensils size={25} />
+                        <h3>Cardápio indisponível</h3>
+                        <p>Este restaurante não retornou pratos agora.</p>
+                      </div>
+                    )
+                  ) : merchants?.length ? (
+                    <div className="merchant-grid">
+                      {merchants.map((m) => (
+                        <MerchantCard
+                          key={m.merchant_id}
+                          merchant={m}
+                          onSelect={() => void openMerchant(m)}
+                          disabled={disabled}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    merchants && (
+                      <div className="empty-results">
+                        <Store size={25} />
+                        <h3>Nenhum restaurante aberto por perto</h3>
+                        <p>Tente atualizar a lista daqui a pouco.</p>
+                      </div>
+                    )
+                  )}
+                </section>
               )}
 
               {view === "profile" && (
@@ -1346,6 +1524,27 @@ export default function App() {
                         session.selected.unit_total_cents,
                     )}
                   </p>
+                  {session.selected.option_labels.length > 0 && (
+                    <p className="small muted">
+                      {session.selected.option_labels.join(" · ")}
+                    </p>
+                  )}
+                  {session.selected.nutrition && (
+                    <>
+                      <SelectedNutrition
+                        nutrition={session.selected.nutrition}
+                        quantity={session.selected.quantity}
+                      />
+                      {session.selected.nutrition.state === "ready" && (
+                        <details className="selected-nutrition-details">
+                          <summary>Como calculamos</summary>
+                          <NutritionDetails
+                            nutrition={session.selected.nutrition}
+                          />
+                        </details>
+                      )}
+                    </>
+                  )}
                   <button
                     className="primary-button"
                     onClick={() => void openCheckout()}
@@ -1393,7 +1592,13 @@ export default function App() {
               onClick={() => navigate(id)}
             >
               <Icon size={20} />
-              <span>{name === "Pedir com o Macro" ? "Pedir" : name}</span>
+              <span>
+                {name === "Pedir com o Macro"
+                  ? "Pedir"
+                  : name === "Restaurantes perto"
+                    ? "Perto"
+                    : name}
+              </span>
             </button>
           ))}
       </nav>
@@ -1513,6 +1718,22 @@ export default function App() {
                 </button>
               </div>
             )}
+            <NewAddressForm
+              busy={busy}
+              disabled={busy || !!session?.order}
+              onGeocode={(address) => perform(() => api.geocode(address))}
+              onCreate={async (payload) => {
+                const created = await perform(() => api.createAddress(payload));
+                if (!created) return false;
+                setAddresses(created.addresses);
+                setSession(created.session);
+                setDialog(null);
+                setToast(
+                  "Endereço salvo na sua conta do iFood e selecionado para a entrega.",
+                );
+                return true;
+              }}
+            />
             <p className="small muted">
               Trocar o endereço limpa a busca e o carrinho para consultar a
               disponibilidade novamente.
@@ -1665,14 +1886,23 @@ export default function App() {
                 <div className="info-box">
                   <Info size={18} />
                   <p>
-                    A composição do prato mudou. A estimativa anterior está
-                    desatualizada; o cálculo das opções selecionadas ainda não
-                    está disponível. Você pode continuar sem estimativa.
+                    A composição do prato mudou. A estimativa acima vale para o
+                    prato sem opções; ao adicionar ao pedido, o Macro recalcula
+                    as calorias com as opções escolhidas.
                   </p>
                 </div>
               ) : (
                 <NutritionDetails nutrition={recommendation.nutrition} />
               )}
+            </div>
+          )}
+          {!recommendation && (
+            <div className="info-box">
+              <Info size={18} />
+              <p>
+                Ao adicionar ao pedido, o Macro calcula as calorias deste prato
+                com a descrição do restaurante e as opções que você escolheu.
+              </p>
             </div>
           )}
           <div className="modal-action-bar">
@@ -1687,7 +1917,7 @@ export default function App() {
               onClick={() => void addSelection()}
             >
               {busy ? (
-                <Spinner text="Adicionando…" />
+                <Spinner text="Adicionando e calculando calorias…" />
               ) : (
                 <>
                   <span>Adicionar ao pedido</span>
@@ -2207,5 +2437,197 @@ function ProfileForm({
         </div>
       </form>
     </>
+  );
+}
+
+/** Cadastro em duas etapas do iFood: localizar o endereço e depois confirmar o local com os detalhes. */
+function NewAddressForm({
+  busy,
+  disabled,
+  onGeocode,
+  onCreate,
+}: {
+  busy: boolean;
+  disabled: boolean;
+  onGeocode: (address: string) => Promise<GeocodeResult | undefined>;
+  onCreate: (payload: NewAddress) => Promise<boolean>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const [result, setResult] = useState<GeocodeResult | null>(null);
+  const [candidateId, setCandidateId] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
+  const [complement, setComplement] = useState("");
+  const [reference, setReference] = useState("");
+  const [alias, setAlias] = useState<NewAddress["alias"]>("");
+
+  function reset() {
+    setOpen(false);
+    setText("");
+    setResult(null);
+    setCandidateId("");
+    setNeighborhood("");
+    setComplement("");
+    setReference("");
+    setAlias("");
+  }
+  function pick(id: string, found: GeocodeResult) {
+    setCandidateId(id);
+    setNeighborhood(
+      found.candidates.find((c) => c.candidate_id === id)?.neighborhood || "",
+    );
+  }
+  async function search(e: FormEvent) {
+    e.preventDefault();
+    if (text.trim().length < 5) return;
+    const found = await onGeocode(text.trim());
+    if (!found) return;
+    setResult(found);
+    if (found.candidates.length) pick(found.candidates[0].candidate_id, found);
+  }
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    if (!candidateId || !neighborhood.trim()) return;
+    const ok = await onCreate({
+      address: text.trim(),
+      candidate_id: candidateId,
+      neighborhood: neighborhood.trim(),
+      complement: complement.trim(),
+      reference: reference.trim(),
+      alias,
+    });
+    if (ok) reset();
+  }
+
+  if (!open)
+    return (
+      <button
+        className="secondary-button new-address-toggle"
+        disabled={disabled}
+        onClick={() => setOpen(true)}
+      >
+        <Plus size={15} />
+        Adicionar novo endereço
+      </button>
+    );
+
+  return (
+    <div className="new-address">
+      <form onSubmit={(e) => void search(e)}>
+        <label className="form-field">
+          Novo endereço
+          <input
+            autoFocus
+            maxLength={300}
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value);
+              setResult(null);
+              setCandidateId("");
+            }}
+            placeholder="Rua, número, cidade e estado"
+            disabled={busy}
+          />
+          <small>Ex.: Avenida Paulista, 1578, São Paulo, SP</small>
+        </label>
+        {!result && (
+          <div className="new-address-actions">
+            <button type="button" className="secondary-button" onClick={reset}>
+              Cancelar
+            </button>
+            <button
+              className="primary-button"
+              disabled={disabled || text.trim().length < 5}
+            >
+              {busy ? <Spinner text="Procurando…" /> : "Buscar endereço"}
+            </button>
+          </div>
+        )}
+      </form>
+      {result && (
+        <form onSubmit={(e) => void save(e)}>
+          <p className="small muted">
+            {result.match === "MULTIPLE"
+              ? "Encontramos mais de um local. Escolha o certo:"
+              : "Confira o local encontrado:"}
+          </p>
+          <div className="address-list">
+            {result.candidates.map((c) => (
+              <label
+                key={c.candidate_id}
+                className={`address-choice ${candidateId === c.candidate_id ? "selected" : ""}`}
+              >
+                <input
+                  type="radio"
+                  name="address-candidate"
+                  checked={candidateId === c.candidate_id}
+                  onChange={() => pick(c.candidate_id, result)}
+                />
+                <MapPin size={22} />
+                <span>
+                  <strong>{c.formatted}</strong>
+                </span>
+              </label>
+            ))}
+          </div>
+          <div className="form-columns">
+            <label className="form-field">
+              Bairro
+              <input
+                required
+                maxLength={200}
+                value={neighborhood}
+                onChange={(e) => setNeighborhood(e.target.value)}
+                placeholder="Obrigatório"
+              />
+            </label>
+            <label className="form-field">
+              Complemento
+              <input
+                maxLength={200}
+                value={complement}
+                onChange={(e) => setComplement(e.target.value)}
+                placeholder="Apto, bloco, sala…"
+              />
+            </label>
+            <label className="form-field">
+              Ponto de referência
+              <input
+                maxLength={200}
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                placeholder="Portão azul, perto da padaria…"
+              />
+            </label>
+            <label className="form-field">
+              Apelido
+              <select
+                value={alias}
+                onChange={(e) => setAlias(e.target.value as NewAddress["alias"])}
+              >
+                <option value="">Sem apelido</option>
+                <option value="CASA">Casa</option>
+                <option value="TRABALHO">Trabalho</option>
+              </select>
+            </label>
+          </div>
+          <p className="small muted">
+            O endereço fica salvo na sua conta do iFood. Algumas regiões exigem
+            complemento e ponto de referência.
+          </p>
+          <div className="new-address-actions">
+            <button type="button" className="secondary-button" onClick={reset}>
+              Cancelar
+            </button>
+            <button
+              className="primary-button"
+              disabled={disabled || !candidateId || !neighborhood.trim()}
+            >
+              {busy ? <Spinner text="Salvando…" /> : "Salvar e entregar aqui"}
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
   );
 }

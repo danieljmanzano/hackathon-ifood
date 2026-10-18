@@ -7,26 +7,54 @@ from app.core.exceptions import MacroError
 from app.domain import rank, search_terms, select
 from app.schemas.macro import (
     Address,
+    AddressCreated,
     AddressInput,
     CheckoutInput,
     CheckoutSummary,
     ConfirmationInput,
+    CreateAddressInput,
+    GeocodeInput,
+    GeocodeResult,
     MealCandidate,
     MealRequest,
+    MerchantSummary,
     Message,
     OrderRecord,
     SelectionInput,
     Session,
     UserProfile,
 )
+from app.services.ifood_live import MCPIFood
 from app.services.mock_ifood import MockIFood
+from app.services.nutrition import enrich_recommendations, estimate_selected
 
 router = APIRouter()
 _mock_provider = MockIFood()
+_live_provider: MCPIFood | None = None
 
 
 def get_provider(settings: Settings = Depends(get_settings)):
-    return _mock_provider
+    """Modo live usa o MCP real do iFood; mock usa o catálogo fictício."""
+    global _live_provider
+    if settings.ifood_mode != "live":
+        return _mock_provider
+    if _live_provider is None:
+        _live_provider = MCPIFood(settings)
+    return _live_provider
+
+
+def live_only(provider, feature: str):
+    """Restaurantes próximos, cardápio e cadastro de endereço só existem no iFood real."""
+    if not hasattr(provider, feature):
+        raise MacroError("Disponível somente no modo live (IFOOD_MODE=live).", 409)
+
+
+def offered(session: Session, merchant_id: str, item_id: str) -> bool:
+    """Item veio da busca atual ou do cardápio aberto."""
+    return any(
+        (r.candidate.merchant_id, r.candidate.item_id) == (merchant_id, item_id)
+        for r in session.recommendations
+    ) or (session.menu_merchant_id == merchant_id and item_id in session.menu_item_ids)
 
 
 def current_session(request: Request, settings: Settings = Depends(get_settings)) -> Session:
@@ -93,6 +121,46 @@ async def addresses(
     return await provider.addresses()
 
 
+@router.post("/addresses/geocode", response_model=GeocodeResult)
+async def geocode(
+    payload: GeocodeInput,
+    session: Session = Depends(current_session),
+    provider: MockIFood = Depends(get_provider),
+):
+    """Etapa 1 do cadastro: localiza o endereço digitado. Nada é salvo ainda."""
+    editable(session)
+    live_only(provider, "geocode")
+    return await provider.geocode(payload.address)
+
+
+@router.post("/addresses", response_model=AddressCreated)
+async def create_address(
+    payload: CreateAddressInput,
+    request: Request,
+    session: Session = Depends(current_session),
+    provider: MockIFood = Depends(get_provider),
+):
+    """Etapa 2: salva o candidato confirmado na conta do iFood e já o seleciona para a entrega."""
+    editable(session)
+    live_only(provider, "create_address")
+    before = {a.id for a in await provider.addresses()}
+    new_id = await provider.create_address(payload)
+    available_addresses = await provider.addresses()
+    created = next((a for a in available_addresses if a.id == new_id), None) or next(
+        (a for a in available_addresses if a.id not in before), None
+    )
+    if created is None:
+        raise MacroError("Endereço salvo no iFood, mas ainda não apareceu na lista. Recarregue os endereços.", 502)
+
+    def update(s: Session):
+        s.address = created
+        s.selected = None
+        s.summary = None
+        s.recommendations = []
+
+    return AddressCreated(session=mutate_session(request, session, update), addresses=available_addresses)
+
+
 @router.put("/session/address", response_model=Session)
 async def set_address(
     payload: AddressInput,
@@ -136,6 +204,7 @@ async def search(
     request: Request,
     session: Session = Depends(current_session),
     provider: MockIFood = Depends(get_provider),
+    settings: Settings = Depends(get_settings),
 ):
     editable(session)
     if session.address is None:
@@ -145,6 +214,7 @@ async def search(
         budget = session.profile.default_budget_cents
     candidates = await provider.search(query, session.address, budget)
     recommendations = rank(candidates, payload, session.profile, budget)
+    recommendations = await enrich_recommendations(recommendations, settings)
 
     def update(s: Session):
         s.budget_cents = budget
@@ -167,6 +237,37 @@ async def search(
     return mutate_session(request, session, update)
 
 
+@router.get("/merchants", response_model=list[MerchantSummary])
+async def merchants(
+    session: Session = Depends(current_session),
+    provider: MockIFood = Depends(get_provider),
+):
+    if session.address is None:
+        raise MacroError("Selecione o endereço antes de ver os restaurantes.", 422)
+    live_only(provider, "merchants")
+    return await provider.merchants(session.address)
+
+
+@router.get("/merchants/{merchant_id}/menu", response_model=list[MealCandidate])
+async def menu(
+    merchant_id: str,
+    request: Request,
+    session: Session = Depends(current_session),
+    provider: MockIFood = Depends(get_provider),
+):
+    if session.address is None:
+        raise MacroError("Selecione o endereço antes de ver o cardápio.", 422)
+    live_only(provider, "menu")
+    items = await provider.menu(merchant_id, session.address)
+
+    def update(s: Session):
+        s.menu_merchant_id = merchant_id
+        s.menu_item_ids = [i.item_id for i in items]
+
+    mutate_session(request, session, update)
+    return items
+
+
 @router.get("/items/{merchant_id}/{item_id}")
 async def item(
     merchant_id: str,
@@ -174,11 +275,8 @@ async def item(
     session: Session = Depends(current_session),
     provider: MockIFood = Depends(get_provider),
 ):
-    if not session.address or not any(
-        (r.candidate.merchant_id, r.candidate.item_id) == (merchant_id, item_id)
-        for r in session.recommendations
-    ):
-        raise MacroError("Escolha um item da busca atual.", 422)
+    if not session.address or not offered(session, merchant_id, item_id):
+        raise MacroError("Escolha um item da busca atual ou do cardápio aberto.", 422)
     return await provider.item(merchant_id, item_id, session.address)
 
 
@@ -188,19 +286,41 @@ async def selection(
     request: Request,
     session: Session = Depends(current_session),
     provider: MockIFood = Depends(get_provider),
+    settings: Settings = Depends(get_settings),
 ):
     editable(session)
-    if not session.address or not any(
-        (r.candidate.merchant_id, r.candidate.item_id) == (payload.merchant_id, payload.item_id)
-        for r in session.recommendations
-    ):
-        raise MacroError("Escolha um item da busca atual.", 422)
+    if not session.address or not offered(session, payload.merchant_id, payload.item_id):
+        raise MacroError("Escolha um item da busca atual ou do cardápio aberto.", 422)
     candidate = await provider.item(payload.merchant_id, payload.item_id, session.address)
     selected_item = select(candidate, payload)
+    # Prato montado: calcula as calorias com a descrição completa e as opções escolhidas.
+    selected_item = selected_item.model_copy(
+        update={"nutrition": await estimate_selected(selected_item, settings)}
+    )
 
     def update(s: Session):
         s.selected = selected_item
         s.summary = None
+
+    return mutate_session(request, session, update)
+
+
+@router.get("/selection/nutrition", response_model=Session)
+async def selection_nutrition(
+    request: Request,
+    session: Session = Depends(current_session),
+    settings: Settings = Depends(get_settings),
+):
+    """Atualiza a estimativa do prato escolhido quando ela ainda estava "pending"."""
+    if not session.selected or session.selected.nutrition.state != "pending":
+        return session
+    nutrition = await estimate_selected(session.selected, settings, aguardar=False)
+    if nutrition.state == "pending":
+        return session
+
+    def update(s: Session):
+        if s.selected and s.selected.nutrition.state == "pending":
+            s.selected = s.selected.model_copy(update={"nutrition": nutrition})
 
     return mutate_session(request, session, update)
 
