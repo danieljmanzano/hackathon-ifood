@@ -2,6 +2,8 @@
 import asyncio
 import json
 
+from pydantic import SecretStr
+
 from app.schemas.macro import MealIntent
 from app.services import busca_web
 from tests.nutricao_comum import settings
@@ -91,5 +93,5 @@ def test_desligado_ou_sem_chave_nao_pesquisa(monkeypatch, tmp_path):
     rodar(monkeypatch, tmp_path, Provedor([ABERTO()]), LLM(plano()), intent=_intent(pesquisar_na_web="x1"),
           busca_web_identificar=False)
     rodar(monkeypatch, tmp_path, Provedor([ABERTO()]), LLM(plano()), intent=_intent(pesquisar_na_web="x1"),
-          busca_web_identificar=True, gemini_api_key="")
+          busca_web_identificar=True, openai_api_key=SecretStr(""), gemini_api_key="")
     assert web.termos == []

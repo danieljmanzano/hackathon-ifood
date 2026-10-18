@@ -165,6 +165,16 @@ export interface Recommendation {
   reasons: string[];
   limitations: string[];
 }
+export interface Assembly {
+  id: string;
+  state: "running" | "ready" | "impossible" | "failed";
+  candidate: Candidate | null;
+  options: SelectedOption[];
+  quantity: number;
+  attempt: number;
+  events: string[];
+  message: string | null;
+}
 export interface SelectedOption {
   group_id: string;
   option_id: string;
@@ -243,7 +253,8 @@ export interface Order {
 }
 export interface Session {
   nutrition_search?: {id: string; state: "pending" | "complete"; tested: number; accepted: number; approximate?: number; batches: number; reason: string | null} | null;
-  last_chat_action?: "search" | "context" | null;
+  last_chat_action?: "search" | "context" | "assembly" | null;
+  assembly?: Assembly | null;
   request_intent?: MealIntent | null;
   id: string;
   mode: "mock" | "live";

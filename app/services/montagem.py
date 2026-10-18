@@ -32,6 +32,9 @@ from app.skills import montar_pedido
 log = logging.getLogger(__name__)
 TETOS = {"preço", "calorias", "carboidrato", "gordura"}  # só aumentam ao adicionar: o pedido base já os estoura = impossível
 MAX_QUANTIDADE = 5
+# Preferências do cliente entregues ao modelo, como texto. Valor fixo por enquanto: a feature de preferências
+# (gostos, aversões, restrições) vai trocar isto por um texto montado a partir do perfil.
+PREFERENCIAS_DO_CLIENTE = "Sem preferências registradas."
 _tarefas: dict[str, asyncio.Task] = {}
 
 
@@ -122,7 +125,7 @@ def _nutricao_para_o_modelo(n: NutritionResult) -> dict:
             "suposicoes": n.assumptions[:4], "evidencia": (n.evidence or "")[:300], "por_unidade": True}
 
 
-def _dados(candidate: MealCandidate, limites: AssemblyLimits, profile: UserProfile, base: dict, tentativas: list[dict]):
+def _dados(candidate: MealCandidate, limites: AssemblyLimits, base: dict, tentativas: list[dict]):
     n = limites.nutrition
     return {
         "prato": {"nome": candidate.name, "descricao": candidate.description[:300],
@@ -136,8 +139,7 @@ def _dados(candidate: MealCandidate, limites: AssemblyLimits, profile: UserProfi
             "calorias_maximas": n.max_calories, "proteina_minima_g": n.min_protein_g,
             "carboidrato_maximo_g": n.max_carbs_g, "gordura_maxima_g": n.max_fat_g,
             "objetivos": list(n.goals) or None}.items() if v is not None},
-        "preferencias": {"gosta": profile.preferences, "nao_gosta": profile.dislikes,
-                         "restricoes": profile.restrictions},
+        "preferencias": PREFERENCIAS_DO_CLIENTE,
         "quantidade_maxima": MAX_QUANTIDADE,
         "pedido_base": base,
         "tentativas": tentativas,
@@ -176,10 +178,18 @@ def _chave(selected: SelectedItem) -> str:
     return json.dumps([selected.quantity, sorted((o.group_id, o.option_id, o.quantity) for o in selected.options)])
 
 
+def _pronto(selecionado: SelectedItem, nutricao: NutritionResult, tentativa: int) -> Resultado:
+    return Resultado("ready", f"Pronto! Montei: {', '.join(selecionado.option_labels) or 'o prato como está'}"
+                              f"{f' × {selecionado.quantity} pratos' if selecionado.quantity > 1 else ''}. "
+                              f"{_resumo(selecionado, nutricao)} (estimativa). Confira e diga “continuar”.",
+                     options=selecionado.options, quantity=selecionado.quantity, nutrition=nutricao, attempt=tentativa)
+
+
 async def montar(settings: Settings, candidate: MealCandidate, limites: AssemblyLimits, profile: UserProfile,
                  extras_proibidos: list[str], emit: Callable[[str], None],
                  calcular: Callable[[SelectedItem], Awaitable[NutritionResult]],
-                 propor_fn=propor) -> Resultado:
+                 propor_fn=None) -> Resultado:
+    propor_fn = propor_fn or propor  # resolvido na chamada (os testes trocam `propor`)
     proibidas = _proibidas(profile, extras_proibidos)
     base_opcoes = pedido_base(candidate, proibidas)
     if base_opcoes is None:
@@ -207,26 +217,28 @@ async def montar(settings: Settings, candidate: MealCandidate, limites: Assembly
     ref = {"complementos": base.option_labels, "preco_reais": base.unit_total_cents / 100,
            "nutricao": _nutricao_para_o_modelo(n_base)}
     tentativas: list[dict] = []
-    vistas = {_chave(base)}
+    avaliados = {_chave(base): (base, n_base, quebras_base)}  # combinação -> (pedido, nutrição, o que quebrou)
     for tentativa in range(1, settings.montagem_max_tentativas + 1):
         emit(f"Tentativa {tentativa} de {settings.montagem_max_tentativas}: escolhendo complementos…")
         selecionado, erro = None, None
         for _ in range(2):  # uma correção se a proposta for inválida
             try:
-                resposta = await propor_fn(settings, _dados(candidate, limites, profile, ref, tentativas), erro)
+                resposta = await propor_fn(settings, _dados(candidate, limites, ref, tentativas), erro)
                 selecionado = _montar_selecao(candidate, resposta, proibidas)
                 break
-            except (AppError, ValueError, SchemaError, KeyError) as e:
+            except (AppError, MacroError, ValueError, SchemaError, KeyError) as e:
                 erro = getattr(e, "message", None) or str(e)
         if selecionado is None:
             return Resultado("failed", "Não consegui montar uma combinação válida. Monte o seu pedido pela tela.",
                              attempt=tentativa)
-        if _chave(selecionado) in vistas:
+        if _chave(selecionado) in avaliados:
+            antigo, n_antigo, q_antigo = avaliados[_chave(selecionado)]
+            if not q_antigo:  # já calculada e dentro dos limites (ex.: o próprio pedido base)
+                return _pronto(antigo, n_antigo, tentativa)
             tentativas.append({"complementos": selecionado.option_labels, "quantidade": selecionado.quantity,
                                "aviso": "combinação repetida; proponha outra diferente"})
             emit("Repeti uma combinação já avaliada; vou tentar outra.")
             continue
-        vistas.add(_chave(selecionado))
         emit(f"{resposta['motivo']} ({', '.join(selecionado.option_labels) or 'sem complementos'}"
              f"{f', {selecionado.quantity} pratos' if selecionado.quantity > 1 else ''}). Calculando a nutrição…")
         nutricao = await calcular(selecionado)
@@ -234,12 +246,9 @@ async def montar(settings: Settings, candidate: MealCandidate, limites: Assembly
             return Resultado("failed", "Não consegui calcular as calorias do que montei. Monte o seu pedido pela tela.",
                              attempt=tentativa)
         quebras = conferir(selecionado, nutricao, limites)
+        avaliados[_chave(selecionado)] = (selecionado, nutricao, quebras)
         if not quebras:
-            return Resultado("ready", f"Pronto! Montei: {', '.join(selecionado.option_labels) or 'o prato como está'}"
-                                      f"{f' × {selecionado.quantity} pratos' if selecionado.quantity > 1 else ''}. "
-                                      f"{_resumo(selecionado, nutricao)} (estimativa). Confira e diga “continuar”.",
-                             options=selecionado.options, quantity=selecionado.quantity, nutrition=nutricao,
-                             attempt=tentativa)
+            return _pronto(selecionado, nutricao, tentativa)
         emit(f"Não bateu: {'; '.join(q.texto for q in quebras)}.")
         tentativas.append({"complementos": selecionado.option_labels, "quantidade": selecionado.quantity,
                            "preco_reais": selecionado.unit_total_cents * selecionado.quantity / 100,

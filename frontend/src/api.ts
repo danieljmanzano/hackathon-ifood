@@ -82,6 +82,7 @@ export const api = {
   merchants: () => request<MerchantSummary[]>("/merchants"),
   menu: (merchantId: string) =>
     request<Candidate[]>(`/merchants/${encodeURIComponent(merchantId)}/menu`),
+  assembly: () => request<Session>("/assembly"),
   selectionNutrition: () => request<Session>("/selection/nutrition"),
   recommendationsNutrition: () =>
     request<Session>("/recommendations/nutrition"),

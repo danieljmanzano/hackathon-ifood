@@ -10,6 +10,7 @@ os.environ["IFOOD_MODE"] = "mock"  # os testes usam o catálogo fictício, qualq
 os.environ["CALORIAS_LOG"] = "off"
 os.environ["BUSCA_LOG_CONTEUDO"] = "false"  # o .env de desenvolvimento liga; os testes verificam o padrão privado
 os.environ["BUSCA_WEB_IDENTIFICAR"] = "false"  # sem rede nos testes; os testes da pesquisa ligam e trocam a busca por um dublê
+os.environ["CALORIAS_CLASSIFICAR"] = "false"  # sem chamada de rede a um provedor falso; test_classificar liga e usa dublê
 os.environ["BUSCA_LOG"] = "off"
 
 
