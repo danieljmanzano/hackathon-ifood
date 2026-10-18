@@ -78,7 +78,7 @@ class CatalogStore:
                        (state, reason, time.time()+delay, int(attempted), key))
 
     def reserve(self, product, max_calls, max_products, per_product):
-        """Reserva ANTES do HTTP: erros, retries e fallback também consomem a cota."""
+        """Reserva ANTES do HTTP: erros, retries e fallback também consomem a cota. max_calls/max_products None = sem limite."""
         day = self.day()
         with self.connection() as db:
             db.execute('BEGIN IMMEDIATE')
@@ -86,7 +86,8 @@ class CatalogStore:
             usage = db.execute('SELECT * FROM nutrition_usage WHERE day=?', (day,)).fetchone()
             row = db.execute('SELECT calls FROM nutrition_product_usage WHERE day=? AND product=?', (day, product)).fetchone()
             calls = row['calls'] if row else 0
-            if usage['calls'] >= max_calls or (not row and usage['products'] >= max_products):
+            if (max_calls is not None and usage['calls'] >= max_calls) or (
+                    max_products is not None and not row and usage['products'] >= max_products):
                 return 'daily_limit'
             if calls >= per_product:
                 return 'product_limit'

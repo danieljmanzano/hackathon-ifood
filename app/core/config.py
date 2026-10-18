@@ -111,9 +111,10 @@ class Settings(BaseSettings):
     # Catálogo real: enriquecimento incremental e orçamento persistido (independente da busca).
     catalog_enrichment_enabled: bool = True
     catalog_products_per_search: int = Field(default=3, ge=0, le=10)
-    catalog_products_per_day: int = Field(default=20, ge=0)
+    # Limites diários: None = sem limite (padrão). Um número reativa o limite; 0 bloqueia o enriquecimento.
+    catalog_products_per_day: int | None = Field(default=None, ge=0)
     catalog_calls_per_product: int = Field(default=8, ge=0, le=30)
-    catalog_calls_per_day: int = Field(default=60, ge=0)
+    catalog_calls_per_day: int | None = Field(default=None, ge=0)
     catalog_max_output_tokens: int = Field(default=1800, ge=256, le=8000)
     catalog_max_input_chars: int = Field(default=24000, ge=1000, le=100000)
     catalog_retry_seconds: int = Field(default=900, ge=1)
