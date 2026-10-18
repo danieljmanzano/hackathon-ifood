@@ -114,6 +114,11 @@ export default function App() {
   const [toast, setToast] = useState("");
   const [text, setText] = useState("");
   const [detail, setDetail] = useState<Candidate | null>(null);
+  // A janela do prato abre com os dados do card; descrição e opções chegam depois do iFood.
+  const [detailState, setDetailState] = useState<"loading" | "ready" | "error">(
+    "ready",
+  );
+  const detailRequest = useRef(0);
   const [recommendation, setRecommendation] = useState<Recommendation | null>(
     null,
   );
@@ -284,14 +289,61 @@ export default function App() {
     return () => clearInterval(timer);
   }, [selectedNutritionState, session?.selected?.candidate.item_id]);
 
+  // A busca responde antes das calorias: consulta até todas as recomendações ficarem prontas.
+  const pendingRecommendations =
+    session?.recommendations
+      .filter((r) => r.nutrition.state === "pending")
+      .map((r) => `${r.candidate.merchant_id}/${r.candidate.item_id}`)
+      .join(",") ?? "";
+  useEffect(() => {
+    if (!pendingRecommendations) return;
+    let tries = 0;
+    const timer = window.setInterval(async () => {
+      tries += 1;
+      try {
+        const next = await api.recommendationsNutrition();
+        const stillPending = next.recommendations
+          .filter((r) => r.nutrition.state === "pending")
+          .map((r) => `${r.candidate.merchant_id}/${r.candidate.item_id}`)
+          .join(",");
+        if (stillPending !== pendingRecommendations) {
+          setSession(next);
+          clearInterval(timer);
+        }
+      } catch {
+        // Tenta de novo no próximo ciclo; os pratos continuam selecionáveis.
+      }
+      if (tries >= 30) clearInterval(timer);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [pendingRecommendations]);
+
   async function choose(candidate: Candidate, rec: Recommendation | null) {
-    const item = await perform(() => api.item(candidate));
-    if (item) {
+    if (busy || loading) return;
+    setDetail(candidate);
+    setRecommendation(rec);
+    setOptions([]);
+    setQuantity(1);
+    open("item");
+    await loadDetail(candidate);
+  }
+  async function loadDetail(candidate: Candidate) {
+    // Ignora respostas atrasadas de um prato que o usuário já trocou ou fechou.
+    const request = ++detailRequest.current;
+    setDetailState("loading");
+    try {
+      const item = await api.item(candidate);
+      if (detailRequest.current !== request) return;
       setDetail(item);
-      setRecommendation(rec);
-      setOptions([]);
-      setQuantity(1);
-      open("item");
+      setDetailState("ready");
+    } catch (e) {
+      if (detailRequest.current !== request) return;
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Não foi possível carregar as opções deste prato.",
+      );
+      setDetailState("error");
     }
   }
   function updateOption(groupId: string, optionId: string, count: number) {
@@ -1755,10 +1807,32 @@ export default function App() {
             <div>
               <span className="merchant">{detail.merchant_name}</span>
               <h3>{detail.name}</h3>
-              <p>{detail.description}</p>
+              {detailState === "loading" ? (
+                <p className="muted">Carregando a descrição do restaurante…</p>
+              ) : (
+                <p>{detail.description}</p>
+              )}
               <strong>{money(detail.price_cents)}</strong>
             </div>
           </div>
+          {detailState === "loading" && (
+            <div className="detail-loading">
+              <Spinner text="Buscando as opções no iFood…" />
+            </div>
+          )}
+          {detailState === "error" && (
+            <div className="detail-loading">
+              <p className="muted">
+                Não conseguimos carregar as opções deste prato.
+              </p>
+              <button
+                className="secondary-button"
+                onClick={() => void loadDetail(detail)}
+              >
+                Tentar de novo
+              </button>
+            </div>
+          )}
           <div className="option-groups">
             {detail.option_groups.map((group) => (
               <fieldset key={group.id}>
@@ -1913,7 +1987,7 @@ export default function App() {
             />
             <button
               className="primary-button"
-              disabled={!validOptions || busy}
+              disabled={!validOptions || busy || detailState !== "ready"}
               onClick={() => void addSelection()}
             >
               {busy ? (
@@ -1974,6 +2048,8 @@ export default function App() {
                       session.selected!.candidate.item_id,
                   );
                   if (rec) {
+                    detailRequest.current += 1;
+                    setDetailState("ready");
                     setDetail(session.selected!.candidate);
                     setRecommendation(rec);
                     setQuantity(session.selected!.quantity);

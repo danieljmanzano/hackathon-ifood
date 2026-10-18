@@ -11,12 +11,21 @@ import json
 import logging
 from datetime import datetime, timezone
 
+import httpx
 from jsonschema import ValidationError as SchemaError
 from pydantic import ValidationError
 
 from app.core.config import Settings
 from app.core.exceptions import AppError
 from app.schemas.macro import MealCandidate, NutritionResult, Recommendation, SelectedItem
+from .llm import LLMError, OpenAIBackend, OpenRouterBackend, criar_backend
+from .prompts import INSTRUCOES_BUSCA, INSTRUCOES_ESTIMATIVA, SCHEMA_BUSCA, SCHEMA_ESTIMATIVA
+
+Backend = OpenAIBackend | OpenRouterBackend
+
+PIPELINE_VERSION = "calorias-v1"
+CONFIANCA = {"baixa": "low", "media": "medium", "alta": "high"}
+RESTAURANTES_INVALIDOS = {"", "não informado", "nao informado", "desconhecido", "n/a", "na", "null", "none", "-"}
 from .etapas.estimar import EstimativaInvalida
 from .pipeline import PIPELINE_VERSION, calcular
 from .produtos import chave_produto, repositorio
@@ -28,6 +37,14 @@ log = logging.getLogger(__name__)
 # Resultados prontos por item; estimativas que passam do prazo da resposta terminam aqui em segundo plano.
 _cache: dict[str, NutritionResult] = {}
 _em_andamento: dict[str, asyncio.Task] = {}
+_limites: dict[int, asyncio.Semaphore] = {}  # estimativas simultâneas por loop (limite de uso do provedor)
+
+
+def _semaforo(settings: Settings) -> asyncio.Semaphore:
+    loop = id(asyncio.get_running_loop())
+    if loop not in _limites:
+        _limites[loop] = asyncio.Semaphore(settings.nutrition_concurrency)
+    return _limites[loop]
 
 
 def _agora() -> datetime:
@@ -95,21 +112,29 @@ def _com_nutricao(rec: Recommendation, nutricao: NutritionResult) -> Recommendat
 async def enrich_recommendations(recommendations: list[Recommendation], settings: Settings) -> list[Recommendation]:
     """Preenche a nutrição das recomendações sem passar do prazo da resposta HTTP.
 
-    O que não termina a tempo volta como "pending" e continua em segundo plano, indo para o cache:
-    a próxima busca pelo mesmo item já recebe o resultado.
+    O que não termina a tempo volta como "pending" e continua em segundo plano, indo para o cache;
+    refresh_recommendations entrega o resultado quando ficar pronto.
     """
     if not pipeline_disponivel(settings) or not recommendations:
         return [_com_nutricao(r, await estimate_nutrition(r.candidate, settings)) for r in recommendations]
 
-    limite = asyncio.Semaphore(settings.nutrition_concurrency)
 
     async def uma(candidate: MealCandidate) -> NutritionResult:
         async with limite:
             return await estimate_nutrition(candidate, settings)
 
-    tarefas = [_tarefa(rec.candidate, lambda c=rec.candidate: uma(c)) for rec in recommendations]
-    await asyncio.wait(tarefas, timeout=settings.nutrition_response_budget_seconds)
-    return [_com_nutricao(rec, _estado_da_tarefa(t)) for rec, t in zip(recommendations, tarefas)]
+    Se o cálculo se perdeu (ex.: o servidor reiniciou), ele é iniciado de novo em segundo plano.
+    """
+    client = client or criar_cliente(settings)
+    atualizadas = []
+    for rec in recommendations:
+        if rec.nutrition.state != "pending" or client is None:
+            atualizadas.append(rec)
+            continue
+        chave = _chave(rec.candidate, None)
+        nutricao = _cache.get(chave) or _estado_da_tarefa(_iniciar(rec, settings, client))
+        atualizadas.append(_com_nutricao(rec, nutricao))
+    return atualizadas
 
 
 async def estimate_selected(selected: SelectedItem, settings: Settings, aguardar: bool = True) -> NutritionResult:
