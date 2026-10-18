@@ -41,6 +41,35 @@ class Address(Model):
     longitude: float = Field(ge=-180, le=180, allow_inf_nan=False)
 
 
+ShortText = Annotated[str, Field(max_length=200, strip_whitespace=True)]
+
+
+class GeocodeInput(Model):
+    address: Annotated[str, Field(min_length=5, max_length=300, strip_whitespace=True)]
+
+
+class AddressCandidate(Model):
+    candidate_id: str
+    formatted: str
+    neighborhood: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+
+
+class GeocodeResult(Model):
+    match: Literal["SINGLE", "MULTIPLE"]
+    candidates: list[AddressCandidate]
+
+
+class CreateAddressInput(Model):
+    address: Annotated[str, Field(min_length=5, max_length=300, strip_whitespace=True)]
+    candidate_id: Annotated[str, Field(min_length=1, max_length=200)]
+    neighborhood: ShortText = ""
+    complement: ShortText = ""
+    reference: ShortText = ""
+    alias: Literal["", "CASA", "TRABALHO"] = ""
+
+
 class Option(Model):
     id: str
     name: str
@@ -210,6 +239,11 @@ class Message(Model):
     text: str
 
 
+class AddressCreated(Model):
+    session: "Session"
+    addresses: list[Address]
+
+
 class Session(Model):
     id: str = Field(default_factory=lambda: str(uuid4()))
     mode: Literal["mock", "live"]
@@ -224,3 +258,6 @@ class Session(Model):
     # Cardápio aberto pelo usuário: libera abrir e escolher esses itens, como as recomendações.
     menu_merchant_id: str | None = None
     menu_item_ids: list[str] = Field(default_factory=list)
+
+
+AddressCreated.model_rebuild()

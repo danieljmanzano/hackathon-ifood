@@ -4498,3 +4498,42 @@ select {
     grid-template-columns: 1fr;
   }
 }
+
+/* Cadastro de endereço */
+.new-address-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+}
+.new-address {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.new-address .form-field:first-child {
+  margin-top: 0;
+}
+.new-address .address-choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.new-address .address-choice {
+  position: relative;
+  cursor: pointer;
+}
+.new-address-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+@media (max-width: 640px) {
+  .new-address .form-columns {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}

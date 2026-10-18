@@ -1,5 +1,6 @@
 from ..errors import MacroError
-from ..schemas import Address, DeliveryChoice, MealCandidate, MerchantSummary, Option, OptionGroup, PaymentChoice
+from ..schemas import (Address, AddressCandidate, CreateAddressInput, DeliveryChoice, GeocodeResult, MealCandidate,
+                       MerchantSummary, Option, OptionGroup, PaymentChoice)
 
 
 def catalog() -> list[MealCandidate]:
@@ -22,9 +23,26 @@ def catalog() -> list[MealCandidate]:
 class MockIFood:
     simulated = True
 
+    def __init__(self):
+        self._addresses = [Address(id="demo-address", label="Casa de demonstração",
+                                   formatted="Rua Exemplo, 100 — endereço fictício", latitude=-22.0, longitude=-47.9)]
+
     async def addresses(self):
-        return [Address(id="demo-address", label="Casa de demonstração", formatted="Rua Exemplo, 100 — endereço fictício",
-                        latitude=-22.0, longitude=-47.9)]
+        return list(self._addresses)
+
+    async def geocode(self, address: str):
+        if "inexistente" in address.lower():
+            raise MacroError("Não encontrei esse endereço. Confira rua, número e cidade e tente de novo.", 422)
+        return GeocodeResult(match="SINGLE", candidates=[AddressCandidate(
+            candidate_id=f"demo-candidate-{len(self._addresses)}", formatted=f"{address} — endereço fictício",
+            neighborhood="Centro", latitude=-22.01, longitude=-47.89)])
+
+    async def create_address(self, payload: CreateAddressInput):
+        new = Address(id=f"demo-address-{len(self._addresses)}", label=payload.alias.title() or "Endereço salvo",
+                      formatted=f"{payload.address}{', ' + payload.complement if payload.complement else ''} — fictício",
+                      latitude=-22.01, longitude=-47.89)
+        self._addresses.append(new)
+        return new.id
 
     async def search(self, query: str, address: Address, budget_cents: int | None):
         return catalog()

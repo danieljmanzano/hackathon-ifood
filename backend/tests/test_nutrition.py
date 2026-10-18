@@ -189,3 +189,20 @@ def test_prato_lento_fica_pending_e_atualiza_depois(tmp_path, monkeypatch):
         import time
         time.sleep(0.8)
         assert http.get("/api/selection/nutrition").json()["selected"]["nutrition"]["state"] == "ready"
+
+
+def test_cadastra_endereco_em_duas_etapas_e_seleciona(tmp_path, monkeypatch):
+    with TestClient(_app(tmp_path, monkeypatch, fake())) as http:
+        http.get("/api/session")
+        assert http.post("/api/addresses/geocode", json={"address": "Rua inexistente 1"}).status_code == 422
+        achado = http.post("/api/addresses/geocode", json={"address": "Rua Nova, 10, Campinas"}).json()
+        assert achado["match"] == "SINGLE" and achado["candidates"][0]["neighborhood"] == "Centro"
+        resposta = http.post("/api/addresses", json={"address": "Rua Nova, 10, Campinas",
+                                                     "candidate_id": achado["candidates"][0]["candidate_id"],
+                                                     "complement": "apto 3", "alias": "CASA"})
+        assert resposta.status_code == 200, resposta.text
+        corpo = resposta.json()
+        assert len(corpo["addresses"]) == 2
+        assert corpo["session"]["address"]["label"] == "Casa" and "apto 3" in corpo["session"]["address"]["formatted"]
+        assert http.post("/api/addresses", json={"address": "Rua Nova, 10", "candidate_id": "x",
+                                                 "alias": "PRAIA"}).status_code == 422  # apelido fora do permitido

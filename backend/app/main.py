@@ -12,7 +12,8 @@ from .errors import MacroError
 from .ifood.mcp import MCPIFood
 from .ifood.mock import MockIFood
 from .nutrition import enrich_recommendations, estimate_selected
-from .schemas import (CheckoutInput, CheckoutSummary, ConfirmationInput, MealCandidate, MealRequest, MerchantSummary,
+from .schemas import (AddressCreated, CheckoutInput, CheckoutSummary, ConfirmationInput, CreateAddressInput,
+                      GeocodeInput, GeocodeResult, MealCandidate, MealRequest, MerchantSummary,
                       Message, OrderRecord, SelectionInput, Session, UserProfile)
 from .storage.database import Database
 
@@ -87,6 +88,28 @@ def create_app(settings: Settings | None = None, provider=None) -> FastAPI:
     async def addresses(request: Request):
         current(request)
         return await provider.addresses()
+
+    @app.post("/api/addresses/geocode", response_model=GeocodeResult)
+    async def geocode(payload: GeocodeInput, request: Request):
+        """Etapa 1 do cadastro: localiza o endereço digitado. Nada é salvo ainda."""
+        editable(current(request))
+        return await provider.geocode(payload.address)
+
+    @app.post("/api/addresses", response_model=AddressCreated)
+    async def create_address(payload: CreateAddressInput, request: Request):
+        """Etapa 2: salva o candidato confirmado na conta e já o seleciona para a entrega."""
+        snapshot = current(request)
+        editable(snapshot)
+        before = {a.id for a in await provider.addresses()}
+        new_id = await provider.create_address(payload)
+        addresses = await provider.addresses()
+        created = next((a for a in addresses if a.id == new_id), None) or next(
+            (a for a in addresses if a.id not in before), None)
+        if created is None:
+            raise MacroError("Endereço salvo no iFood, mas ainda não apareceu na lista. Recarregue os endereços.", 502)
+        def update(s):
+            s.address, s.selected, s.summary, s.recommendations = created, None, None, []
+        return AddressCreated(session=mutate(snapshot, update), addresses=addresses)
 
     @app.put("/api/session/address", response_model=Session)
     async def set_address(payload: AddressInput, request: Request):

@@ -53,8 +53,10 @@ import type {
   Candidate,
   CheckoutChoices,
   Consumption,
+  GeocodeResult,
   Health,
   MerchantSummary,
+  NewAddress,
   Profile,
   Recommendation,
   SelectedOption,
@@ -1682,6 +1684,22 @@ export default function App() {
                 </button>
               </div>
             )}
+            <NewAddressForm
+              busy={busy}
+              disabled={busy || !!session?.order}
+              onGeocode={(address) => perform(() => api.geocode(address))}
+              onCreate={async (payload) => {
+                const created = await perform(() => api.createAddress(payload));
+                if (!created) return false;
+                setAddresses(created.addresses);
+                setSession(created.session);
+                setDialog(null);
+                setToast(
+                  "Endereço salvo na sua conta do iFood e selecionado para a entrega.",
+                );
+                return true;
+              }}
+            />
             <p className="small muted">
               Trocar o endereço limpa a busca e o carrinho para consultar a
               disponibilidade novamente.
@@ -2451,5 +2469,197 @@ function ProfileForm({
         </div>
       </form>
     </>
+  );
+}
+
+/** Cadastro em duas etapas do iFood: localizar o endereço e depois confirmar o local com os detalhes. */
+function NewAddressForm({
+  busy,
+  disabled,
+  onGeocode,
+  onCreate,
+}: {
+  busy: boolean;
+  disabled: boolean;
+  onGeocode: (address: string) => Promise<GeocodeResult | undefined>;
+  onCreate: (payload: NewAddress) => Promise<boolean>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const [result, setResult] = useState<GeocodeResult | null>(null);
+  const [candidateId, setCandidateId] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
+  const [complement, setComplement] = useState("");
+  const [reference, setReference] = useState("");
+  const [alias, setAlias] = useState<NewAddress["alias"]>("");
+
+  function reset() {
+    setOpen(false);
+    setText("");
+    setResult(null);
+    setCandidateId("");
+    setNeighborhood("");
+    setComplement("");
+    setReference("");
+    setAlias("");
+  }
+  function pick(id: string, found: GeocodeResult) {
+    setCandidateId(id);
+    setNeighborhood(
+      found.candidates.find((c) => c.candidate_id === id)?.neighborhood || "",
+    );
+  }
+  async function search(e: FormEvent) {
+    e.preventDefault();
+    if (text.trim().length < 5) return;
+    const found = await onGeocode(text.trim());
+    if (!found) return;
+    setResult(found);
+    if (found.candidates.length) pick(found.candidates[0].candidate_id, found);
+  }
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    if (!candidateId || !neighborhood.trim()) return;
+    const ok = await onCreate({
+      address: text.trim(),
+      candidate_id: candidateId,
+      neighborhood: neighborhood.trim(),
+      complement: complement.trim(),
+      reference: reference.trim(),
+      alias,
+    });
+    if (ok) reset();
+  }
+
+  if (!open)
+    return (
+      <button
+        className="secondary-button new-address-toggle"
+        disabled={disabled}
+        onClick={() => setOpen(true)}
+      >
+        <Plus size={15} />
+        Adicionar novo endereço
+      </button>
+    );
+
+  return (
+    <div className="new-address">
+      <form onSubmit={(e) => void search(e)}>
+        <label className="form-field">
+          Novo endereço
+          <input
+            autoFocus
+            maxLength={300}
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value);
+              setResult(null);
+              setCandidateId("");
+            }}
+            placeholder="Rua, número, cidade e estado"
+            disabled={busy}
+          />
+          <small>Ex.: Avenida Paulista, 1578, São Paulo, SP</small>
+        </label>
+        {!result && (
+          <div className="new-address-actions">
+            <button type="button" className="secondary-button" onClick={reset}>
+              Cancelar
+            </button>
+            <button
+              className="primary-button"
+              disabled={disabled || text.trim().length < 5}
+            >
+              {busy ? <Spinner text="Procurando…" /> : "Buscar endereço"}
+            </button>
+          </div>
+        )}
+      </form>
+      {result && (
+        <form onSubmit={(e) => void save(e)}>
+          <p className="small muted">
+            {result.match === "MULTIPLE"
+              ? "Encontramos mais de um local. Escolha o certo:"
+              : "Confira o local encontrado:"}
+          </p>
+          <div className="address-list">
+            {result.candidates.map((c) => (
+              <label
+                key={c.candidate_id}
+                className={`address-choice ${candidateId === c.candidate_id ? "selected" : ""}`}
+              >
+                <input
+                  type="radio"
+                  name="address-candidate"
+                  checked={candidateId === c.candidate_id}
+                  onChange={() => pick(c.candidate_id, result)}
+                />
+                <MapPin size={22} />
+                <span>
+                  <strong>{c.formatted}</strong>
+                </span>
+              </label>
+            ))}
+          </div>
+          <div className="form-columns">
+            <label className="form-field">
+              Bairro
+              <input
+                required
+                maxLength={200}
+                value={neighborhood}
+                onChange={(e) => setNeighborhood(e.target.value)}
+                placeholder="Obrigatório"
+              />
+            </label>
+            <label className="form-field">
+              Complemento
+              <input
+                maxLength={200}
+                value={complement}
+                onChange={(e) => setComplement(e.target.value)}
+                placeholder="Apto, bloco, sala…"
+              />
+            </label>
+            <label className="form-field">
+              Ponto de referência
+              <input
+                maxLength={200}
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                placeholder="Portão azul, perto da padaria…"
+              />
+            </label>
+            <label className="form-field">
+              Apelido
+              <select
+                value={alias}
+                onChange={(e) => setAlias(e.target.value as NewAddress["alias"])}
+              >
+                <option value="">Sem apelido</option>
+                <option value="CASA">Casa</option>
+                <option value="TRABALHO">Trabalho</option>
+              </select>
+            </label>
+          </div>
+          <p className="small muted">
+            O endereço fica salvo na sua conta do iFood. Algumas regiões exigem
+            complemento e ponto de referência.
+          </p>
+          <div className="new-address-actions">
+            <button type="button" className="secondary-button" onClick={reset}>
+              Cancelar
+            </button>
+            <button
+              className="primary-button"
+              disabled={disabled || !candidateId || !neighborhood.trim()}
+            >
+              {busy ? <Spinner text="Salvando…" /> : "Salvar e entregar aqui"}
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
   );
 }

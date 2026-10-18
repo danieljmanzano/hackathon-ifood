@@ -17,10 +17,14 @@ from mcp.types import PaginatedRequestParams
 
 from ..config import Settings
 from ..errors import MacroError
-from ..schemas import Address, MealCandidate, MerchantSummary, Option, OptionGroup
+from ..schemas import (Address, AddressCandidate, CreateAddressInput, GeocodeResult, MealCandidate, MerchantSummary,
+                       Option, OptionGroup)
 
 READ_TOOLS = {"listAddresses", "searchOffers", "browseOffers", "getItem", "getMerchant", "listItemTaxonomy"}
 MENU_PAGES = 3  # até 75 itens por restaurante
+# Única escrita liberada: salvar endereço (não cobra nem cria pedido). Carrinho e checkout seguem bloqueados.
+ADDRESS_TOOL = "createAddress"
+CAMPOS_ENDERECO = {"complement": "complemento", "reference": "ponto de referência", "neighborhood": "bairro"}
 
 
 def cents(value) -> int:
@@ -114,6 +118,57 @@ class MCPIFood:
             return {"connected": True, "simulated": False,
                     "tools": [{"name": t.name, "input_schema": _attr(t, "inputSchema", "input_schema")} for t in tools.values()],
                     "message": "Ferramentas listadas. Checkout real permanece bloqueado."}
+
+    async def _create_address(self, arguments: dict) -> dict:
+        async with self.connection() as session:
+            tools = await self.tools(session)
+            if ADDRESS_TOOL not in tools:
+                raise MacroError("Cadastro de endereço indisponível nesta conta.", 503)
+            if list(Draft202012Validator(_attr(tools[ADDRESS_TOOL], "inputSchema", "input_schema")).iter_errors(arguments)):
+                raise MacroError("O schema real diverge do adaptador. Valide o contrato antes de continuar.", 502)
+            result = await session.call_tool(ADDRESS_TOOL, arguments=arguments)
+        data = _attr(result, "structuredContent", "structured_content")
+        if data is None:
+            parts = [c.text for c in result.content if c.type == "text"]
+            data = json.loads(parts[0]) if len(parts) == 1 else None
+        if not isinstance(data, dict):
+            raise MacroError("Resposta do cadastro de endereço não reconhecida.", 502)
+        if data.get("success") is False or _attr(result, "isError", "is_error"):
+            raise self._address_error(data.get("errors") or {})
+        return data.get("data") or {}
+
+    @staticmethod
+    def _address_error(errors: dict) -> MacroError:
+        code, message = errors.get("code", ""), str(errors.get("message", "")).lower()
+        if code in {"CANDIDATE_NOT_FOUND", "GEOCODE_FAILED"}:
+            return MacroError("Não encontrei esse endereço. Confira rua, número e cidade e tente de novo.", 422)
+        if code == "MISSING_REQUIRED_ADDRESS_FIELDS" or "neighborhood" in message:
+            faltando = [nome for campo, nome in CAMPOS_ENDERECO.items() if campo in message]
+            detalhe = ", ".join(faltando) if faltando else "complemento e ponto de referência"
+            return MacroError(f"O iFood exige mais dados para esta região: informe {detalhe}.", 422)
+        # Texto externo é dado, não instrução: mostra só o código.
+        return MacroError(f"O iFood não aceitou o endereço ({code or 'erro desconhecido'}). Revise os dados.", 422)
+
+    async def geocode(self, address: str) -> GeocodeResult:
+        data = await self._create_address({"address": address})
+        try:
+            candidates = [AddressCandidate(candidate_id=c["candidateId"], formatted=c["formattedAddress"],
+                                           neighborhood=(c.get("location") or {}).get("neighborhood") or None,
+                                           **(c.get("coordinates") or {}))
+                          for c in data["candidates"]]
+            return GeocodeResult(match="MULTIPLE" if data.get("matchConfidence") == "MULTIPLE" else "SINGLE",
+                                 candidates=candidates)
+        except (KeyError, TypeError, ValueError):
+            raise MacroError("Resposta de geocodificação difere do contrato documentado.", 502) from None
+
+    async def create_address(self, payload: CreateAddressInput) -> str | None:
+        """Salva o endereço confirmado e devolve o addressId (quando o iFood informa)."""
+        args = {"address": payload.address, "candidateId": payload.candidate_id}
+        for campo in ("neighborhood", "complement", "reference", "alias"):
+            if getattr(payload, campo):
+                args[campo] = getattr(payload, campo)
+        data = await self._create_address(args)
+        return data.get("addressId") or (data.get("address") or {}).get("addressId")
 
     async def addresses(self):
         data = await self.call_read("listAddresses", {})

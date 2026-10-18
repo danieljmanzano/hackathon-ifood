@@ -13,6 +13,25 @@ export interface Address {
   latitude: number;
   longitude: number;
 }
+export interface AddressCandidate {
+  candidate_id: string;
+  formatted: string;
+  neighborhood: string | null;
+  latitude: number | null;
+  longitude: number | null;
+}
+export interface GeocodeResult {
+  match: "SINGLE" | "MULTIPLE";
+  candidates: AddressCandidate[];
+}
+export interface NewAddress {
+  address: string;
+  candidate_id: string;
+  neighborhood: string;
+  complement: string;
+  reference: string;
+  alias: "" | "CASA" | "TRABALHO";
+}
 export interface Option {
   id: string;
   name: string;
