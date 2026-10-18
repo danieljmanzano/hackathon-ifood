@@ -13,6 +13,16 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
     cors_origins: list[str] = ["*"]
 
+    openrouter_api_key: str = ""
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    openrouter_model: str = "google/gemma-4-31b-it:free"
+    openrouter_fallback_models: list[str] = [
+        "nvidia/nemotron-3-super-120b-a12b:free",
+        "google/gemma-4-26b-a4b-it:free",
+        "openrouter/free",
+    ]
+    openrouter_timeout: float = 60.0
+
     ifood_mcp_url: str = "https://consumer-mcp.ifood.com.br/marketplace"
     ifood_client_id: str = ""
     ifood_client_secret: str = ""

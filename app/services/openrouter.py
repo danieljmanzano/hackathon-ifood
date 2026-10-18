@@ -1,0 +1,61 @@
+from typing import Any
+
+import httpx
+
+from app.core.config import Settings, get_settings
+from app.core.exceptions import AppError
+
+Message = dict[str, Any]
+
+# Erros em que vale tentar o próximo modelo (limite, modelo removido, falha do provedor).
+RETRYABLE_STATUS = {404, 408, 429, 500, 502, 503, 504}
+
+
+class OpenRouterError(AppError):
+    def __init__(self, message: str, status_code: int = 502):
+        super().__init__(message, status_code=status_code, code="openrouter_error")
+
+
+async def chat_completion(
+    messages: list[Message],
+    *,
+    model: str | None = None,
+    temperature: float = 0.2,
+    max_tokens: int | None = None,
+    settings: Settings | None = None,
+) -> str:
+    """Chama o OpenRouter (API compatível com OpenAI), com fallback entre modelos. Retorna o texto."""
+    settings = settings or get_settings()
+    if not settings.openrouter_api_key:
+        raise OpenRouterError("OPENROUTER_API_KEY não configurada", status_code=500)
+
+    models = [model or settings.openrouter_model, *settings.openrouter_fallback_models]
+    errors: list[str] = []
+
+    async with httpx.AsyncClient(base_url=settings.openrouter_base_url, timeout=settings.openrouter_timeout) as client:
+        for current in dict.fromkeys(models):
+            payload: dict[str, Any] = {"model": current, "messages": messages, "temperature": temperature}
+            if max_tokens is not None:
+                payload["max_tokens"] = max_tokens
+            try:
+                response = await client.post(
+                    "/chat/completions",
+                    json=payload,
+                    headers={"Authorization": f"Bearer {settings.openrouter_api_key}"},
+                )
+            except httpx.HTTPError as exc:
+                errors.append(f"{current}: rede ({exc})")
+                continue
+
+            if response.status_code == 200:
+                try:
+                    return response.json()["choices"][0]["message"]["content"] or ""
+                except (KeyError, IndexError, ValueError):
+                    errors.append(f"{current}: resposta inesperada")
+                    continue
+
+            errors.append(f"{current}: {response.status_code} {response.text[:150]}")
+            if response.status_code not in RETRYABLE_STATUS:
+                break
+
+    raise OpenRouterError("Todos os modelos falharam:\n" + "\n".join(errors))
