@@ -6,7 +6,7 @@ from app.core.nutrition_budget import Budget, current_budget
 from app.domain import rank
 from app.schemas.macro import MealCandidate, MealRequest, NutritionResult
 from app.services.catalog_enrichment import job_key
-from app.services.nutrition_preferences import meets_explicit_limits
+from app.services.nutrition_preferences import LABELS, meets_explicit_limits
 from app.storage.catalog import CatalogStore
 from app.storage.database import Database
 
@@ -14,8 +14,8 @@ log = logging.getLogger(__name__)
 BATCH_SIZE = 3
 MAX_CANDIDATES = 15
 # Referências de comparação do motor, não metas prescritas ao usuário.
-QUALITATIVE = {'high_protein': ('protein_g', 30, True), 'low_carb': ('carbs_g', 40, False),
-               'low_fat': ('fat_g', 20, False), 'low_calorie': ('calories', 500, False)}
+QUALITATIVE = {'high_protein': ('protein_g', 30, 20, True), 'low_carb': ('carbs_g', 40, 65, False),
+               'low_fat': ('fat_g', 20, 30, False), 'low_calorie': ('calories', 500, 700, False)}
 
 
 def identity(candidate):
@@ -26,9 +26,9 @@ def qualifies(nutrition, preferences):
     if nutrition.state != 'ready' or meets_explicit_limits(nutrition, preferences) is not True:
         return False
     for goal in preferences.goals:
-        metric, reference, higher = QUALITATIVE[goal]
+        metric, reference, broad, higher = QUALITATIVE[goal]
         value = getattr(nutrition, metric)
-        if value is None or (value < reference if higher else value > reference):
+        if value is None or (value < broad if higher else value > broad):
             return False
     return True
 
@@ -61,12 +61,7 @@ def ordered(session, payload, candidates, settings, db, *, nutrition=None, ignor
                 strict_nutrition=not ignore, ignore_nutrition=ignore)
 
 
-def message(tested, accepted, complete, reason):
-    progress = f'Avaliei {tested} de até 15 candidatos; {accepted} atendem aos critérios nutricionais.'
-    if not complete:
-        return progress + ' Estou avaliando mais opções em lotes de três.'
-    if reason == 'target_reached':
-        return progress + ' Escolha uma das três opções abaixo. Os valores nutricionais são estimativas.'
+def message(tested, accepted, complete, reason, approximate=0):
     endings = {
         'limit_reached': 'Atingi o limite de 15 candidatos.',
         'catalog_exhausted': 'Não há mais opções disponíveis com os outros filtros.',
@@ -75,9 +70,19 @@ def message(tested, accepted, complete, reason):
         'source_error': 'Não consegui consultar mais opções no catálogo agora.',
         'error': 'Não consegui concluir a avaliação nutricional agora.',
     }
+    if approximate:
+        return (f'Avaliei {tested} de até 15 candidatos e não encontrei correspondência nutricional verificada. '
+                f'{endings.get(reason, "")} Trouxe {approximate} alternativas mais próximas: a certeza da adequação é baixa. '
+                'Elas podem não satisfazer seus termos subjetivos; confira as estimativas e as limitações de cada opção. '
+                'Limites numéricos explícitos foram mantidos.')
+    progress = f'Avaliei {tested} de até 15 candidatos; {accepted} atendem aos critérios nutricionais.'
+    if not complete:
+        return progress + ' Estou avaliando mais opções em lotes de três.'
+    if reason == 'target_reached':
+        return progress + ' Escolha uma das três opções abaixo. Os valores nutricionais são estimativas.'
     return progress + ' ' + endings.get(reason, '') + (
         ' Estas são as opções aprovadas; seus limites foram mantidos.' if accepted else
-        ' Não vou apresentar opções sem adequação verificada. Você pode ajustar os critérios e buscar novamente.')
+        ' Não encontrei alternativas compatíveis com os limites numéricos e os demais filtros. Você pode ajustar os critérios e buscar novamente.')
 
 
 def publish(db, job, recommendations, *, done, reason=None):
@@ -87,14 +92,15 @@ def publish(db, job, recommendations, *, done, reason=None):
             return False
         progress = session.nutrition_search
         progress.tested = len(job['results'])
-        progress.accepted = len(recommendations)
+        progress.accepted = sum(not r.approximate_match for r in recommendations)
+        progress.approximate = sum(r.approximate_match for r in recommendations)
         progress.batches = (progress.tested + 2)//3
         progress.state = 'complete' if done else 'pending'
         progress.reason = reason
         session.recommendations = recommendations
         index = job['assistant_index']
         if index < len(session.messages) and session.messages[index].role == 'assistant':
-            session.messages[index].text = message(progress.tested, progress.accepted, done, reason)
+            session.messages[index].text = message(progress.tested, progress.accepted, done, reason, progress.approximate)
         if done:
             session.recent_recommendations = (session.recent_recommendations + [
                 (r.candidate.merchant_id,r.candidate.item_id) for r in recommendations])[-18:]
@@ -142,6 +148,55 @@ def approved_results(job, session, payload, settings, db):
     return ordered(session,payload,approved,settings,db,nutrition=nutrition,ignore=False,limit=3)
 
 
+def approximate_results(job, session, payload, settings, db):
+    """Aproximações apenas quando não há aprovados, sem relaxar limites numéricos ou outros filtros."""
+    preferences = session.request_intent.nutrition_preferences
+    eligible, nutrition = [], {}
+    for result in job['results']:
+        if result.get('reason') in ('other_filters', 'unavailable'):
+            continue  # detalhes atuais indisponíveis ou candidato inelegível
+        c = MealCandidate.model_validate(result['candidate'])
+        n = NutritionResult.model_validate(result['nutrition'])
+        if meets_explicit_limits(n, preferences) is not True:
+            continue
+        eligible.append(c)
+        nutrition[c.merchant_id,c.item_id] = n
+    ranked = ordered(session,payload,eligible,settings,db,nutrition=nutrition,ignore=False,limit=15)
+
+    def proximity(rec):
+        n = rec.nutrition
+        scores = []
+        for goal in preferences.goals:
+            metric, reference, broad, higher = QUALITATIVE[goal]
+            value = getattr(n, metric) if n.state == 'ready' else None
+            if value is not None:
+                scores.append(min(value/reference,1) if higher else reference/max(value,reference))
+        # Evidência nutricional pesa antes da afinidade inferida pelo texto/reviews.
+        return (len(scores), sum(scores)/len(scores) if scores else 0)
+
+    ranked.sort(key=proximity, reverse=True)  # empates mantêm a ordenação pelos demais critérios
+    results = []
+    for rec in ranked[:3]:
+        limitations = list(rec.limitations)
+        n = rec.nutrition
+        for goal in preferences.goals:
+            metric, reference, broad, higher = QUALITATIVE[goal]
+            value = getattr(n, metric) if n.state == 'ready' else None
+            metric_label = {'protein_g':'proteína','carbs_g':'carboidratos','fat_g':'gordura','calories':'calorias'}[metric]
+            if value is None:
+                limitations.append(f'Sem dados de {metric_label} para verificar sua preferência por {LABELS[goal]}.')
+            elif (value < broad if higher else value > broad):
+                amount = f'{value:g} kcal' if metric == 'calories' else f'{value:g} g de {metric_label}'
+                limitations.append(f'A estimativa de {amount} pode não corresponder ao que você espera ao pedir {LABELS[goal]}.')
+        warning = ('Alternativa aproximada — baixa certeza de adequação ao seu pedido. '
+                   'Não foi encontrada correspondência verificada; esta opção pode não atender à preferência subjetiva.')
+        results.append(rec.model_copy(update={
+            'approximate_match':True, 'match_confidence':'low',
+            'reasons':[warning,*rec.reasons], 'limitations':[warning,*limitations],
+        }))
+    return results
+
+
 async def process_search(settings, provider=None):
     store = CatalogStore(settings.database_path)
     job = store.claim_search(settings.nutrition_timeout_seconds+120)
@@ -165,6 +220,8 @@ async def process_search(settings, provider=None):
                               'limit_reached' if len(job['results']) >= MAX_CANDIDATES else
                               'usage_limit' if any(r.get('reason') == 'daily_limit' for r in job['results']) else None)
             if resumed_reason:
+                if not previous:
+                    previous = approximate_results(job,session,payload,settings,db)
                 publish(db,job,previous,done=True,reason=resumed_reason)
                 store.save_search(job['id'],job,done=True)
                 return True
@@ -212,6 +269,8 @@ async def process_search(settings, provider=None):
                 reason = 'source_error' if job.get('source_error') else 'catalog_exhausted'
             store.save_search(job['id'],job,
                               lease_seconds=settings.nutrition_timeout_seconds+120)
+            if reason and not recommendations:
+                recommendations = approximate_results(job,session,payload,settings,db)
             if not publish(db,job,recommendations,done=reason is not None,reason=reason):
                 store.save_search(job['id'],job,done=True)
                 return True

@@ -157,6 +157,8 @@ export interface ReviewSignal {
   personal_rating: number | null;
 }
 export interface Recommendation {
+  approximate_match?: boolean;
+  match_confidence?: "normal" | "low";
   review_signal?: ReviewSignal | null;
   candidate: Candidate;
   nutrition: Nutrition;
@@ -240,7 +242,7 @@ export interface Order {
   review?: OrderReview | null;
 }
 export interface Session {
-  nutrition_search?: {id: string; state: "pending" | "complete"; tested: number; accepted: number; batches: number; reason: string | null} | null;
+  nutrition_search?: {id: string; state: "pending" | "complete"; tested: number; accepted: number; approximate?: number; batches: number; reason: string | null} | null;
   last_chat_action?: "search" | "context" | null;
   request_intent?: MealIntent | null;
   id: string;

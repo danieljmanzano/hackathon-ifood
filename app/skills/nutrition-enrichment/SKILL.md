@@ -13,3 +13,6 @@ O backend controla cache, fila, orçamento e retries. Não solicite novas fontes
 
 
 Na busca nutricional incremental, cada lote contém até três candidatos já priorizados pelos demais filtros. O backend aprova somente dados suficientes que atendam aos limites, avança para o lote seguinte e encerra com três aprovados ou quinze avaliados. Não aprove informação desconhecida para preencher a lista e não relaxe limites. A avaliação dos três candidatos pode acontecer em paralelo; cada um mantém suas evidências, porção e orçamento próprios.
+
+
+Termos subjetivos como bastante/pouco aceitam faixas amplas de comparação, definidas pelo backend. Se a busca encerrar sem aprovados, o backend pode oferecer os candidatos mais próximos como alternativas aproximadas, com baixa certeza de adequação e lacunas explícitas. Isso não os transforma em aprovados nem modifica a confiança da estimativa original. Nunca relaxe limites numéricos explícitos, orçamento ou restrições para gerar essas alternativas.

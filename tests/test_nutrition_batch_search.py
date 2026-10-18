@@ -177,7 +177,8 @@ def test_cache_reuse_and_qualitative_missing_data(settings,monkeypatch):
     assert db.get(session.id).nutrition_search.reason=='target_reached'
     prefs=NutritionPreferences(goals=['high_protein'])
     assert not batches.qualifies(nutrition(protein=None),prefs)
-    assert not batches.qualifies(nutrition(protein=20),prefs)
+    assert batches.qualifies(nutrition(protein=20),prefs)
+    assert not batches.qualifies(nutrition(protein=18),prefs)
     assert batches.qualifies(nutrition(protein=40),prefs)
 
 
@@ -293,3 +294,71 @@ def test_restart_after_saved_success_does_not_estimate_another_batch(settings,mo
     result=db.get(session.id)
     assert result.nutrition_search.tested==3 and result.nutrition_search.reason=='target_reached'
     assert len(result.recommendations)==3
+
+
+@pytest.mark.parametrize('goal,values',[
+    ('high_protein',{'protein':22}),('low_carb',{'carbs_g':60}),
+    ('low_fat',{'fat_g':28}),('low_calorie',{'calories':650}),
+])
+def test_subjective_preferences_accept_broad_ranges(goal,values):
+    n=nutrition(values.get('calories',400),values.get('protein',40))
+    n=n.model_copy(update={k:v for k,v in values.items() if k in ('carbs_g','fat_g')})
+    assert batches.qualifies(n,NutritionPreferences(goals=[goal]))
+    if goal=='low_calorie':
+        assert not batches.qualifies(n,NutritionPreferences(goals=[goal],max_calories=500))
+
+
+def test_no_subjective_match_returns_closest_with_low_certainty(settings,monkeypatch):
+    db,session,_=setup(settings,count=15,text='frango com bastante proteína')
+    calls=[]
+    async def calculate(s,c,options):
+        calls.append(c.item_id)
+        return nutrition(protein=5+int(c.item_id.split('-')[-1]))
+    monkeypatch.setattr(service,'calcular',calculate)
+    asyncio.run(batches.process_search(settings,provider=object()))
+    result=db.get(session.id)
+    assert len(calls)==15  # fallback não pede estimativas adicionais
+    assert result.nutrition_search.reason=='limit_reached'
+    assert result.nutrition_search.accepted==0 and result.nutrition_search.approximate==3
+    assert [r.candidate.item_id for r in result.recommendations]==['item-14','item-13','item-12']
+    assert all(r.approximate_match and r.match_confidence=='low' for r in result.recommendations)
+    assert 'certeza da adequação é baixa' in result.messages[-1].text
+    assert all('baixa certeza' in r.reasons[0] for r in result.recommendations)
+
+
+def test_unknown_nutrition_fallback_is_labeled_and_does_not_invent_macros(settings,monkeypatch):
+    db,session,_=setup(settings,count=3,text='frango com bastante proteína')
+    async def calculate(*args):
+        return NutritionResult(state='unavailable')
+    monkeypatch.setattr(service,'calcular',calculate)
+    asyncio.run(batches.process_search(settings,provider=object()))
+    result=db.get(session.id)
+    assert result.nutrition_search.accepted==0 and result.nutrition_search.approximate==3
+    assert all(r.nutrition.protein_g is None and r.nutrition.state=='unavailable' for r in result.recommendations)
+    assert all(any('Sem dados de proteína' in l for l in r.limitations) for r in result.recommendations)
+
+
+def test_fallback_keeps_explicit_limits_and_does_not_lower_source_confidence(settings,monkeypatch):
+    db,session,_=setup(settings,count=3,text='frango com bastante proteína até 500 kcal')
+    async def calculate(s,c,options):
+        # Um candidato tem proteína próxima mas viola o limite explícito; não pode ser sugerido.
+        return nutrition(800 if c.item_id=='item-0' else 400,protein=18).model_copy(update={'confidence':'high'})
+    monkeypatch.setattr(service,'calcular',calculate)
+    asyncio.run(batches.process_search(settings,provider=object()))
+    result=db.get(session.id)
+    assert len(result.recommendations)==2
+    assert all(r.nutrition.calories<=500 for r in result.recommendations)
+    assert all(r.nutrition.confidence=='high' and r.match_confidence=='low' for r in result.recommendations)
+    assert result.nutrition_search.accepted==0 and result.nutrition_search.approximate==2
+
+
+def test_partial_matches_are_not_filled_with_uncertain_suggestions(settings,monkeypatch):
+    db,session,_=setup(settings,count=3,text='frango com bastante proteína')
+    async def calculate(s,c,options):
+        return nutrition(protein=25 if c.item_id=='item-0' else 10)
+    monkeypatch.setattr(service,'calcular',calculate)
+    asyncio.run(batches.process_search(settings,provider=object()))
+    result=db.get(session.id)
+    assert len(result.recommendations)==1
+    assert not result.recommendations[0].approximate_match
+    assert result.nutrition_search.accepted==1 and result.nutrition_search.approximate==0

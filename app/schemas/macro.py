@@ -288,6 +288,8 @@ class ReviewSignal(Model):
 
 
 class Recommendation(Model):
+    approximate_match: bool = False
+    match_confidence: Literal["normal", "low"] = "normal"
     candidate: MealCandidate
     nutrition: NutritionResult = Field(default_factory=NutritionResult)
     reasons: list[str]
@@ -443,6 +445,7 @@ class NutritionSearchProgress(Model):
     state: Literal["pending", "complete"] = "pending"
     tested: int = Field(default=0, ge=0, le=15)
     accepted: int = Field(default=0, ge=0, le=3)
+    approximate: int = Field(default=0, ge=0, le=3)
     batches: int = Field(default=0, ge=0, le=5)
     reason: str | None = None
 

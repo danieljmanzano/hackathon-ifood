@@ -337,11 +337,13 @@ No modo real, buscas com preferências nutricionais usam um fluxo específico:
    Com menos de três aprovados, o motor passa ao próximo lote. Para em **3
    aprovados ou 15 candidatos avaliados**, ou antes por esgotamento do catálogo,
    indisponibilidade do estimador ou limite diário de uso. Pode retornar menos de
-   três opções; não completa com pratos incompatíveis ou desconhecidos.
+   três opções aprovadas. Sem nenhum aprovado, pode oferecer alternativas
+   aproximadas com aviso de baixa certeza, preservando limites numéricos.
 
 Preferências qualitativas usam as referências de comparação já adotadas no motor:
-mais proteína: >=30 g; menos carboidratos: <=40 g; menos gordura: <=20 g; menos
-calorias: <=500 kcal, sempre por prato. São critérios internos de seleção, não
+mais proteína: >=20 g (referência central 30 g); menos carboidratos: <=65 g
+(central 40 g); menos gordura: <=30 g (central 20 g); menos calorias: <=700 kcal
+(central 500 kcal), sempre por prato. São critérios internos de seleção, não
 metas de dieta atribuídas ao usuário. Limites numéricos explícitos também precisam
 ser atendidos. Cada card mantém fonte, confiança e limitações da estimativa.
 
@@ -355,3 +357,20 @@ buscas **sem preferência nutricional**. Nas buscas nutricionais, o limite é de
 candidatos, em lotes fixos de três. Cotas diárias de produtos e chamadas continuam
 valendo e podem interromper a avaliação antes desse máximo. O modo mock mantém o
 fluxo de demonstração anterior.
+
+
+### Preferências subjetivas e alternativas aproximadas
+
+"Bastante" e "pouco" usam as faixas amplas acima, sem converter essas referências
+em metas prescritas. Se nenhum candidato for aprovado ao encerrar a busca, são
+oferecidas até três alternativas próximas dentre os candidatos já avaliados.
+A proximidade usa os nutrientes conhecidos e preserva os demais critérios nos
+empates; não é uma probabilidade calibrada. Dados conhecidos têm prioridade sobre
+inferências sem macros disponíveis. Não há chamadas extras de IA para esse fallback.
+
+Cards aproximados têm `approximate_match=true` e `match_confidence=low`, aviso
+visível e explicação das lacunas; a confiança nutricional original é preservada.
+O progresso separa `accepted` (aprovados) de `approximate` (alternativas).
+Orçamento, disponibilidade, restrições e limites numéricos continuam sendo
+aplicados. Se um limite numérico não puder ser verificado, essa opção não entra
+nas alternativas. Com um ou dois aprovados, retornam apenas os aprovados.
