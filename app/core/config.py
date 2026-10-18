@@ -69,6 +69,12 @@ class Settings(BaseSettings):
     # "minimal" não aceita web_search, então a busca na web usa OPENAI_REASONING_EFFORT_WEB.
     openai_reasoning_effort: Literal["minimal", "low", "medium", "high"] = "minimal"
     openai_reasoning_effort_web: Literal["low", "medium", "high"] = "low"
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-3.8-flash"
+    gemini_fallback_models: list[str] = ["gemini-flash-latest"]
+    gemini_retries: int = 3
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
+    gemini_timeout: float = 60.0
 
     ifood_mcp_url: str = "https://consumer-mcp.ifood.com.br/marketplace"
     ifood_client_id: str = ""
@@ -134,12 +140,13 @@ class Settings(BaseSettings):
 
     @property
     def web_api_key(self) -> str:
-        """Chave da busca na web e da leitura das imagens: só a OpenAI faz as duas (vazio com openrouter)."""
-        return self.openai_api_key.get_secret_value() if self.nutrition_provider == "openai" else ""
+        """Chave de quem faz a busca na web: OpenAI (web_search) ou Gemini (Google Search)."""
+        return (self.openai_api_key.get_secret_value() if self.nutrition_provider == "openai"
+                else self.gemini_api_key)
 
     @property
     def nutrition_enabled(self) -> bool:
-        return bool(self.llm_api_key)
+        return bool(self.llm_api_key or self.gemini_api_key)
 
     @field_validator("timezone")
     @classmethod
