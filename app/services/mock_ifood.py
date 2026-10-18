@@ -1,9 +1,13 @@
 import json
 from pathlib import Path
+from uuid import uuid4
 
 from app.core.exceptions import MacroError
 from app.schemas.macro import (
     Address,
+    AddressCandidate,
+    CreateAddressInput,
+    GeocodeResult,
     DeliveryChoice,
     MealCandidate,
     MerchantSummary,
@@ -11,6 +15,9 @@ from app.schemas.macro import (
 )
 
 from app.services.mock_reviews import review_dataset
+
+DEMO_LATITUDE, DEMO_LONGITUDE = -22.0, -47.9
+ALIAS_LABELS = {"CASA": "Casa", "TRABALHO": "Trabalho"}
 
 
 def catalog() -> list[MealCandidate]:
@@ -27,10 +34,28 @@ class MockIFood:
                 id="demo-address",
                 label="Casa de demonstração",
                 formatted="Rua Exemplo, 100 — endereço fictício",
-                latitude=-22.0,
-                longitude=-47.9,
+                latitude=DEMO_LATITUDE,
+                longitude=DEMO_LONGITUDE,
             )
         ]
+
+    async def geocode(self, address: str) -> GeocodeResult:
+        """Geocodificação fictícia: aceita o texto digitado como único candidato."""
+        return GeocodeResult(match="SINGLE", candidates=[AddressCandidate(
+            candidate_id=f"demo-{uuid4()}", formatted=f"{address} — endereço fictício",
+            latitude=DEMO_LATITUDE, longitude=DEMO_LONGITUDE,
+        )])
+
+    def new_address(self, payload: CreateAddressInput) -> Address:
+        """Monta o endereço fictício; quem guarda é o banco local (ver Database.mock_addresses)."""
+        details = ", ".join(p for p in (payload.complement, payload.neighborhood) if p)
+        return Address(
+            id=f"demo-{uuid4()}",
+            label=ALIAS_LABELS.get(payload.alias, "Endereço salvo"),
+            formatted=f"{payload.address}{f' ({details})' if details else ''} — endereço fictício",
+            latitude=DEMO_LATITUDE,
+            longitude=DEMO_LONGITUDE,
+        )
 
     async def search(
         self, query: str, address: Address, budget_cents: int | None
