@@ -20,6 +20,7 @@ from app.schemas.macro import (
     AddressCreated,
     AddressInput,
     CheckoutInput,
+    ChatInput,
     CheckoutSummary,
     ConfirmationInput,
     CreateAddressInput,
@@ -32,6 +33,7 @@ from app.schemas.macro import (
     OrderRecord,
     OrderReview,
     OrderReviewEdit,
+    OrderReviewInput,
     SelectionInput,
     Session,
     UserProfile,
@@ -50,7 +52,7 @@ from app.services.review_recommendations import review_context
 from app.services.llm_meal_intent import interpret_intent
 from app.services.nutrition_preferences import apply_profile_preferences, update_explanation
 from app.services.nutrition.service import cached_candidates
-from app.services.diet_context import apply_diet_context, build_diet_context, local_date
+from app.services.diet_context import GOAL_LABELS, apply_diet_context, build_diet_context, local_date, split_daily_message
 
 router = APIRouter()
 _mock_provider = MockIFood()
@@ -331,6 +333,60 @@ async def search(
         return result
 
 
+@router.post("/chat", response_model=Session)
+async def chat(payload: ChatInput, request: Request, response: Response,
+               session: Session = Depends(current_session), provider: MockIFood = Depends(get_provider),
+               settings: Settings = Depends(get_settings)):
+    """Guarda o contexto relatado na conversa; pedidos de comida seguem o motor existente."""
+    meal_text, foods, goal = split_daily_message(payload.text)
+    if goal:
+        def update_goal(s: Session):
+            s.profile.diet_plan = s.profile.diet_plan.model_copy(update={"goal": goal})
+        session = mutate_session(request, session, update_goal)
+    for index, description in enumerate(foods):
+        request.app.state.db.save_food_entry(session.profile.id, FoodDiaryEntry(
+            id=f"chat-{payload.message_id}-{index}", description=description,
+        ))
+    # Informar o objetivo ou o que comeu não dispara uma compra/busca involuntária.
+    remaining_words = set(meal_text.strip(' ,;.!').split()) - {'e', 'eu', 'quero', 'meu', 'objetivo', 'de', 'para'}
+    context_only = bool(foods or goal) and (meal_text == 'refeição' or not remaining_words)
+    if context_only:
+        acknowledgements = []
+        if goal:
+            acknowledgements.append(f"Objetivo salvo: {GOAL_LABELS[goal]}.")
+        if foods:
+            acknowledgements.append("Registrei o que você informou que comeu hoje. Vou considerar isso nas próximas sugestões.")
+        def acknowledge(s: Session):
+            s.last_chat_action = 'context'
+            s.messages = (s.messages + [Message(role='user', text=payload.text),
+                          Message(role='assistant', text=' '.join(acknowledgements) + ' O que você gostaria de comer agora?')])[-40:]
+        return mutate_session(request, session, acknowledge)
+    if session.order:
+        session = new_order(request, session)
+    result = await search(MealRequest(text=meal_text, budget_cents=payload.budget_cents,
+                                      restrictions=payload.restrictions,
+                                      nutrition_preferences=payload.nutrition_preferences),
+                          request, response, session, provider, settings)
+    def mark_search(s: Session):
+        s.last_chat_action = 'search'
+        s.messages[-2] = Message(role='user', text=payload.text)
+    return mutate_session(request, result, mark_search)
+
+
+@router.post("/session/new-order", response_model=Session)
+def new_order(request: Request, session: Session = Depends(current_session)):
+    if session.order and session.order.review and session.order.review.interpretation_state == 'pending':
+        raise MacroError("Aguarde a interpretação da avaliação antes de iniciar outro pedido.", 409)
+    def reset(s: Session):
+        s.selected = s.summary = s.order = s.request_intent = None
+        s.last_chat_action = None
+        s.recommendations = []
+        s.menu_merchant_id = None
+        s.menu_item_ids = []
+        s.messages = (s.messages + [Message(role='assistant', text='Vamos encontrar sua próxima refeição. Seu objetivo e suas preferências continuam salvos.')])[-40:]
+    return mutate_session(request, session, reset)
+
+
 @router.get("/consumption", response_model=list[ConsumptionRecord])
 def consumption(request: Request, session: Session = Depends(current_session)):
     return request.app.state.db.consumption(session.profile.id)
@@ -505,6 +561,8 @@ async def selection(
     def update(s: Session):
         s.selected = selected_item
         s.summary = None
+        s.messages = (s.messages + [Message(role='user', text=f'Escolhi {selected_item.quantity} unidade(s) de {candidate.name}.'),
+                      Message(role='assistant', text='Prato escolhido. Vamos selecionar a entrega e o pagamento.')])[-40:]
 
     return mutate_session(request, session, update)
 
@@ -572,6 +630,9 @@ def review(
             version=str(uuid4()),
             simulated=True,
         )
+        total = f'R$ {s.summary.total_cents / 100:.2f}'.replace('.', ',')
+        s.messages = (s.messages + [Message(role='user', text=f'Entrega: {delivery.label}. Pagamento: {payment.label}.'),
+                      Message(role='assistant', text=f'Confira os itens e o total de {total}. O pedido ainda não foi confirmado.')])[-40:]
 
     return mutate_session(request, session, update)
 
@@ -605,6 +666,8 @@ async def confirm(
                     interpretation_state="pending" if given.comment and llm_available(settings) else "none",
                 ),
             )
+            s.messages = (s.messages + [Message(role='user', text='Confirmar pedido.'),
+                          Message(role='assistant', text='Pedido de demonstração confirmado. Nenhuma cobrança foi realizada. Você pode avaliar sua experiência aqui na conversa.')])[-40:]
             db.save(s, connection)
     # Fora da transação: save_review abre a sua. Só a primeira confirmação grava a avaliação.
     if created and s.order.review:
@@ -637,4 +700,26 @@ def edit_order_review(
 
     updated = mutate_session(request, session, update)
     sync_taste_review(request.app.state.db, updated)
+    return updated
+
+
+@router.post("/checkout/order/review", response_model=Session)
+async def add_order_review(payload: OrderReviewInput, request: Request,
+                           session: Session = Depends(current_session), settings: Settings = Depends(get_settings)):
+    if not session.order or session.order.status != 'submitted':
+        raise MacroError("Confirme o pedido antes de avaliá-lo.", 422)
+    if payload.empty:
+        raise MacroError("Informe uma nota ou um comentário para avaliar.", 422)
+    if session.order.review and session.order.review.interpretation_state == 'pending':
+        raise MacroError("Sua avaliação ainda está sendo interpretada.", 409)
+    def update(s: Session):
+        s.order.review = OrderReview(rating=payload.rating, comment=payload.comment,
+                                    interpretation_state='pending' if payload.comment and llm_available(settings) else 'none')
+        text = payload.comment or f'Nota do pedido: {payload.rating}/5.'
+        s.messages = (s.messages + [Message(role='user', text=text),
+                      Message(role='assistant', text='Avaliação salva. Ela será considerada nas próximas sugestões.')])[-40:]
+    updated = mutate_session(request, session, update)
+    sync_taste_review(request.app.state.db, updated)
+    if updated.order.review.interpretation_state == 'pending':
+        schedule_interpretation(request.app.state.db, updated.id, settings)
     return updated

@@ -77,6 +77,8 @@ export const api = {
   myReviews: () => request<UserReview[]>("/reviews/me"),
   saveReview: (review: ReviewInput) => request<UserReview>("/reviews", review, "PUT"),
   search: (text: string) => request<Session>("/search", { text }, "POST", 60_000),
+  chat: (text: string, message_id: string) => request<Session>("/chat", { text, message_id }, "POST", 60_000),
+  newOrder: () => request<Session>("/session/new-order", {}, "POST"),
   merchants: () => request<MerchantSummary[]>("/merchants"),
   menu: (merchantId: string) =>
     request<Candidate[]>(`/merchants/${encodeURIComponent(merchantId)}/menu`),
@@ -106,6 +108,7 @@ export const api = {
   order: () => request<Session>("/checkout/order"),
   editOrderReview: (rating: number, aspects: OrderAspects) =>
     request<Session>("/checkout/order/review", { rating, aspects }, "PUT"),
+  addOrderReview: (review: OrderReviewInput) => request<Session>("/checkout/order/review", review),
 };
 
 export const money = (cents: number) =>
