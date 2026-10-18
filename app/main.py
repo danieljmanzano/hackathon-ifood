@@ -6,6 +6,7 @@ from app.api.endpoints.mock_reviews import router as mock_reviews_router
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.exceptions import register_exception_handlers
+from app.core.logs import configurar_logs
 from app.storage.database import Database
 from app.services.review_processing import processed_reviews
 from app.services.mock_reviews import review_dataset
@@ -13,6 +14,7 @@ from app.services.mock_reviews import review_dataset
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    configurar_logs(settings.calorias_log)
     app = FastAPI(
         title=settings.app_name,
         version=settings.version,

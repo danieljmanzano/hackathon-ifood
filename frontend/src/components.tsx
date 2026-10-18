@@ -221,9 +221,11 @@ export function NutritionDetails({ nutrition }: { nutrition: Nutrition }) {
               kcal
             </strong>{" "}
             ·{" "}
-            {nutrition.method === "published"
+            {nutrition.method === "published" || nutrition.method === "web"
               ? "Informação publicada"
-              : "Estimativa"}{" "}
+              : nutrition.method === "database"
+                ? "Tabela nutricional"
+                : "Estimativa"}{" "}
             por {nutrition.portion_basis}.
           </p>
           {nutrition.confidence && (
@@ -480,9 +482,11 @@ export function SelectedNutrition({
         <span>
           {times(nutrition.minimum)}–{times(nutrition.maximum)} kcal
           {quantity > 1 ? ` · ${quantity} unidades` : ""} ·{" "}
-          {nutrition.method === "published"
+          {nutrition.method === "published" || nutrition.method === "web"
             ? "tabela do restaurante"
-            : "estimativa"}
+            : nutrition.method === "database"
+              ? "tabela nutricional"
+              : "estimativa"}
         </span>
       </div>
     </div>

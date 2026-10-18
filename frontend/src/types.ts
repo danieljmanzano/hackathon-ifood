@@ -85,7 +85,13 @@ export interface Nutrition {
   minimum: number | null;
   maximum: number | null;
   confidence: "low" | "medium" | "high" | null;
-  method: "published" | "estimated" | null;
+  method: "published" | "estimated" | "database" | "web" | "consensus" | null;
+  protein_g?: number | null;
+  carbs_g?: number | null;
+  fat_g?: number | null;
+  portion_grams?: number | null;
+  revisar?: boolean;
+  motivo_revisao?: string | null;
   source_url: string | null;
   source_name: string | null;
   evidence: string | null;

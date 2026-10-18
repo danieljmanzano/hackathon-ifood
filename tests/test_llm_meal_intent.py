@@ -189,3 +189,54 @@ def test_training_time_is_not_delivery_deadline_and_fallback_understands_context
     assert post.goals == ['small_portion', 'protein']
     assert post.inferred_goals == ['protein']
     assert 'large_portion' not in post.goals
+
+
+def test_personalization_survives_background_nutrition_refresh(tmp_path, monkeypatch):
+    import app.main as main
+    from app.api.endpoints import macro
+    from app.schemas.macro import NutritionResult
+
+    configured = settings(database_path=tmp_path / 'combined.sqlite3', ifood_mode='mock',
+                          nutrition_provider='openrouter', nutrition_search_budget_seconds=0,
+                          openai_api_key='', gemini_api_key='', calorias_log='off')
+    calls = []
+
+    async def complete(*args, **kwargs):
+        return result()
+
+    async def pending(recommendations, config, prazo=None):
+        calls.append(prazo)
+        return [rec.model_copy(update={'nutrition': NutritionResult(state='pending')})
+                for rec in recommendations]
+
+    def ready(recommendations, config):
+        nutrition = NutritionResult(state='ready', portion_basis='uma porção', method='database',
+                                    calories=600, minimum=550, maximum=650, protein_g=40,
+                                    carbs_g=60, fat_g=20, portion_grams=500,
+                                    source_name='Base de teste', evidence='Dados fictícios de teste')
+        return [rec.model_copy(update={'nutrition': nutrition}) for rec in recommendations]
+
+    monkeypatch.setattr(service, 'chat_completion', complete)
+    monkeypatch.setattr(macro, 'enrich_recommendations', pending)
+    monkeypatch.setattr(macro, 'refresh_recommendations', ready)
+    monkeypatch.setattr(main, 'get_settings', lambda: configured)
+    app = main.create_app()
+    app.dependency_overrides[get_settings] = lambda: configured
+    with TestClient(app) as client:
+        client.get('/api/session')
+        client.put('/api/session/address', json={'address_id': 'demo-address'})
+        response = client.post('/api/search', json={'text': 'Hoje treinei musculação'})
+        assert response.status_code == 200
+        before = response.json()
+        assert calls == [0]
+        assert before['request_intent']['interpretation_source'] == 'llm'
+        assert all(rec['nutrition']['state'] == 'pending' for rec in before['recommendations'])
+        assert all(rec['review_signal'] for rec in before['recommendations'])
+        response = client.get('/api/recommendations/nutrition')
+        assert response.status_code == 200
+        after = response.json()
+        assert after['request_intent'] == before['request_intent']
+        assert after['recent_recommendations'] == before['recent_recommendations']
+        assert [rec['review_signal'] for rec in after['recommendations']] == [rec['review_signal'] for rec in before['recommendations']]
+        assert all(rec['nutrition']['state'] == 'ready' and rec['nutrition']['protein_g'] == 40
+                   for rec in after['recommendations'])

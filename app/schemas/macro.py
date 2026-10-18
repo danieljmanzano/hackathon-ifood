@@ -155,7 +155,13 @@ class NutritionResult(Model):
     minimum: NonNegative | None = None
     maximum: NonNegative | None = None
     confidence: Literal["low", "medium", "high"] | None = None
-    method: Literal["published", "estimated"] | None = None
+    method: Literal["published", "estimated", "database", "web", "consensus"] | None = None
+    protein_g: NonNegative | None = None
+    carbs_g: NonNegative | None = None
+    fat_g: NonNegative | None = None
+    portion_grams: NonNegative | None = None
+    revisar: bool = False
+    motivo_revisao: str | None = None
     source_url: str | None = None
     source_name: str | None = None
     evidence: str | None = None
@@ -171,8 +177,10 @@ class NutritionResult(Model):
                 raise ValueError("Uma estimativa disponível exige faixa, porção e método.")
             if not self.minimum <= self.calories <= self.maximum:
                 raise ValueError("Faixa calórica inconsistente.")
-            if self.method == "published" and not all((self.source_url, self.source_name, self.evidence)):
+            if self.method in ("published", "web") and not all((self.source_url, self.source_name, self.evidence)):
                 raise ValueError("Informação publicada exige fonte e evidência.")
+            if self.method == "database" and not all((self.source_name, self.evidence)):
+                raise ValueError("Informação de base de dados exige fonte e evidência.")
         elif any(n is not None for n in numbers):
             raise ValueError("Dados indisponíveis não podem conter calorias.")
         return self
