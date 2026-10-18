@@ -19,7 +19,6 @@ from .llm import perguntar_json
 # Folga da faixa de cada adicional (porção de cobertura varia muito entre restaurantes).
 FOLGA_ADICIONAL = 0.35
 KCAL_MAX_UNIDADE = 1500  # acima disso a resposta do modelo não é uma unidade de complemento
-_QUANTIDADE = re.compile(r"^\s*(\d+)\s*[×x]\s*(.+?)\s*$")
 
 # Classificação e valores POR UNIDADE de cada opção, por restaurante + item + opção. Sem isso, cada chamada
 # reestimava os complementos e "2 × Nutella" podia sair menor que "1 × Nutella".
@@ -43,8 +42,17 @@ class Separacao:
 
 def quantidade_e_nome(rotulo: str) -> tuple[int, str]:
     """"2 × Nutella" -> (2, "Nutella"). Sem prefixo de quantidade, vale 1."""
-    m = _QUANTIDADE.match(rotulo)
-    return (int(m.group(1)), m.group(2)) if m else (1, rotulo.strip())
+    texto = rotulo.strip()
+    i = 0
+    while i < len(texto) and texto[i].isdigit():
+        i += 1
+    if i == 0:
+        return 1, texto
+    resto = texto[i:].lstrip()
+    if not resto or resto[0] not in ("×", "x"):
+        return 1, texto
+    nome = resto[1:].strip()
+    return (int(texto[:i]), nome) if nome else (1, texto)
 
 
 def _normalizar(texto: str) -> str:
