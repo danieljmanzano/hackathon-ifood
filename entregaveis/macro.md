@@ -70,29 +70,9 @@ A pessoa escolhe, monta o prato, revisa o total e confirma, tudo na conversa. De
 
 ### Fluxo geral
 
-```mermaid
-flowchart TD
-    A[Pessoa escreve na conversa] --> B{O que a mensagem pede?}
-    B -->|objetivo ou o que comeu| C[Salva contexto do dia<br/>sem disparar busca]
-    B -->|comida| D[Interpreta intenção<br/>fome, orçamento, objetivo, termos]
-    C -->|mensagem também pede comida| D
-    D --> E[Busca no iFood via MCP<br/>searchOffers perto do endereço]
-    E --> F[Filtra e ranqueia<br/>restrições, orçamento, avaliações, variedade]
-    F -->|sobrou algo| G[Até 3 sugestões com motivos]
-    F -->|nada sobrou| H[Agente replaneja<br/>novas consultas ou explora o MCP]
-    H -->|até 2 rodadas| E
-    H -->|desiste| I[Mensagem específica do motivo<br/>fechado, caro, filtrado...]
-    G --> J[Estimativa nutricional<br/>em segundo plano]
-    G --> K[Pessoa escolhe o prato]
-    K --> L[Monta complementos e quantidade<br/>getItem]
-    L --> M[Entrega e pagamento]
-    M --> N[Revisão com total]
-    N -->|botão ou 'confirmar pedido'| O[Pedido confirmado]
-    O --> P[Avaliação livre na conversa]
-    P --> Q[Interpretação em segundo plano<br/>pessoa pode corrigir]
-    Q --> R[Perfil de gostos atualizado]
-    R -.próximas sugestões.-> F
-```
+![Fluxo geral da solução](diagramas/fluxo-solucao.png)
+
+<sub>Fonte editável: [`diagramas/fluxo-solucao.mmd`](diagramas/fluxo-solucao.mmd)</sub>
 
 ### Etapas
 
@@ -159,35 +139,9 @@ flowchart TD
 
 ### Arquitetura
 
-```mermaid
-flowchart LR
-    subgraph Navegador
-        UI[React + TypeScript + Vite<br/>conversa e etapas da compra]
-    end
-    subgraph Backend[FastAPI]
-        API[API /api<br/>sessão por cookie]
-        INT[Intenção<br/>LLM + regras]
-        AG[Agente de busca<br/>laço de replanejamento]
-        RK[Ranking<br/>avaliações, gostos, variedade]
-        NUT[Pipeline nutricional]
-        REV[Interpretação de avaliações]
-        PROV{Provedor}
-    end
-    DB[(SQLite<br/>sessões, avaliações, gostos)]
-    MCP[MCP do iFood<br/>OAuth 2.1 + PKCE]
-    MOCK[Catálogo fictício]
-    LLM[OpenRouter / OpenAI / Gemini]
+![Arquitetura do Macro](diagramas/arquitetura.png)
 
-    UI -->|HTTP /api| API
-    API --> INT --> AG --> RK
-    AG --> PROV
-    PROV -->|IFOOD_MODE=live| MCP
-    PROV -->|IFOOD_MODE=mock| MOCK
-    API --> NUT
-    API --> REV
-    INT & AG & NUT & REV --> LLM
-    API --> DB
-```
+<sub>Fonte editável: [`diagramas/arquitetura.mmd`](diagramas/arquitetura.mmd)</sub>
 
 | Camada | Tecnologia | Onde |
 |---|---|---|
