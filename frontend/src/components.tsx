@@ -47,6 +47,7 @@ export function Modal({
   wide = false,
   busy = false,
   error,
+  footer,
 }: {
   title: string;
   children: React.ReactNode;
@@ -54,6 +55,7 @@ export function Modal({
   wide?: boolean;
   busy?: boolean;
   error?: string;
+  footer?: React.ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -86,12 +88,15 @@ export function Modal({
           <X size={21} />
         </button>
       </div>
-      {error && (
-        <div className="inline-error" role="alert">
-          {error}
-        </div>
-      )}
-      {children}
+      <div className="modal-content">
+        {error && (
+          <div className="inline-error" role="alert">
+            {error}
+          </div>
+        )}
+        {children}
+      </div>
+      {footer}
     </dialog>
   );
 }

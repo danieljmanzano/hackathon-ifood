@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ArrowRight,
-  ArrowUp,
   ArrowUpRight,
   Check,
   CheckCheck,
@@ -44,6 +43,7 @@ import {
   Stepper,
 } from "./components";
 import { loadConsumption, saveConsumption } from "./storage";
+import ChatBar from "./ChatBar";
 import type {
   Address,
   Candidate,
@@ -203,7 +203,9 @@ export default function App() {
   }
   async function search(query: string) {
     if (!query.trim() || !session || busy || loading) return;
+    setText(query);
     if (session.order) {
+      setDialog(null);
       navigate("orders");
       setToast(
         "Este pedido já foi confirmado. Confira os detalhes em Meus pedidos.",
@@ -214,12 +216,13 @@ export default function App() {
       open("address");
       return;
     }
-    setText(query);
     navigate("chat");
     const next = await perform(() => api.search(query.trim()));
     if (next) {
       setSession(next);
-      setText("");
+      setDialog(null);
+      // Keep text typed while the previous message was being processed.
+      setText((current) => (current.trim() === query.trim() ? "" : current));
     }
   }
   async function choose(rec: Recommendation) {
@@ -412,6 +415,18 @@ export default function App() {
     session.summary.delivery.id === delivery &&
     session.summary.payment.id === payment;
   const disabled = loading || busy || !session;
+
+  const chatBar = (
+    <ChatBar
+      value={text}
+      onChange={setText}
+      onSend={() => void search(text)}
+      inputRef={composer}
+      busy={busy}
+      disabled={disabled}
+      inDialog={!!dialog}
+    />
+  );
 
   return (
     <div className="app-shell">
@@ -694,57 +709,10 @@ export default function App() {
                       </h2>
                       <span className="text-only">Por texto, do seu jeito</span>
                     </div>
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        void search(text);
-                      }}
-                      className="composer"
-                    >
-                      <label className="sr-only" htmlFor="meal-request">
-                        O que você quer comer?
-                      </label>
-                      <textarea
-                        ref={composer}
-                        id="meal-request"
-                        rows={2}
-                        maxLength={2000}
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                        placeholder="Acabei de treinar. Quero um frango grelhado até R$ 40…"
-                        disabled={disabled || !!session.order}
-                        onKeyDown={(e) => {
-                          if (
-                            e.key === "Enter" &&
-                            !e.shiftKey &&
-                            !e.nativeEvent.isComposing
-                          ) {
-                            e.preventDefault();
-                            void search(text);
-                          }
-                        }}
-                      />
-                      <div className="composer-footer">
-                        <span>
-                          <SlidersHorizontal size={14} />
-                          {session.profile.preferences.length
-                            ? `${session.profile.preferences.length} preferência${session.profile.preferences.length > 1 ? "s" : ""} no seu perfil`
-                            : "Suas preferências fazem a diferença"}
-                        </span>
-                        <button
-                          className="send-button"
-                          type="submit"
-                          disabled={disabled || !text.trim() || !!session.order}
-                          aria-label="Buscar refeições"
-                        >
-                          {busy ? (
-                            <span className="button-spinner" />
-                          ) : (
-                            <ArrowUp size={20} />
-                          )}
-                        </button>
-                      </div>
-                    </form>
+                    <p className="conversation-hint">
+                      Use uma sugestão ou escreva na barra de conversa, sempre
+                      disponível abaixo.
+                    </p>
                     <div className="quick-prompts">
                       {[
                         {
@@ -1382,6 +1350,7 @@ export default function App() {
           </button>
         </footer>
       </div>
+      {!dialog && chatBar}
       <nav className="mobile-nav" aria-label="Navegação no celular">
         {nav
           .filter((n) => n.id !== "home")
@@ -1409,6 +1378,7 @@ export default function App() {
 
       {dialog === "about" && (
         <Modal
+          footer={chatBar}
           title="Seu próximo prato, com o Macro."
           onClose={() => setDialog(null)}
         >
@@ -1453,6 +1423,7 @@ export default function App() {
 
       {dialog === "address" && (
         <Modal
+          footer={chatBar}
           title="Onde vai ser sua refeição?"
           onClose={() => setDialog(null)}
           busy={busy}
@@ -1523,6 +1494,7 @@ export default function App() {
 
       {dialog === "item" && detail && (
         <Modal
+          footer={chatBar}
           title="Deixe o prato com a sua cara"
           onClose={() => setDialog(null)}
           busy={busy}
@@ -1701,6 +1673,7 @@ export default function App() {
 
       {dialog === "checkout" && session?.selected && choices && (
         <Modal
+          footer={chatBar}
           title="Tudo certo com seu pedido?"
           onClose={() => setDialog(null)}
           busy={busy}
@@ -1892,6 +1865,7 @@ export default function App() {
 
       {dialog === "consumption" && session?.selected && (
         <Modal
+          footer={chatBar}
           title="Quanto do pedido você comeu?"
           onClose={() => setDialog(null)}
           error={error}

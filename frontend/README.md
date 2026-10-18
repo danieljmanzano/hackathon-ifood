@@ -34,7 +34,9 @@ O comando verifica os tipos e gera `dist/`. Para produção, sirva esses arquivo
 
 ## Fluxos implementados
 
-- Visão geral com entrada por texto, atalhos de busca e inspirações fotográficas identificadas como ilustrativas.
+- Visão geral com atalhos de busca e inspirações fotográficas identificadas como ilustrativas.
+- Barra de conversa fixa em todas as telas e dentro dos diálogos, acima da navegação no celular. O rascunho é mantido ao navegar; Enter envia e Shift + Enter quebra a linha. A barra usa a busca existente do backend e abre os resultados na tela de conversa.
+- É possível continuar digitando durante uma consulta, sem perder o novo rascunho ao receber o resultado. Envios ficam bloqueados durante o processamento; confirmar pedidos continua sendo uma ação separada no checkout.
 - Sessão, endereço, conversa, recomendações e perfil carregados do backend. Quando existe apenas um endereço, ele é selecionado e informado no cabeçalho.
 - Até três recomendações, com preço do prato, motivo, limitações e estados nutricionais explícitos.
 - Detalhes do prato com opções obrigatórias e opcionais, limites, quantidades e preço atualizado.
@@ -61,6 +63,7 @@ O backend permite um pedido por sessão. A tela de pedidos mostra esse pedido, s
 
 - `src/App.tsx`: telas e transições do fluxo, consumindo os endpoints existentes.
 - `src/components.tsx`: componentes visuais, cards, diálogos, seleção de quantidade e estados nutricionais.
+- `src/ChatBar.tsx`: campo de conversa compartilhado por todas as telas e diálogos, sem bibliotecas adicionais.
 - `src/api.ts`: cliente HTTP, timeout, formatação de preços, URLs HTTPS e data local de São Paulo.
 - `src/types.ts`: contratos TypeScript correspondentes ao backend.
 - `src/storage.ts`: armazenamento e validação dos registros locais de consumo.

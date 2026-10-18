@@ -647,62 +647,6 @@ select {
   color: #a5a99f;
   font-size: 9px;
 }
-.composer {
-  border: 1px solid #e1e5da;
-  border-radius: 13px;
-  background: white;
-  padding: 16px 17px 11px;
-  transition: border-color 0.2s;
-}
-.composer:focus-within {
-  border-color: #eaa88a;
-  box-shadow: 0 0 0 3px #f5b58e12;
-}
-.composer textarea {
-  display: block;
-  width: 100%;
-  resize: vertical;
-  min-height: 44px;
-  max-height: 170px;
-  font-size: 12px;
-  border: 0;
-  background: transparent;
-  line-height: 1.8;
-  padding: 0;
-  outline: none;
-}
-.composer textarea::placeholder {
-  color: #a1a69b;
-}
-.composer textarea:disabled {
-  resize: none;
-}
-.composer-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 6px;
-}
-.composer-footer > span {
-  font-size: 9px;
-  color: #9ba18f;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.send-button {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: var(--orange);
-  color: white;
-  display: grid;
-  place-items: center;
-}
-.send-button:disabled {
-  background: #edb59d;
-  opacity: 0.7;
-}
 .quick-prompts {
   display: flex;
   flex-wrap: wrap;
@@ -2777,9 +2721,6 @@ select {
   .section-label h2 {
     font-size: 13px;
   }
-  .composer textarea {
-    font-size: 13px;
-  }
   .quick-prompts button {
     font-size: 10px;
     padding: 8px 10px;
@@ -3179,21 +3120,6 @@ select {
   }
   .text-only {
     display: none;
-  }
-  .composer {
-    padding: 15px 13px 10px;
-  }
-  .composer textarea {
-    font-size: 11px;
-    line-height: 1.9;
-    min-height: 45px;
-  }
-  .composer-footer > span {
-    font-size: 8px;
-    gap: 4px;
-  }
-  .composer-footer > span svg {
-    width: 12px;
   }
   .quick-prompts {
     gap: 6px;
@@ -3767,7 +3693,6 @@ select {
 .date-label > span:last-child,
 .date-label small,
 .text-only,
-.composer-footer > span,
 .section-heading p,
 .illustration-label,
 .care-note,
@@ -3816,7 +3741,6 @@ select {
 }
 .greeting,
 .section-heading p,
-.composer-footer > span,
 .rail-subtitle,
 .preference-card > p,
 .ifood-note strong,
@@ -3833,12 +3757,6 @@ select {
 .hero-label {
   color: #8c5f3b;
   font-size: 11px;
-}
-.composer textarea::placeholder {
-  color: #78826f;
-}
-.composer textarea {
-  font-size: 13px;
 }
 .quick-prompts button {
   font-size: 11px;
@@ -4060,12 +3978,6 @@ select {
   .section-label h2 {
     font-size: 12px;
   }
-  .composer textarea {
-    font-size: 16px;
-  }
-  .composer-footer > span {
-    font-size: 9px;
-  }
   .quick-prompts button {
     font-size: 10px;
     padding: 8px;
@@ -4257,5 +4169,202 @@ select {
   }
   .sidebar-bottom {
     padding-top: 25px;
+  }
+}
+
+/* A single conversation bar, shared by every screen and dialog. */
+.workspace {
+  padding-bottom: 150px;
+}
+.conversation-hint {
+  color: #68745f;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.chat-dock {
+  position: fixed;
+  left: 218px;
+  right: 0;
+  bottom: 0;
+  z-index: 45;
+  background: #fff;
+  border-top: 1px solid #e1e6db;
+  box-shadow: 0 -6px 24px #28352f06;
+}
+.chat-dock-inner {
+  max-width: 1560px;
+  margin: 0 auto;
+  padding: 13px 34px 12px;
+}
+.chat-dock-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.chat-dock-heading label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 750;
+}
+.chat-dock-heading label svg {
+  color: var(--orange);
+}
+.chat-dock-heading > span {
+  font-size: 10px;
+  color: #68745f;
+}
+.chat-dock-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 9px 8px 14px;
+  border: 1px solid #dbe2d3;
+  border-radius: 12px;
+  background: #fafbf8;
+}
+.chat-dock-form:focus-within {
+  border-color: #e6a080;
+  outline: 2px solid #f3663b14;
+}
+.chat-dock-form textarea {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font-size: 13px;
+  line-height: 21px;
+}
+.chat-dock-form textarea::placeholder {
+  color: #748169;
+}
+.chat-send {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--orange);
+  color: white;
+  flex-shrink: 0;
+}
+.chat-send:hover:enabled {
+  background: #df572f;
+}
+.chat-send:disabled {
+  opacity: 1;
+  background: #f5d6c7;
+  color: #a86043;
+}
+.chat-dock-help {
+  color: #68745f;
+  font-size: 10px;
+  line-height: 1.6;
+  margin-top: 6px;
+}
+.toast {
+  bottom: 165px;
+}
+.modal[open] {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.modal-header {
+  flex-shrink: 0;
+}
+.modal-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.chat-dock-dialog {
+  position: static;
+  flex-shrink: 0;
+  box-shadow: none;
+}
+.chat-dock-dialog .chat-dock-inner {
+  padding: 12px 24px;
+}
+.chat-dock-dialog .chat-dock-help {
+  font-size: 9px;
+}
+@media (max-width: 1250px) {
+  .chat-dock:not(.chat-dock-dialog) {
+    left: 190px;
+  }
+  .chat-dock-inner {
+    padding-left: 25px;
+    padding-right: 25px;
+  }
+}
+@media (max-width: 760px) {
+  .chat-dock:not(.chat-dock-dialog) {
+    left: 76px;
+  }
+  .chat-dock-inner {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+  .chat-dock-heading > span {
+    font-size: 9px;
+  }
+}
+@media (max-width: 560px) {
+  .workspace {
+    padding-bottom: 155px;
+  }
+  .chat-dock:not(.chat-dock-dialog) {
+    left: 0;
+    bottom: calc(69px + env(safe-area-inset-bottom, 0px));
+  }
+  .chat-dock-inner,
+  .chat-dock-dialog .chat-dock-inner {
+    padding: 10px 16px;
+  }
+  .chat-dock-heading {
+    margin-bottom: 7px;
+  }
+  .chat-dock-heading label {
+    font-size: 11px;
+  }
+  .chat-dock-form {
+    gap: 8px;
+    padding-left: 10px;
+  }
+  .chat-dock-form textarea {
+    font-size: 16px;
+    line-height: 22px;
+    height: 44px;
+  }
+  .chat-dock-help {
+    font-size: 9px;
+  }
+  .chat-dock-dialog .chat-dock-heading > span {
+    display: none;
+  }
+  .conversation-hint {
+    font-size: 11px;
+  }
+  .toast {
+    bottom: calc(230px + env(safe-area-inset-bottom, 0px));
+  }
+}
+@media (max-width: 560px) {
+  body {
+    padding-bottom: calc(69px + env(safe-area-inset-bottom, 0px));
+  }
+  .mobile-nav {
+    height: calc(69px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(11px + env(safe-area-inset-bottom, 0px));
   }
 }
