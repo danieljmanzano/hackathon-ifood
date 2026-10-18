@@ -15,12 +15,14 @@ from datetime import datetime, timezone
 from urllib.parse import urlparse
 
 import httpx
-from openai import AsyncOpenAI, OpenAIError
 from pydantic import ValidationError
 
 from app.core.config import Settings
 from app.schemas.macro import MealCandidate, NutritionResult, Recommendation, SelectedItem
+from .llm import LLMError, OpenAIBackend, OpenRouterBackend, criar_backend
 from .prompts import INSTRUCOES_BUSCA, INSTRUCOES_ESTIMATIVA, SCHEMA_BUSCA, SCHEMA_ESTIMATIVA
+
+Backend = OpenAIBackend | OpenRouterBackend
 
 PIPELINE_VERSION = "calorias-v1"
 CONFIANCA = {"baixa": "low", "media": "medium", "alta": "high"}
@@ -33,6 +35,14 @@ log = logging.getLogger(__name__)
 # Resultados prontos por item; estimativas que passam do prazo da resposta terminam aqui em segundo plano.
 _cache: dict[str, NutritionResult] = {}
 _em_andamento: dict[str, asyncio.Task] = {}
+_limites: dict[int, asyncio.Semaphore] = {}  # estimativas simultâneas por loop (limite de uso do provedor)
+
+
+def _semaforo(settings: Settings) -> asyncio.Semaphore:
+    loop = id(asyncio.get_running_loop())
+    if loop not in _limites:
+        _limites[loop] = asyncio.Semaphore(settings.nutrition_concurrency)
+    return _limites[loop]
 
 
 class NutritionFailure(Exception):
@@ -101,45 +111,20 @@ def _dominio(url: str) -> str:
     return urlparse(url).netloc.lower().removeprefix("www.")
 
 
-def _urls_consultadas(resposta) -> set[str]:
-    """URLs que a busca na web realmente abriu ou citou nesta resposta."""
-    urls = set()
-    for saida in resposta.output:
-        if saida.type == "web_search_call":
-            for fonte in getattr(getattr(saida, "action", None), "sources", None) or []:
-                url = fonte.get("url") if isinstance(fonte, dict) else getattr(fonte, "url", None)
-                if url:
-                    urls.add(url)
-        elif saida.type == "message":
-            for parte in saida.content:
-                for anotacao in getattr(parte, "annotations", None) or []:
-                    if getattr(anotacao, "type", None) == "url_citation":
-                        urls.add(anotacao.url)
-    return urls
-
-
-def _formato(nome: str, schema: dict) -> dict:
-    return {"format": {"type": "json_schema", "name": nome, "schema": schema, "strict": True}}
-
-
-async def buscar_publicado(client: AsyncOpenAI, settings: Settings, candidate: MealCandidate,
+async def buscar_publicado(backend: Backend, candidate: MealCandidate,
                            opcoes: list[str] | None) -> NutritionResult | None:
     """Tabela nutricional publicada para este item, ou None se nada confiável foi encontrado."""
-    resposta = await client.responses.create(
-        model=settings.nutrition_model,
-        instructions=INSTRUCOES_BUSCA,
-        input="Procure a informação nutricional oficial deste item.\n\n" + montar_prompt(candidate, opcoes),
-        tools=[{"type": "web_search"}],
-        include=["web_search_call.action.sources"],
-        text=_formato("busca_nutricional", SCHEMA_BUSCA),
+    resposta = await backend.json(
+        nome="busca_nutricional", schema=SCHEMA_BUSCA, instrucoes=INSTRUCOES_BUSCA, buscar_na_web=True,
+        texto="Procure a informação nutricional oficial deste item.\n\n" + montar_prompt(candidate, opcoes),
     )
-    dados = json.loads(resposta.output_text)
+    dados = resposta.dados
     if not dados["encontrado"]:
         return None
     if not dados["fonte_url"] or not dados["trecho_fonte"].strip():
         log.info("Busca sem fonte ou trecho para %s; descartada.", candidate.name)
         return None
-    if _dominio(dados["fonte_url"]) not in {_dominio(u) for u in _urls_consultadas(resposta)}:
+    if _dominio(dados["fonte_url"]) not in {_dominio(u) for u in resposta.urls}:
         log.info("Fonte %s não está entre os sites consultados; descartada.", dados["fonte_url"])
         return None
     try:
@@ -173,26 +158,22 @@ async def baixar_imagem(url: str | None, timeout: float) -> str | None:
     return f"data:{tipo};base64,{base64.b64encode(resp.content).decode()}"
 
 
-async def estimar(client: AsyncOpenAI, settings: Settings, candidate: MealCandidate,
+async def estimar(backend: Backend, settings: Settings, candidate: MealCandidate,
                   opcoes: list[str] | None) -> NutritionResult:
     ilustrativa = foto_ilustrativa(candidate)
     imagem = None if ilustrativa else await baixar_imagem(candidate.image_url, settings.nutrition_timeout_seconds)
-    conteudo = [{"type": "input_text", "text": "Estime as calorias deste item.\n\n" + montar_prompt(candidate, opcoes)}]
-    if imagem:
-        conteudo.append({"type": "input_image", "image_url": imagem})
-
-    resposta = await client.responses.create(
-        model=settings.nutrition_model,
-        instructions=INSTRUCOES_ESTIMATIVA,
-        input=[{"role": "user", "content": conteudo}],
-        text=_formato("estimativa_calorias", SCHEMA_ESTIMATIVA),
+    resposta = await backend.json(
+        nome="estimativa_calorias", schema=SCHEMA_ESTIMATIVA, instrucoes=INSTRUCOES_ESTIMATIVA, imagem=imagem,
+        texto="Estime as calorias deste item.\n\n" + montar_prompt(candidate, opcoes),
     )
-    dados = json.loads(resposta.output_text)
+    dados = resposta.dados
     suposicoes = list(dados["suposicoes"])
     if ilustrativa:
         suposicoes.append("Foto ilustrativa: não foi usada para medir a porção.")
     elif candidate.image_url and not imagem:
         suposicoes.append("Imagem indisponível: estimativa feita só com o texto.")
+    elif imagem and not resposta.usou_imagem:
+        suposicoes.append("O modelo não aceitou a imagem: estimativa feita só com o texto.")
 
     if not dados["suficiente"]:
         return _resultado("unavailable", evidence=dados["justificativa"], assumptions=suposicoes)
@@ -204,31 +185,29 @@ async def estimar(client: AsyncOpenAI, settings: Settings, candidate: MealCandid
     )
 
 
-def criar_cliente(settings: Settings) -> AsyncOpenAI | None:
-    chave = settings.openai_api_key.get_secret_value()
-    if not chave:
-        return None
-    return AsyncOpenAI(api_key=chave, timeout=settings.nutrition_timeout_seconds, max_retries=1)
+def criar_cliente(settings: Settings) -> Backend | None:
+    return criar_backend(settings)
 
 
-async def _calcular(client: AsyncOpenAI, settings: Settings, candidate: MealCandidate,
+async def _calcular(client: Backend, settings: Settings, candidate: MealCandidate,
                     opcoes: list[str] | None) -> NutritionResult:
-    if settings.nutrition_web_search and restaurante_valido(candidate):
+    if settings.nutrition_web_search and client.web_search and restaurante_valido(candidate):
         try:
-            publicado = await buscar_publicado(client, settings, candidate, opcoes)
+            publicado = await buscar_publicado(client, candidate, opcoes)
             if publicado:
                 return publicado
-        except (OpenAIError, json.JSONDecodeError, KeyError, ValidationError) as e:
+        except (LLMError, json.JSONDecodeError, KeyError, ValidationError) as e:
             log.warning("Busca nutricional falhou para %s: %s", candidate.name, e)
     return await estimar(client, settings, candidate, opcoes)
 
 
 async def estimate_nutrition(item: MealCandidate | SelectedItem, settings: Settings,
-                             client: AsyncOpenAI | None = None) -> NutritionResult:
+                             client: Backend | None = None) -> NutritionResult:
     """Calorias de uma unidade do item (a quantidade comprada é aplicada por quem chama)."""
     client = client or criar_cliente(settings)
     if client is None:
-        return _resultado("unavailable", evidence="Pipeline nutricional não configurada (OPENAI_API_KEY ausente).")
+        chave = "OPENROUTER_API_KEY" if settings.nutrition_provider == "openrouter" else "OPENAI_API_KEY"
+        return _resultado("unavailable", evidence=f"Pipeline nutricional não configurada ({chave} ausente).")
 
     candidate, opcoes = _partes(item)
     chave = _chave(candidate, opcoes)
@@ -237,7 +216,7 @@ async def estimate_nutrition(item: MealCandidate | SelectedItem, settings: Setti
     try:
         resultado = await asyncio.wait_for(_calcular(client, settings, candidate, opcoes),
                                            settings.nutrition_timeout_seconds)
-    except (asyncio.TimeoutError, OpenAIError, json.JSONDecodeError, KeyError, ValidationError,
+    except (asyncio.TimeoutError, LLMError, json.JSONDecodeError, KeyError, ValidationError,
             NutritionFailure) as e:
         log.warning("Estimativa nutricional falhou para %s: %s", candidate.name, e)
         return _resultado("error", evidence="Não foi possível obter a informação nutricional agora.")
@@ -252,30 +231,51 @@ def _com_nutricao(rec: Recommendation, nutricao: NutritionResult) -> Recommendat
     return rec.model_copy(update={"nutrition": nutricao, "limitations": limitacoes})
 
 
-async def enrich_recommendations(recommendations: list[Recommendation], settings: Settings,
-                                 client: AsyncOpenAI | None = None) -> list[Recommendation]:
-    """Preenche a nutrição das recomendações sem passar do prazo da resposta HTTP.
+def _iniciar(rec: Recommendation, settings: Settings, client: Backend) -> asyncio.Task:
+    async def uma() -> NutritionResult:
+        async with _semaforo(settings):
+            return await estimate_nutrition(rec.candidate, settings, client)
+    return _tarefa(rec.candidate, uma)
 
-    O que não termina a tempo volta como "pending" e continua em segundo plano, indo para o cache:
-    a próxima busca pelo mesmo item já recebe o resultado.
+
+async def enrich_recommendations(recommendations: list[Recommendation], settings: Settings,
+                                 client: Backend | None = None,
+                                 prazo: float | None = None) -> list[Recommendation]:
+    """Inicia a nutrição das recomendações e espera no máximo `prazo` segundos.
+
+    O que não termina a tempo volta como "pending" e continua em segundo plano, indo para o cache;
+    refresh_recommendations entrega o resultado quando ficar pronto.
     """
     client = client or criar_cliente(settings)
     if client is None or not recommendations:
         return [_com_nutricao(r, await estimate_nutrition(r.candidate, settings, client)) for r in recommendations]
-
-    limite = asyncio.Semaphore(settings.nutrition_concurrency)
-
-    async def uma(candidate: MealCandidate) -> NutritionResult:
-        async with limite:
-            return await estimate_nutrition(candidate, settings, client)
-
-    tarefas = [_tarefa(rec.candidate, lambda c=rec.candidate: uma(c)) for rec in recommendations]
-    await asyncio.wait(tarefas, timeout=settings.nutrition_response_budget_seconds)
+    tarefas = [_iniciar(rec, settings, client) for rec in recommendations]
+    espera = settings.nutrition_response_budget_seconds if prazo is None else prazo
+    if espera > 0:
+        await asyncio.wait(tarefas, timeout=espera)
     return [_com_nutricao(rec, _estado_da_tarefa(t)) for rec, t in zip(recommendations, tarefas)]
 
 
+def refresh_recommendations(recommendations: list[Recommendation], settings: Settings,
+                            client: Backend | None = None) -> list[Recommendation]:
+    """Atualiza, sem esperar, as recomendações ainda "pending".
+
+    Se o cálculo se perdeu (ex.: o servidor reiniciou), ele é iniciado de novo em segundo plano.
+    """
+    client = client or criar_cliente(settings)
+    atualizadas = []
+    for rec in recommendations:
+        if rec.nutrition.state != "pending" or client is None:
+            atualizadas.append(rec)
+            continue
+        chave = _chave(rec.candidate, None)
+        nutricao = _cache.get(chave) or _estado_da_tarefa(_iniciar(rec, settings, client))
+        atualizadas.append(_com_nutricao(rec, nutricao))
+    return atualizadas
+
+
 async def estimate_selected(selected: SelectedItem, settings: Settings,
-                            client: AsyncOpenAI | None = None, aguardar: bool = True) -> NutritionResult:
+                            client: Backend | None = None, aguardar: bool = True) -> NutritionResult:
     """Calorias do prato montado (com as opções escolhidas), dentro do prazo da resposta HTTP.
 
     Com aguardar=False só consulta: devolve o resultado se já terminou, ou "pending" se ainda está calculando.

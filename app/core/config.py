@@ -48,13 +48,28 @@ class Settings(BaseSettings):
     ifood_token_file: str = ".ifood_tokens.json"
     mcp_timeout_seconds: float = Field(default=20, gt=0, le=120)
 
-    # Pipeline nutricional (OpenAI). Sem chave, a nutrição fica "unavailable" e o resto funciona.
+    # Pipeline nutricional. Sem a chave do provedor escolhido, a nutrição fica "unavailable" e o resto funciona.
+    # openai: GPT pago (melhor qualidade, busca na web nativa). openrouter: modelos gratuitos.
+    nutrition_provider: Literal["openai", "openrouter"] = "openai"
     openai_api_key: SecretStr = SecretStr("")
     nutrition_model: str = "gpt-5.4-mini"
+    # Modelo do OpenRouter e reservas, tentadas em ordem quando o anterior falha ou está no limite.
+    # Para estimar com a foto, prefira modelos que aceitam imagem (gemma-4, nemotron-3.5-super-vl).
+    nutrition_openrouter_model: str = "google/gemma-4-31b-it:free"
+    nutrition_openrouter_fallback_models: list[str] = [
+        "google/gemma-4-26b-a4b-it:free",
+        "nvidia/nemotron-3.5-super-vl:free",
+        "openrouter/free",
+    ]
+    # O plugin de busca na web do OpenRouter é cobrado por uso, mesmo com modelo gratuito.
+    nutrition_openrouter_web_search: bool = False
     nutrition_web_search: bool = True
     nutrition_timeout_seconds: float = Field(default=60, gt=0, le=300)
     # O frontend aborta requisições em 30 s; o que passar disso volta "pending" e termina em segundo plano.
     nutrition_response_budget_seconds: float = Field(default=20, gt=0, le=28)
+    # A busca responde sem esperar as calorias (os cards mostram "Calculando…" e a tela atualiza sozinha).
+    # Um prazo curto ainda entrega na hora o que já está em cache ou é muito rápido.
+    nutrition_search_budget_seconds: float = Field(default=1, ge=0, le=28)
     nutrition_concurrency: int = Field(default=3, ge=1, le=10)
 
     @field_validator("timezone")
@@ -71,7 +86,8 @@ class Settings(BaseSettings):
             "mode": self.ifood_mode,
             "simulated": self.ifood_mode == "mock",
             "live_orders_enabled": False,
-            "nutrition": "enabled" if self.openai_api_key.get_secret_value() else "unavailable",
+            "nutrition": "enabled" if (self.openrouter_api_key if self.nutrition_provider == "openrouter"
+                                       else self.openai_api_key.get_secret_value()) else "unavailable",
             "timezone": self.timezone,
             "issues": (
                 ["Demonstração com catálogo, endereço, preços e pedidos fictícios."]

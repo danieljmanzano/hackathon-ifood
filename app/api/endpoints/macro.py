@@ -26,7 +26,7 @@ from app.schemas.macro import (
 )
 from app.services.ifood_live import MCPIFood
 from app.services.mock_ifood import MockIFood
-from app.services.nutrition import enrich_recommendations, estimate_selected
+from app.services.nutrition import enrich_recommendations, estimate_selected, refresh_recommendations
 
 router = APIRouter()
 _mock_provider = MockIFood()
@@ -214,7 +214,9 @@ async def search(
         budget = session.profile.default_budget_cents
     candidates = await provider.search(query, session.address, budget)
     recommendations = rank(candidates, payload, session.profile, budget)
-    recommendations = await enrich_recommendations(recommendations, settings)
+    recommendations = await enrich_recommendations(
+        recommendations, settings, prazo=settings.nutrition_search_budget_seconds
+    )
 
     def update(s: Session):
         s.budget_cents = budget
@@ -266,6 +268,28 @@ async def menu(
 
     mutate_session(request, session, update)
     return items
+
+
+@router.get("/recommendations/nutrition", response_model=Session)
+def recommendations_nutrition(
+    request: Request,
+    session: Session = Depends(current_session),
+    settings: Settings = Depends(get_settings),
+):
+    """Entrega as calorias das recomendações que estavam "pending" quando a busca respondeu."""
+    if not any(r.nutrition.state == "pending" for r in session.recommendations):
+        return session
+    updated = refresh_recommendations(session.recommendations, settings)
+    if [r.nutrition for r in updated] == [r.nutrition for r in session.recommendations]:
+        return session
+    ids = [(r.candidate.merchant_id, r.candidate.item_id) for r in session.recommendations]
+
+    def update(s: Session):
+        # Só aplica se a busca não mudou enquanto isso.
+        if [(r.candidate.merchant_id, r.candidate.item_id) for r in s.recommendations] == ids:
+            s.recommendations = updated
+
+    return mutate_session(request, session, update)
 
 
 @router.get("/items/{merchant_id}/{item_id}")
