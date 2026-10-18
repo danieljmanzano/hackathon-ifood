@@ -19,32 +19,87 @@ Depois da confirmação, a avaliação modificada aceita nota opcional, comentá
 
 ## 🚀 Como Executar
 
+Use Python **3.11 ou superior** e Node.js **22.6 ou superior**, com npm.
+O repositório é [danieljmanzano/hackathon-ifood](https://github.com/danieljmanzano/hackathon-ifood)
+e a branch padrão atual é **`main`**.
+
 ### 1. Backend (FastAPI)
 
-Na raiz do repositório:
+Na raiz do repositório, crie e ative o ambiente virtual:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-uvicorn app.main:app --reload --port 8000
+python -m pip install -r requirements.txt
 ```
 
-- Documentação interativa da API: http://127.0.0.1:8000/docs
-- Verificação de saúde: http://127.0.0.1:8000/api/health
+Na primeira execução, crie o `.env` sem sobrescrever uma configuração existente:
+
+```bash
+if [ ! -f .env ]; then cp .env.example .env; fi
+```
+
+Para testar com dados fictícios e checkout sem cobrança, inicie em modo mock:
+
+```bash
+IFOOD_MODE=mock python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Esse comando define o modo apenas para o processo iniciado. Para usar a
+configuração já salva no `.env`, execute:
+
+```bash
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+O modo live exige credenciais e autenticação MCP, descritas em
+[Catálogo real](#catálogo-real-com-reviews-de-demonstração-e-nutrição-incremental).
+O mock funciona sem credenciais do iFood. Estimativas nutricionais e interpretação
+por IA dependem das chaves e opções dos respectivos provedores; sem essas chaves,
+as regras locais continuam disponíveis e a nutrição pode ficar indisponível.
+
+- [Documentação interativa da API](http://127.0.0.1:8000/docs).
+- [Verificação de saúde](http://127.0.0.1:8000/api/health).
 
 ### 2. Frontend (React + Vite)
 
-Em outro terminal:
+Mantenha o backend aberto. Em outro terminal, a partir da raiz:
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
-Abra **http://127.0.0.1:5180/** no navegador. O Vite encaminha automaticamente as chamadas `/api` para o backend na porta 8000 via proxy.
+Abra **[http://127.0.0.1:5180/](http://127.0.0.1:5180/)**. O Vite encaminha `/api`
+para o backend na porta 8000. As duas aplicações precisam permanecer em execução.
+Se o backend usar outra porta, informe o endereço ao iniciar o frontend:
+
+```bash
+MACRO_API_URL=http://127.0.0.1:8001 npm run dev
+```
+
+### Resolvendo problemas de execução
+
+**`No module named uvicorn`.** Na raiz, confira o Python do ambiente virtual e
+instale as dependências nele:
+
+```bash
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Use `python -m pip` e `python -m uvicorn` para que instalação e execução usem o
+mesmo interpretador. Se a pasta do projeto foi movida ou renomeada, recrie o
+ambiente virtual no caminho atual e reinstale as dependências: os scripts de
+ativação e executáveis da `.venv` podem conter o caminho absoluto antigo.
+
+**Página abre, mas não conecta.** Confira se o backend está aberto e se
+`http://127.0.0.1:8000/api/health` responde. Uma API em outra porta exige ajustar
+`MACRO_API_URL` no frontend.
+
+**Porta ocupada.** O frontend exige a porta 5180 e não escolhe outra automaticamente.
+Encerre a instância anterior do mesmo aplicativo antes de iniciar outra.
 
 ---
 
@@ -83,8 +138,8 @@ Abra **http://127.0.0.1:5180/** no navegador. O Vite encaminha automaticamente a
 ## 🧪 Testes
 
 ```bash
-# Testes do backend
-pytest
+# Na raiz, com o ambiente virtual ativado
+python -m pytest tests -q
 
 # Build do frontend
 cd frontend && npm run build
@@ -110,12 +165,12 @@ de negócio devem ser preservados em refatorações.
 
 ```bash
 # Na raiz do repositório
-pip install -r requirements-dev.txt
-ruff check app scripts
-ruff format --check app scripts
+python -m pip install -r requirements-dev.txt
+python -m ruff check app scripts
+python -m ruff format --check app scripts
 
 # Para aplicar a formatação Python
-ruff format app scripts
+python -m ruff format app scripts
 
 # Na pasta frontend, após npm ci
 npm run format:check
@@ -150,7 +205,7 @@ Em Python, use `from app.services.mock_reviews import review_dataset`. Relacione
 - O sinal adicional é `comunidade + 2 × afinidade + 3 × nota pessoal centrada + afinidade textual + 0,5 × aspectos`, somado à pontuação de busca e preferências. A resposta inclui `review_signal` com componentes e `reasons` com explicações. O score é uma pontuação de ordenação, não uma probabilidade de satisfação.
 - Orçamento, indisponibilidade, ingredientes rejeitados e restrições textuais continuam filtrando os candidatos antes do ranqueamento. Até três sugestões priorizam restaurantes distintos; restrições alimentares ainda exigem confirmação com o restaurante.
 
-No modo mock, cada sessão começa com uma cópia do histórico `demo-user`; novas notas substituem a seed do mesmo item. No modo live, somente avaliações locais não simuladas entram no cálculo: ainda não há importação de reviews do iFood nem metadados de cozinha reais, então a afinidade por cozinha fica neutra. Sem histórico relacionado, o motor usa a comunidade; sem reviews, usa a busca e as preferências existentes.
+No modo mock, cada sessão começa com uma cópia do histórico `demo-user`; novas notas substituem a seed do mesmo item. No modo live, o ranking usa avaliações locais e, com `LIVE_MOCK_REVIEWS=true` (padrão), avaliações simuladas ligadas aos produtos reais observados, identificadas na interface. Configure `LIVE_MOCK_REVIEWS=false` para remover essa camada de demonstração. Não há importação dos textos das reviews do iFood nem metadados de cozinha reais. Sem histórico relacionado, o motor usa a comunidade disponível; sem reviews, usa a busca e as preferências existentes.
 
 Na interface, avalie pela conversa depois de confirmar o pedido. A interpretação mostra nota e aspectos e permite corrigir o resultado. O histórico continua no backend para personalização, sem uma tela paralela de avaliações.
 
@@ -330,12 +385,12 @@ ficam no SQLite de `DATABASE_PATH`. A nutrição pronta continua em
 `CATALOG_RETRY_SECONDS=900` e no máximo `CATALOG_MAX_ATTEMPTS=2` tentativas.
 A cota diária esgotada adia tarefas até o próximo dia UTC, sem gastar tentativas.
 
-Limites padrão do agente nutricional real:
+Configuração de limites do agente nutricional real:
 
-- `CATALOG_PRODUCTS_PER_DAY=20`: produtos/variantes distintos que iniciaram chamadas no dia.
-- `CATALOG_CALLS_PER_DAY=60`: requisições de IA, contando erros, retries e fallback.
+- `CATALOG_PRODUCTS_PER_DAY`: sem limite diário por padrão. Configure um número para limitar os produtos/variantes distintos que iniciam chamadas no dia; `0` bloqueia novos cálculos.
+- `CATALOG_CALLS_PER_DAY`: sem limite diário por padrão. Configure um número para limitar requisições de IA, contando erros, retries e fallback; `0` bloqueia novas chamadas.
 - `CATALOG_CALLS_PER_PRODUCT=8`: requisições por produto/variante no dia.
-- `CATALOG_MAX_OUTPUT_TOKENS=1800`: limite de saída enviado a cada provedor.
+- `CATALOG_MAX_OUTPUT_TOKENS=4000`: limite de saída enviado a cada provedor.
 - `CATALOG_MAX_INPUT_CHARS=24000`: entradas textuais maiores não são enviadas.
 
 Essas cotas são reservadas atomicamente **antes** do HTTP. Elas limitam volume,

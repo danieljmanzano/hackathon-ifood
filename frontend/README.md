@@ -5,6 +5,8 @@ pedidos. O backend FastAPI ativo está em `app/`, na raiz do repositório.
 
 ## Executar
 
+Use Node.js 22.6 ou superior, com npm, e Python 3.11 ou superior para o backend.
+
 Na raiz, instale as dependências Python e configure `.env` conforme o
 [README principal](../README.md). Inicie a API:
 
@@ -12,7 +14,11 @@ Na raiz, instale as dependências Python e configure `.env` conforme o
 .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-Em outro terminal:
+Para testar com dados fictícios, acrescente `IFOOD_MODE=mock` antes do comando
+da API. Isso altera apenas o processo iniciado, sem editar o `.env`. O modo live
+usa as credenciais e a configuração salvas no backend.
+
+Mantenha a API em execução. Em outro terminal, a partir da raiz:
 
 ```bash
 cd frontend
@@ -26,6 +32,12 @@ mantendo o cookie de sessão na mesma origem. Para usar outra porta do backend:
 ```bash
 MACRO_API_URL=http://127.0.0.1:8001 npm run dev
 ```
+
+Se aparecer `No module named uvicorn`, instale as dependências com
+`.venv/bin/python -m pip install -r requirements.txt` na raiz. Após mover ou
+renomear a pasta do projeto, recrie o ambiente virtual no caminho atual e
+reinstale as dependências. Veja também a seção de problemas de execução do
+[README principal](../README.md#resolvendo-problemas-de-execução).
 
 ## Verificar e formatar
 
