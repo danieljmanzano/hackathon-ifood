@@ -5,6 +5,7 @@ __pycache__/
 .env.*
 !.env.example
 .pytest_cache/
+.ruff_cache/
 .ifood_tokens.json
 data/*
 !data/mocks/

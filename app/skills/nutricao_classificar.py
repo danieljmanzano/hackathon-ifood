@@ -7,6 +7,7 @@ Saída:    {"tipo_item": "industrializado"|"prato", "marca": ..., "motivo": ...}
 Para que serve: produto de marca com embalagem (ex.: "Bolo Dona Maria") tem tabela nutricional publicada; ela deve
           ser procurada na web ANTES das bases genéricas, senão a TACO ("Bolo, pronto, chocolate") ganha de graça.
 """
+
 from . import item_pedido
 from .comum import pedir_json
 
@@ -44,5 +45,7 @@ def pedido(item: str) -> str:
 
 
 def exemplo() -> list[tuple[str, str]]:
-    item = item_pedido.descrever("Bolo Dona Maria Chocolate 250g", "Mercado Bom Preço", "", None, [])
+    item = item_pedido.descrever(
+        "Bolo Dona Maria Chocolate 250g", "Mercado Bom Preço", "", None, []
+    )
     return [("sistema", INSTRUCOES), ("usuário", pedir_json(pedido(item), SCHEMA))]

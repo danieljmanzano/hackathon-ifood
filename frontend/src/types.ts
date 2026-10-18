@@ -19,7 +19,8 @@ export interface Profile {
   nutrition_preferences: NutritionPreferences;
   diet_plan: DietPlan;
 }
-export type DietGoal = "gain_muscle" | "lose_weight" | "maintain_weight" | "performance" | "balanced";
+export type DietGoal =
+  "gain_muscle" | "lose_weight" | "maintain_weight" | "performance" | "balanced";
 export interface DietPlan {
   goal: DietGoal | null;
   details: string;
@@ -257,8 +258,16 @@ export interface Order {
   review?: OrderReview | null;
 }
 export interface Session {
-  pending_preference_update?: {source_message: string} | null;
-  nutrition_search?: {id: string; state: "pending" | "complete"; tested: number; accepted: number; approximate?: number; batches: number; reason: string | null} | null;
+  pending_preference_update?: { source_message: string } | null;
+  nutrition_search?: {
+    id: string;
+    state: "pending" | "complete";
+    tested: number;
+    accepted: number;
+    approximate?: number;
+    batches: number;
+    reason: string | null;
+  } | null;
   last_chat_action?: "search" | "context" | "preferences" | "assembly" | null;
   assembly?: Assembly | null;
   request_intent?: MealIntent | null;

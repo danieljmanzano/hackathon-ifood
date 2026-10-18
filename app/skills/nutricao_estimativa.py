@@ -6,8 +6,9 @@ Saída:    JSON conforme SCHEMA: calorias, faixa, macros, peso, ingredientes, su
 Diferença entre A e B: o A recebe INSTRUCOES como mensagem de sistema e o formato JSON no fim do pedido;
           o B (OpenAI) recebe tudo numa mensagem só, com a imagem anexada.
 """
+
 from . import item_pedido
-from .comum import FORMATO_JSON, NUM, SCHEMA_INGREDIENTES, pedir_json, schema_json
+from .comum import FORMATO_JSON, NUM, pedir_json, schema_json
 
 INSTRUCOES = """Você é um nutricionista especialista em estimar calorias e macronutrientes de pratos de delivery.
 Raciocine passo a passo: identifique os componentes do prato, estime a massa de cada um, aplique valores nutricionais
@@ -39,7 +40,10 @@ SCHEMA = {
         "gordura_g": NUM,
         "peso_estimado_g": {**NUM, "description": "peso total do item em gramas"},
         "confianca": {"type": "string", "enum": ["baixa", "media", "alta"]},
-        "porcao_base": {"type": "string", "description": "A que se refere a estimativa, ex.: 'pote de ~250 g'"},
+        "porcao_base": {
+            "type": "string",
+            "description": "A que se refere a estimativa, ex.: 'pote de ~250 g'",
+        },
         "justificativa": {"type": "string", "description": "1 a 3 frases explicando a estimativa"},
         "ingredientes": {
             "type": "array",
@@ -56,8 +60,22 @@ SCHEMA = {
         },
         "suposicoes": {"type": "array", "items": {"type": "string"}},
     },
-    "required": ["suficiente", "calorias", "faixa_min", "faixa_max", "proteina_g", "carbo_g", "gordura_g",
-                 "peso_estimado_g", "confianca", "porcao_base", "justificativa", "ingredientes", "itens_visiveis_na_imagem", "suposicoes"],
+    "required": [
+        "suficiente",
+        "calorias",
+        "faixa_min",
+        "faixa_max",
+        "proteina_g",
+        "carbo_g",
+        "gordura_g",
+        "peso_estimado_g",
+        "confianca",
+        "porcao_base",
+        "justificativa",
+        "ingredientes",
+        "itens_visiveis_na_imagem",
+        "suposicoes",
+    ],
 }
 
 PEDIDO = "Estime as calorias e macros deste item.\n\n"
@@ -76,4 +94,8 @@ def pedido_b(item: str) -> str:
 
 def exemplo() -> list[tuple[str, str]]:
     item = item_pedido.exemplo()[1][1]
-    return [("A - sistema", INSTRUCOES), ("A - usuário", pedir_json(pedido_a(item), SCHEMA)), ("B (com a foto) - mensagem única", pedido_b(item))]
+    return [
+        ("A - sistema", INSTRUCOES),
+        ("A - usuário", pedir_json(pedido_a(item), SCHEMA)),
+        ("B (com a foto) - mensagem única", pedido_b(item)),
+    ]

@@ -6,13 +6,20 @@
 Nível (CALORIAS_LOG ou python -m app.run --log): off = só problemas · resumo = uma linha por etapa ·
 detalhe = também candidatos, respostas dos modelos e cada chamada de API.
 """
+
 import contextvars
 import logging
 import sys
 import time
 
 NIVEIS = {"off": logging.WARNING, "resumo": logging.INFO, "detalhe": logging.DEBUG}
-SIMBOLO = {logging.DEBUG: ".", logging.INFO: "·", logging.WARNING: "!", logging.ERROR: "x", logging.CRITICAL: "x"}
+SIMBOLO = {
+    logging.DEBUG: ".",
+    logging.INFO: "·",
+    logging.WARNING: "!",
+    logging.ERROR: "x",
+    logging.CRITICAL: "x",
+}
 
 log = logging.getLogger("app.nutricao")
 _item: contextvars.ContextVar[str] = contextvars.ContextVar("nutricao_item", default="")
@@ -48,7 +55,7 @@ def rotulo(nome: str, largura: int = LARGURA_ITEM) -> str:
     if len(nome) <= largura:
         return nome
     fim = largura // 2 - 1
-    return nome[:largura - fim - 1] + "…" + nome[-fim:]
+    return nome[: largura - fim - 1] + "…" + nome[-fim:]
 
 
 def iniciar_item(nome: str) -> contextvars.Token:
@@ -59,7 +66,7 @@ def iniciar_item(nome: str) -> contextvars.Token:
 def curto(valor, limite: int = 180) -> str:
     """Erro ou texto em uma linha só, truncado."""
     texto = " ".join(str(valor if not isinstance(valor, BaseException) else repr(valor)).split())
-    return texto if len(texto) <= limite else texto[:limite - 1] + "…"
+    return texto if len(texto) <= limite else texto[: limite - 1] + "…"
 
 
 def _emitir(nivel: int, etapa: str, msg: str) -> None:
@@ -81,6 +88,7 @@ def aviso(etapa: str, msg: str) -> None:
 
 class Cronometro:
     """with Cronometro() as t: ...; t.segundos"""
+
     def __enter__(self):
         self._inicio = time.perf_counter()
         return self

@@ -34,15 +34,25 @@ class NutritionPreferences(Model):
 
     @model_validator(mode="after")
     def valid_ranges(self):
-        for lower, upper in (("min_calories", "max_calories"), ("min_protein_g", "max_protein_g"),
-                             ("min_carbs_g", "max_carbs_g"), ("min_fat_g", "max_fat_g")):
-            if getattr(self, lower) is not None and getattr(self, upper) is not None and getattr(self, lower) > getattr(self, upper):
+        for lower, upper in (
+            ("min_calories", "max_calories"),
+            ("min_protein_g", "max_protein_g"),
+            ("min_carbs_g", "max_carbs_g"),
+            ("min_fat_g", "max_fat_g"),
+        ):
+            if (
+                getattr(self, lower) is not None
+                and getattr(self, upper) is not None
+                and getattr(self, lower) > getattr(self, upper)
+            ):
                 raise ValueError("O mínimo nutricional não pode ser maior que o máximo.")
         return self
 
     @property
     def active(self) -> bool:
-        return bool(self.goals) or any(value is not None for key, value in self.model_dump().items() if key != "goals")
+        return bool(self.goals) or any(
+            value is not None for key, value in self.model_dump().items() if key != "goals"
+        )
 
 
 DietGoal = Literal["gain_muscle", "lose_weight", "maintain_weight", "performance", "balanced"]
@@ -73,8 +83,14 @@ class DietContext(Model):
     targets: DailyNutrients = Field(default_factory=DailyNutrients)
     remaining: DailyNutrients = Field(default_factory=DailyNutrients)
     known_counts: dict[str, int] = Field(default_factory=dict)
-    signals: list[Literal["fruit_only_records", "protein_target_remaining", "protein_target_reached",
-                        "calorie_target_reached"]] = Field(default_factory=list)
+    signals: list[
+        Literal[
+            "fruit_only_records",
+            "protein_target_remaining",
+            "protein_target_reached",
+            "calorie_target_reached",
+        ]
+    ] = Field(default_factory=list)
     reasons: list[str] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list)
 
@@ -98,7 +114,12 @@ class MealRequest(Model):
 
 
 class ChatInput(MealRequest):
-    message_id: str = Field(default_factory=lambda: str(uuid4()), min_length=1, max_length=80, pattern=r'^[a-zA-Z0-9-]+$')
+    message_id: str = Field(
+        default_factory=lambda: str(uuid4()),
+        min_length=1,
+        max_length=80,
+        pattern=r"^[a-zA-Z0-9-]+$",
+    )
 
 
 class Address(Model):
@@ -169,22 +190,44 @@ class MealFeatures(Model):
     portion_size: Literal["small", "regular", "large", "sharing"] | None = None
     serves: int | None = Field(default=None, ge=1, le=20)
     weight_grams: int | None = Field(default=None, gt=0)
-    tags: list[Literal["light", "protein", "comfort", "indulgent", "vegetarian"]] = Field(default_factory=list)
+    tags: list[Literal["light", "protein", "comfort", "indulgent", "vegetarian"]] = Field(
+        default_factory=list
+    )
     eta_max_minutes: int | None = Field(default=None, gt=0)
 
 
 class MealIntent(Model):
-    goals: list[Literal["large_portion", "small_portion", "light", "cheap", "fast", "protein", "comfort", "indulgent", "vegetarian"]] = Field(default_factory=list)
+    goals: list[
+        Literal[
+            "large_portion",
+            "small_portion",
+            "light",
+            "cheap",
+            "fast",
+            "protein",
+            "comfort",
+            "indulgent",
+            "vegetarian",
+        ]
+    ] = Field(default_factory=list)
     party_size: int | None = Field(default=None, ge=1, le=20)
     max_delivery_minutes: int | None = Field(default=None, gt=0)
     food_query: str = ""
     provider_query: str = "refeição"
     # Consultas concretas para o buscador do iFood (pratos/itens, não só a culinária), da mais específica à mais geral.
     search_queries: list[str] = Field(default_factory=list, max_length=6)
-    cuisine: str | None = None  # ex.: "japonesa"; usada para achar restaurantes quando os itens não aparecem
-    avoid_repeats: bool = False  # "diferente", "outro", "variado": não repetir pratos já mostrados e variar os tipos
-    pesquisar_na_web: str = ""  # termo que o modelo não conhece bem: a busca pesquisa na web antes de consultar o iFood
-    alvo_item_id: str = ""  # sugestão mostrada que o modelo escolheu como alvo do pedido ("" = nenhuma)
+    cuisine: str | None = (
+        None  # ex.: "japonesa"; usada para achar restaurantes quando os itens não aparecem
+    )
+    avoid_repeats: bool = (
+        False  # "diferente", "outro", "variado": não repetir pratos já mostrados e variar os tipos
+    )
+    pesquisar_na_web: str = (
+        ""  # termo que o modelo não conhece bem: a busca pesquisa na web antes de consultar o iFood
+    )
+    alvo_item_id: str = (
+        ""  # sugestão mostrada que o modelo escolheu como alvo do pedido ("" = nenhuma)
+    )
     motivo_da_decisao: str = ""  # por que o modelo leu o pedido assim (vai para o log)
     montar_pedido: bool = False  # o usuário pediu para o assistente montar o pedido (escolher complementos e quantidade)
     budget_cents: Cents | None = None
@@ -192,8 +235,22 @@ class MealIntent(Model):
     interpretation_source: Literal["rules", "llm"] = "rules"
     context_summary: str | None = Field(default=None, max_length=400)
     inferences: list[str] = Field(default_factory=list, max_length=5)
-    inferred_goals: list[Literal["large_portion", "small_portion", "light", "cheap", "fast", "protein", "comfort", "indulgent", "vegetarian"]] = Field(default_factory=list)
-    fallback_reason: Literal["disabled", "not_configured", "timeout", "invalid_response", "unavailable"] | None = None
+    inferred_goals: list[
+        Literal[
+            "large_portion",
+            "small_portion",
+            "light",
+            "cheap",
+            "fast",
+            "protein",
+            "comfort",
+            "indulgent",
+            "vegetarian",
+        ]
+    ] = Field(default_factory=list)
+    fallback_reason: (
+        Literal["disabled", "not_configured", "timeout", "invalid_response", "unavailable"] | None
+    ) = None
     nutrition_preferences: NutritionPreferences = Field(default_factory=NutritionPreferences)
     diet_context: DietContext | None = None
 
@@ -255,7 +312,9 @@ class NutritionResult(Model):
                 raise ValueError("Uma estimativa disponível exige faixa, porção e método.")
             if not self.minimum <= self.calories <= self.maximum:
                 raise ValueError("Faixa calórica inconsistente.")
-            if self.method in ("published", "web") and not all((self.source_url, self.source_name, self.evidence)):
+            if self.method in ("published", "web") and not all(
+                (self.source_url, self.source_name, self.evidence)
+            ):
                 raise ValueError("Informação publicada exige fonte e evidência.")
             if self.method == "database" and not all((self.source_name, self.evidence)):
                 raise ValueError("Informação de base de dados exige fonte e evidência.")
@@ -347,6 +406,7 @@ Rating = Annotated[int, Field(ge=1, le=5, strict=True)]
 
 class OrderAspects(Model):
     """Notas por aspecto; null quando nem o usuário nem o comentário falaram dele."""
+
     taste: Rating | None = None
     delivery: Rating | None = None
     value_for_money: Rating | None = None
@@ -355,14 +415,18 @@ class OrderAspects(Model):
 
 class ReviewInterpretation(Model):
     """Leitura estruturada do comentário livre, feita pelo LLM."""
+
     rating: Rating | None = None
     aspects: OrderAspects = Field(default_factory=OrderAspects)
     summary: str = Field(default="", max_length=300)
-    tags: list[Annotated[str, Field(min_length=1, max_length=40)]] = Field(default_factory=list, max_length=5)
+    tags: list[Annotated[str, Field(min_length=1, max_length=40)]] = Field(
+        default_factory=list, max_length=5
+    )
 
 
 class OrderReviewInput(Model):
     """Avaliação rápida enviada junto da confirmação. Fica só no Macro: o MCP do iFood não recebe reviews."""
+
     rating: Rating | None = None
     comment: Annotated[str, AfterValidator(lambda text: text[:200])] = ""
 
@@ -373,6 +437,7 @@ class OrderReviewInput(Model):
 
 class OrderReviewEdit(Model):
     """Correção do usuário sobre a interpretação; substitui nota e aspectos inferidos."""
+
     rating: Rating
     aspects: OrderAspects = Field(default_factory=OrderAspects)
 
@@ -394,8 +459,10 @@ class OrderReview(Model):
     @property
     def effective_aspects(self) -> dict[str, int | None]:
         inferred = self.interpretation.aspects.model_dump() if self.interpretation else {}
-        return {key: value if value is not None else inferred.get(key)
-                for key, value in self.aspects.model_dump().items()}
+        return {
+            key: value if value is not None else inferred.get(key)
+            for key, value in self.aspects.model_dump().items()
+        }
 
 
 class ConfirmationInput(Model):
@@ -435,7 +502,9 @@ class ConsumptionRecord(Model):
 
 
 class FoodDiaryEntry(Model):
-    id: Annotated[str, Field(min_length=1, max_length=200)] = Field(default_factory=lambda: str(uuid4()))
+    id: Annotated[str, Field(min_length=1, max_length=200)] = Field(
+        default_factory=lambda: str(uuid4())
+    )
     description: Text
     consumed_at: AwareDatetime = Field(default_factory=now)
     nutrition: DailyNutrients = Field(default_factory=DailyNutrients)
@@ -468,12 +537,14 @@ class NutritionSearchProgress(Model):
 
 class AssemblyLimits(Model):
     """O que o cliente exigiu do pedido montado (valores numéricos ditos por ele; o resto só orienta a escolha)."""
+
     max_price_cents: Cents | None = None
     nutrition: NutritionPreferences = Field(default_factory=NutritionPreferences)
 
 
 class Assembly(Model):
     """Montagem do pedido pelo assistente, em segundo plano. A UI acompanha `events` e, no fim, replica a montagem."""
+
     id: str = Field(default_factory=lambda: str(uuid4()))
     state: Literal["running", "ready", "impossible", "failed"] = "running"
     candidate: MealCandidate | None = None
@@ -502,7 +573,7 @@ class Session(Model):
     recommendations: list[Recommendation] = Field(default_factory=list)
     recent_recommendations: list[tuple[str, str]] = Field(default_factory=list, max_length=18)
     request_intent: MealIntent | None = None
-    last_chat_action: Literal['search', 'context', 'preferences', 'assembly'] | None = None
+    last_chat_action: Literal["search", "context", "preferences", "assembly"] | None = None
     selected: SelectedItem | None = None
     summary: CheckoutSummary | None = None
     order: OrderRecord | None = None

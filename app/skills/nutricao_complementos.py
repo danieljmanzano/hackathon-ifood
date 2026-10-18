@@ -5,6 +5,7 @@ Modelo:   LLM de texto (OpenRouter ou OpenAI, com a reserva do outro).
 Saída:    por opção, o tipo e, para os adicionais, gramas e kcal (e macros, se souber) de UMA unidade.
           O item base é calculado pelo resto do pipeline; os adicionais são somados no fim, vezes a quantidade.
 """
+
 from . import item_pedido
 from .comum import NUM, pedir_json
 
@@ -48,13 +49,24 @@ OPCOES = "Opções a classificar (número. grupo: opção):\n"
 
 def pedido(item: str, opcoes: list[tuple[str, str]]) -> str:
     """`opcoes`: (nome do grupo, nome da opção), numeradas na ordem; a resposta cita o número (índice)."""
-    linhas = "\n".join(f"{i}. {grupo}: {nome}" if grupo else f"{i}. {nome}"
-                        for i, (grupo, nome) in enumerate(opcoes))
+    linhas = "\n".join(
+        f"{i}. {grupo}: {nome}" if grupo else f"{i}. {nome}"
+        for i, (grupo, nome) in enumerate(opcoes)
+    )
     return f"{PEDIDO}{item}\n\n{OPCOES}{linhas}"
 
 
 def exemplo() -> list[tuple[str, str]]:
-    item = item_pedido.descrever("Açaí 300ml", "Açaí da Praça", "Copo de açaí cremoso. Monte do seu jeito.",
-                                 ["1 × Tradicional", "2 × Nutella", "1 × Paçoca"], [])
-    opcoes = [("Escolha o açaí", "Tradicional"), ("Coberturas", "Nutella"), ("Coberturas", "Paçoca")]
+    item = item_pedido.descrever(
+        "Açaí 300ml",
+        "Açaí da Praça",
+        "Copo de açaí cremoso. Monte do seu jeito.",
+        ["1 × Tradicional", "2 × Nutella", "1 × Paçoca"],
+        [],
+    )
+    opcoes = [
+        ("Escolha o açaí", "Tradicional"),
+        ("Coberturas", "Nutella"),
+        ("Coberturas", "Paçoca"),
+    ]
     return [("sistema", INSTRUCOES), ("usuário", pedir_json(pedido(item, opcoes), SCHEMA))]

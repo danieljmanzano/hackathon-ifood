@@ -1,15 +1,18 @@
 """Ingredientes do prato casados com a TACO e somados (casar_tbca + somar_ingredientes)."""
+
 from app.core.config import Settings
-from ..modelos import Ingrediente, Leitura, Macros
 from app.skills import nutricao_ingredientes
+
+from ..modelos import Ingrediente, Leitura, Macros
 from .bases import Alimento, candidatos
 from .llm import perguntar_json
 
 COBERTURA_MINIMA = 0.7
 
 
-async def casar_ingredientes(settings: Settings, ingredientes: list[Ingrediente],
-                             alimentos: tuple[Alimento, ...]) -> dict[str, Alimento | None]:
+async def casar_ingredientes(
+    settings: Settings, ingredientes: list[Ingrediente], alimentos: tuple[Alimento, ...]
+) -> dict[str, Alimento | None]:
     """Uma chamada em lote: o LLM escolhe, por ingrediente, o alimento da TACO (ou nenhum)."""
     opcoes = {i.nome: candidatos(alimentos, i.nome, n=5) for i in ingredientes}
     com_candidatos = {nome: lista for nome, lista in opcoes.items() if lista}
@@ -17,9 +20,11 @@ async def casar_ingredientes(settings: Settings, ingredientes: list[Ingrediente]
     if not com_candidatos:
         return casados
     pedido = nutricao_ingredientes.pedido_casar(
-        {nome: [(a.nome, a.categoria) for a in lista] for nome, lista in com_candidatos.items()})
-    dados = await perguntar_json(settings, nutricao_ingredientes.INSTRUCOES_CASAR, pedido,
-                                 nutricao_ingredientes.SCHEMA_CASAR)
+        {nome: [(a.nome, a.categoria) for a in lista] for nome, lista in com_candidatos.items()}
+    )
+    dados = await perguntar_json(
+        settings, nutricao_ingredientes.INSTRUCOES_CASAR, pedido, nutricao_ingredientes.SCHEMA_CASAR
+    )
     for item in dados["escolhas"]:
         lista = com_candidatos.get(item["ingrediente"])
         indice = item["escolha"]
@@ -28,7 +33,9 @@ async def casar_ingredientes(settings: Settings, ingredientes: list[Ingrediente]
     return casados
 
 
-def somar_ingredientes(ingredientes: list[Ingrediente], casados: dict[str, Alimento | None]) -> Leitura | None:
+def somar_ingredientes(
+    ingredientes: list[Ingrediente], casados: dict[str, Alimento | None]
+) -> Leitura | None:
     """TACO × gramas de cada ingrediente. Exige cobertura mínima (por massa) para valer como fonte."""
     total_g = sum(i.gramas for i in ingredientes)
     achados = [(i, casados.get(i.nome)) for i in ingredientes if casados.get(i.nome) is not None]
@@ -47,9 +54,13 @@ def somar_ingredientes(ingredientes: list[Ingrediente], casados: dict[str, Alime
     folga = 0.2 + 0.3 * (1 - cobertura)
     nomes = ", ".join(f"{i.nome}→{a.nome}" for i, a in achados)
     return Leitura(
-        fonte="taco", macros=Macros(kcal, soma("proteina_g"), soma("carbo_g"), soma("gordura_g")),
-        faixa_min=kcal * (1 - folga), faixa_max=kcal * (1 + folga), confianca=0.4 + 0.3 * cobertura,
-        porcao_base="soma dos ingredientes", peso_g=total_g,
+        fonte="taco",
+        macros=Macros(kcal, soma("proteina_g"), soma("carbo_g"), soma("gordura_g")),
+        faixa_min=kcal * (1 - folga),
+        faixa_max=kcal * (1 + folga),
+        confianca=0.4 + 0.3 * cobertura,
+        porcao_base="soma dos ingredientes",
+        peso_g=total_g,
         suposicoes=[f"Soma pela TACO cobrindo {cobertura:.0%} da massa: {nomes}."],
         justificativa="Ingredientes estimados e somados com a Tabela TACO.",
     )

@@ -8,6 +8,7 @@ Entrada:  JSON com o prato e seus grupos de complementos (ids, preços), os limi
 Saída:    JSON: complementos escolhidos (group_id, option_id, quantity), quantidade de pratos e uma frase de motivo.
 O modelo NÃO pesquisa nutrição de cada ingrediente: ele estima pelo que sabe e pelo que o sistema já calculou.
 """
+
 import json
 
 from .comum import schema_json
@@ -42,10 +43,15 @@ SCHEMA = {
     "properties": {
         "opcoes": {
             "type": "array",
-            "items": {"type": "object",
-                      "properties": {"group_id": {"type": "string"}, "option_id": {"type": "string"},
-                                     "quantity": {"type": "integer"}},
-                      "required": ["group_id", "option_id", "quantity"]},
+            "items": {
+                "type": "object",
+                "properties": {
+                    "group_id": {"type": "string"},
+                    "option_id": {"type": "string"},
+                    "quantity": {"type": "integer"},
+                },
+                "required": ["group_id", "option_id", "quantity"],
+            },
         },
         "quantidade": {"type": "integer"},
         "motivo": {"type": "string"},
@@ -61,13 +67,43 @@ def pedido(dados: dict) -> str:
 
 
 def exemplo() -> list[tuple[str, str]]:
-    dados = {"prato": {"nome": "Marmita Fit", "preco_reais": 28.0},
-             "grupos": [{"group_id": "g1", "nome": "Proteína", "min_selections": 1, "max_selections": 1,
-                         "opcoes": [{"option_id": "o1", "nome": "Frango grelhado", "preco_reais": 0.0, "max_quantity": 1},
-                                    {"option_id": "o2", "nome": "Bife acebolado", "preco_reais": 4.0, "max_quantity": 1}]}],
-             "limites": {"preco_maximo_reais": 35.0, "calorias_maximas": 600, "proteina_minima_g": 40},
-             "preferencias": "Gosta de frango. Não come camarão.", "pedido_do_cliente": "monta com bastante proteína",
-             "pedido_base": {"complementos": ["1 × Frango grelhado"], "preco_reais": 28.0,
-                             "nutricao": {"calorias": 520, "proteina_g": 38, "carboidrato_g": 50, "gordura_g": 14,
-                                          "porcao_g": 400}}}
+    dados = {
+        "prato": {"nome": "Marmita Fit", "preco_reais": 28.0},
+        "grupos": [
+            {
+                "group_id": "g1",
+                "nome": "Proteína",
+                "min_selections": 1,
+                "max_selections": 1,
+                "opcoes": [
+                    {
+                        "option_id": "o1",
+                        "nome": "Frango grelhado",
+                        "preco_reais": 0.0,
+                        "max_quantity": 1,
+                    },
+                    {
+                        "option_id": "o2",
+                        "nome": "Bife acebolado",
+                        "preco_reais": 4.0,
+                        "max_quantity": 1,
+                    },
+                ],
+            }
+        ],
+        "limites": {"preco_maximo_reais": 35.0, "calorias_maximas": 600, "proteina_minima_g": 40},
+        "preferencias": "Gosta de frango. Não come camarão.",
+        "pedido_do_cliente": "monta com bastante proteína",
+        "pedido_base": {
+            "complementos": ["1 × Frango grelhado"],
+            "preco_reais": 28.0,
+            "nutricao": {
+                "calorias": 520,
+                "proteina_g": 38,
+                "carboidrato_g": 50,
+                "gordura_g": 14,
+                "porcao_g": 400,
+            },
+        },
+    }
     return [("sistema", INSTRUCOES), ("usuário", pedido(dados))]

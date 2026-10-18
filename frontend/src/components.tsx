@@ -10,21 +10,14 @@ import {
   Star,
 } from "lucide-react";
 import { money, safeUrl } from "./api";
-import type {
-  Candidate,
-  Nutrition,
-  Recommendation,
-} from "./types";
+import type { Candidate, Nutrition, Recommendation } from "./types";
 
 export function Brand({ small = false }: { small?: boolean }) {
   return (
     <span className={`brand ${small ? "brand-small" : ""}`}>
       <span className="brand-mark" aria-hidden="true">
         <svg viewBox="0 0 36 32">
-          <path
-            d="M4 26V7h6l8 10 8-10h6v19h-7V17l-7 9-7-9v9z"
-            fill="currentColor"
-          />
+          <path d="M4 26V7h6l8 10 8-10h6v19h-7V17l-7 9-7-9v9z" fill="currentColor" />
         </svg>
       </span>
       {!small && (
@@ -96,22 +89,14 @@ export function itemPhoto(item: Candidate) {
       ? photos.plant
       : photos.comfort;
 }
-export function MealImage({
-  item,
-  className = "",
-}: {
-  item: Candidate;
-  className?: string;
-}) {
+export function MealImage({ item, className = "" }: { item: Candidate; className?: string }) {
   const src = itemPhoto(item);
   return (
     <div className={`meal-image ${className}`}>
       {src ? (
         <img
           src={src}
-          alt={
-            item.simulated ? "Inspiração de apresentação do prato" : item.name
-          }
+          alt={item.simulated ? "Inspiração de apresentação do prato" : item.name}
           loading="lazy"
           onError={(e) => {
             e.currentTarget.style.display = "none";
@@ -123,9 +108,7 @@ export function MealImage({
           Sem foto disponível
         </span>
       )}
-      {item.simulated && (
-        <span className="photo-caption">Foto ilustrativa</span>
-      )}
+      {item.simulated && <span className="photo-caption">Foto ilustrativa</span>}
     </div>
   );
 }
@@ -191,8 +174,7 @@ export function NutritionDetails({ nutrition }: { nutrition: Nutrition }) {
         <>
           <p>
             <strong>
-              {Math.round(nutrition.minimum!)}–{Math.round(nutrition.maximum!)}{" "}
-              kcal
+              {Math.round(nutrition.minimum!)}–{Math.round(nutrition.maximum!)} kcal
             </strong>{" "}
             ·{" "}
             {nutrition.method === "published" || nutrition.method === "web"
@@ -211,23 +193,15 @@ export function NutritionDetails({ nutrition }: { nutrition: Nutrition }) {
           {nutrition.confidence && (
             <p>
               Confiança qualitativa{" "}
-              {
-                { low: "baixa", medium: "média", high: "alta" }[
-                  nutrition.confidence
-                ]
-              }
-              . Não representa uma probabilidade de acerto.
+              {{ low: "baixa", medium: "média", high: "alta" }[nutrition.confidence]}. Não
+              representa uma probabilidade de acerto.
             </p>
           )}
           {nutrition.source_name && (
             <p>
               Fonte:{" "}
               {safeUrl(nutrition.source_url) ? (
-                <a
-                  href={safeUrl(nutrition.source_url)}
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <a href={safeUrl(nutrition.source_url)} target="_blank" rel="noreferrer">
                   {nutrition.source_name} <ArrowUpRight size={12} />
                 </a>
               ) : (
@@ -251,10 +225,19 @@ export function NutritionDetails({ nutrition }: { nutrition: Nutrition }) {
             : "Não há dados suficientes para mostrar calorias deste prato. Você pode continuar o pedido."}
         </p>
       )}
-      {nutrition.state === "ready" && <p className="nutrition-macros">
-        {[['Proteína', nutrition.protein_g], ['Carboidratos', nutrition.carbs_g], ['Gordura', nutrition.fat_g]].map(([label, value]) =>
-          <span key={label}>{label}: {value == null ? 'não informado' : `${Math.round(Number(value))} g`}</span>)}
-      </p>}
+      {nutrition.state === "ready" && (
+        <p className="nutrition-macros">
+          {[
+            ["Proteína", nutrition.protein_g],
+            ["Carboidratos", nutrition.carbs_g],
+            ["Gordura", nutrition.fat_g],
+          ].map(([label, value]) => (
+            <span key={label}>
+              {label}: {value == null ? "não informado" : `${Math.round(Number(value))} g`}
+            </span>
+          ))}
+        </p>
+      )}
       <p className="muted small">A foto não comprova o tamanho da porção.</p>
     </div>
   );
@@ -288,31 +271,68 @@ export function MealCard({
         <p className="meal-description">{item.description}</p>
         {item.features?.portion_size && (
           <p className="meal-feature-summary">
-            {{ small: "Porção pequena", regular: "Porção regular", large: "Porção grande", sharing: "Para compartilhar" }[item.features.portion_size]}
+            {
+              {
+                small: "Porção pequena",
+                regular: "Porção regular",
+                large: "Porção grande",
+                sharing: "Para compartilhar",
+              }[item.features.portion_size]
+            }
             {item.features.weight_grams && ` · ${item.features.weight_grams} g`}
             {item.features.serves && ` · serve ${item.features.serves}`}
           </p>
         )}
         <NutritionBadge nutrition={nutrition} />
-        {recommendation.approximate_match && <p className="match-warning"><Info size={16} aria-hidden="true" />Alternativa aproximada · baixa certeza de adequação</p>}
+        {recommendation.approximate_match && (
+          <p className="match-warning">
+            <Info size={16} aria-hidden="true" />
+            Alternativa aproximada · baixa certeza de adequação
+          </p>
+        )}
         {recommendation.review_signal && recommendation.review_signal.source !== "unavailable" && (
           <p className="review-summary">
             <Star size={14} aria-hidden="true" />
-            {recommendation.review_signal.simulated ? "Avaliações simuladas · demonstração" : recommendation.review_signal.source === "personalized" ? "Com base nas suas avaliações" : "Avaliações da comunidade"}
-            {recommendation.review_signal.community_rating != null && ` · ${recommendation.review_signal.community_rating.toFixed(1)}/5`}
+            {recommendation.review_signal.simulated
+              ? "Avaliações simuladas · demonstração"
+              : recommendation.review_signal.source === "personalized"
+                ? "Com base nas suas avaliações"
+                : "Avaliações da comunidade"}
+            {recommendation.review_signal.community_rating != null &&
+              ` · ${recommendation.review_signal.community_rating.toFixed(1)}/5`}
           </p>
         )}
         <div className="match-explanation">
           <strong>Por que este prato?</strong>
           <ul>
             {reasons.slice(0, 3).map((reason) => (
-              <li key={reason}>{recommendation.approximate_match ? <Info size={14} aria-hidden="true" /> : <Check size={14} aria-hidden="true" />}<span>{reason}</span></li>
+              <li key={reason}>
+                {recommendation.approximate_match ? (
+                  <Info size={14} aria-hidden="true" />
+                ) : (
+                  <Check size={14} aria-hidden="true" />
+                )}
+                <span>{reason}</span>
+              </li>
             ))}
           </ul>
         </div>
-        <details className="recommendation-details"><summary>Ver detalhes e nutrição</summary>
-          {reasons.length > 3 && <ul>{reasons.slice(3).map(reason => <li key={reason}>{reason}</li>)}</ul>}
-          {!!recommendation.limitations.length && <ul>{recommendation.limitations.map(limit => <li key={limit}>{limit}</li>)}</ul>}
+        <details className="recommendation-details">
+          <summary>Ver detalhes e nutrição</summary>
+          {reasons.length > 3 && (
+            <ul>
+              {reasons.slice(3).map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          )}
+          {!!recommendation.limitations.length && (
+            <ul>
+              {recommendation.limitations.map((limit) => (
+                <li key={limit}>{limit}</li>
+              ))}
+            </ul>
+          )}
           <NutritionDetails nutrition={nutrition} />
         </details>
         <div className="meal-card-footer">

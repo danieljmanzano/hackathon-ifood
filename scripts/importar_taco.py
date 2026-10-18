@@ -3,6 +3,7 @@
 Fonte usada: repositório público raulfdm/taco-api (references/csv/). Valores por 100 g de alimento.
 Uso: .venv/bin/python -m scripts.importar_taco PASTA_COM_CSVS
 """
+
 import csv
 import sys
 from pathlib import Path
@@ -19,8 +20,13 @@ def numero(valor: str) -> str:
 
 
 def main(pasta: Path) -> None:
-    categorias = {r["id"]: r["name"] for r in csv.DictReader((pasta / "categories.csv").open(encoding="utf-8"))}
-    nutrientes = {r["foodId"]: r for r in csv.DictReader((pasta / "nutrients.csv").open(encoding="utf-8"))}
+    categorias = {
+        r["id"]: r["name"]
+        for r in csv.DictReader((pasta / "categories.csv").open(encoding="utf-8"))
+    }
+    nutrientes = {
+        r["foodId"]: r for r in csv.DictReader((pasta / "nutrients.csv").open(encoding="utf-8"))
+    }
     linhas = []
     for alimento in csv.DictReader((pasta / "food.csv").open(encoding="utf-8")):
         n = nutrientes.get(alimento["id"])

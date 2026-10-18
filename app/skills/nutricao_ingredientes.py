@@ -5,8 +5,9 @@ Quem usa: etapas/estimar.py -> decompor_ingredientes (só se nenhuma estimativa 
 Modelo:   LLM de texto (OpenRouter ou OpenAI, com a reserva do outro).
 Saída:    DECOMPOR -> lista de ingredientes com gramas; CASAR -> para cada ingrediente, o índice do candidato ou null.
 """
+
 from . import item_pedido
-from .comum import NUM, SCHEMA_INGREDIENTES, pedir_json
+from .comum import SCHEMA_INGREDIENTES, pedir_json
 
 INSTRUCOES_DECOMPOR = """Você decompõe um prato de delivery em ingredientes com a massa de cada um em gramas, na forma
 como seriam consumidos (cozidos, grelhados etc.). Use nomes genéricos de alimentos em português, como numa tabela de
@@ -32,7 +33,10 @@ SCHEMA_CASAR = {
             "type": "array",
             "items": {
                 "type": "object",
-                "properties": {"ingrediente": {"type": "string"}, "escolha": {"type": ["integer", "null"]}},
+                "properties": {
+                    "ingrediente": {"type": "string"},
+                    "escolha": {"type": ["integer", "null"]},
+                },
                 "required": ["ingrediente", "escolha"],
             },
         }
@@ -53,14 +57,25 @@ def pedido_casar(candidatos_por_ingrediente: dict[str, list[tuple[str, str]]]) -
     """Um bloco por ingrediente com seus candidatos numerados (nome, categoria da TACO)."""
     blocos = []
     for nome, lista in candidatos_por_ingrediente.items():
-        linhas = "\n".join(f"  {i}: {alimento} ({categoria})" for i, (alimento, categoria) in enumerate(lista))
+        linhas = "\n".join(
+            f"  {i}: {alimento} ({categoria})" for i, (alimento, categoria) in enumerate(lista)
+        )
         blocos.append(f"{INGREDIENTE}{nome}\n{linhas}")
     return "\n\n".join(blocos)
 
 
 def exemplo() -> list[tuple[str, str]]:
     item = item_pedido.exemplo()[1][1]
-    candidatos = {"arroz": [("Arroz, tipo 1, cozido", "Cereais e derivados"), ("Arroz, integral, cozido", "Cereais e derivados")],
-                  "feijão": [("Feijão, carioca, cozido", "Leguminosas e derivados")]}
-    return [("decompor - sistema", INSTRUCOES_DECOMPOR), ("decompor - usuário", pedir_json(pedido_decompor(item), SCHEMA_DECOMPOR)),
-            ("casar - sistema", INSTRUCOES_CASAR), ("casar - usuário", pedir_json(pedido_casar(candidatos), SCHEMA_CASAR))]
+    candidatos = {
+        "arroz": [
+            ("Arroz, tipo 1, cozido", "Cereais e derivados"),
+            ("Arroz, integral, cozido", "Cereais e derivados"),
+        ],
+        "feijão": [("Feijão, carioca, cozido", "Leguminosas e derivados")],
+    }
+    return [
+        ("decompor - sistema", INSTRUCOES_DECOMPOR),
+        ("decompor - usuário", pedir_json(pedido_decompor(item), SCHEMA_DECOMPOR)),
+        ("casar - sistema", INSTRUCOES_CASAR),
+        ("casar - usuário", pedir_json(pedido_casar(candidatos), SCHEMA_CASAR)),
+    ]

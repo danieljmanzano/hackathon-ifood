@@ -7,6 +7,7 @@ Modelo:   OpenAI com web_search (NUTRITION_PROVIDER=openai) ou Gemini com Google
 Entrada:  o termo que o usuário usou e a hora local, em texto.
 Saída:    JSON: se entendeu, o que é e as consultas como o item costuma aparecer no cardápio de apps de delivery.
 """
+
 from .comum import schema_json
 
 INSTRUCOES = """Um usuário procura algo num app de delivery de comida do Brasil e usou um termo que o sistema não tem
@@ -43,5 +44,7 @@ def pedido(termo: str, agora: dict | None = None) -> str:
 
 
 def exemplo() -> list[tuple[str, str]]:
-    return [("curta (só OpenAI)", INSTRUCAO_CURTA_OPENAI),
-            ("pedido", pedido("bolo dona maria", {"hora": "15:10", "periodo": "tarde"}))]
+    return [
+        ("curta (só OpenAI)", INSTRUCAO_CURTA_OPENAI),
+        ("pedido", pedido("bolo dona maria", {"hora": "15:10", "periodo": "tarde"})),
+    ]

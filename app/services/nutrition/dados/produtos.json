@@ -3410,6 +3410,41 @@
       },
       "versao_pipeline": "calorias-v3"
     },
+    "c8989697f3deb94e123b7472": {
+      "calculado_em": "2026-10-18T14:09:10.592781+00:00",
+      "nome": "Sanduíche natural de frango",
+      "origem": "estimated",
+      "restaurante": "Brigadeiro Doceria & Café - Matriz",
+      "resultado": {
+        "assumptions": [
+          "Estimativa pesquisada na web com base em “Chicken Salad and Peach Sandwich (USDA MyPlate) / chicken salad sandwich on whole grain bread” — USDA MyPlate (myplate-stg.kwaps.platform.usda.gov).",
+          "Não houve foto; portanto não foi possível validar o tamanho visual da porção.",
+          "Considerei que o item é um sanduíche frio de frango desfiado/pasta de frango em pão multigrãos, sem adicionais relevantes.",
+          "Usei o sanduíche de referência do USDA MyPlate como prato equivalente mais próximo e ajustei a estimativa para uma composição simples com cenoura ralada.",
+          "A porção total foi estimada em cerca de 162 g (2 fatias de pão multigrãos + recheio de frango).",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 324.0,
+        "carbs_g": 32.0,
+        "confidence": "medium",
+        "evidence": "“Serving Size: 1 sandwich. Total Calories 345. Carbohydrates 51 g. Protein 21 g. Total Fat 6 g.” Não existe tabela oficial do restaurante para prato preparado. Usei como referência um sanduíche equivalente do USDA MyPlate com 345 kcal, 21 g de proteína, 51 g de carboidratos e 6 g de gorduras por 1 sanduíche, e reduzi/ajustei para a versão descrita (pasta de frango caseira com cenoura ralada no pão multigrãos), que tende a ter menos carboidrato do que a versão com fruta e recheios adicionais. A estimativa final foi fixada em 324 kcal para 1 sanduíche de aproximadamente 162 g.",
+        "fat_g": 10.0,
+        "maximum": 360.0,
+        "method": "estimated",
+        "minimum": 280.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T14:09:10.591952Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "1 sanduíche (estimado como 2 fatias de pão multigrãos + pasta de frango caseira com cenoura) (~162 g, peso estimada)",
+        "portion_grams": 162.0,
+        "protein_g": 25.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
+    },
     "d03c3e44b9787e3d2a808034": {
       "calculado_em": "2026-10-18T13:45:45.379016+00:00",
       "nome": "Sub Carne Supreme (15cm) - Receita exclusiva",

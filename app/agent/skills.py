@@ -1,4 +1,5 @@
 """Skills do agente: os textos ficam em app/skills/agente_*.py; aqui só se carrega pelo nome."""
+
 from dataclasses import dataclass
 
 from app.skills import AGENTE

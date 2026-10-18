@@ -7,6 +7,7 @@ item.json: payload do getItem (padrão: tests/fixtures/getItem_pizza.json).
 Sem --forcar passa pela base local: rode duas vezes e a 2ª deve voltar na hora, sem chamar nada.
 --forcar: ignora a base e recalcula (nada é gravado). --economico: só estima se bases e web falharem.
 """
+
 import argparse
 import asyncio
 import time
@@ -21,8 +22,12 @@ def imprimir(r) -> None:
     if r.state != "ready":
         print(r.evidence)
         return
-    print(f"- **{r.calories:.0f} kcal** (faixa {r.minimum:.0f}–{r.maximum:.0f}) por {r.portion_basis}")
-    print(f"- proteína {r.protein_g} g · carboidrato {r.carbs_g} g · gordura {r.fat_g} g · peso {r.portion_grams} g")
+    print(
+        f"- **{r.calories:.0f} kcal** (faixa {r.minimum:.0f}–{r.maximum:.0f}) por {r.portion_basis}"
+    )
+    print(
+        f"- proteína {r.protein_g} g · carboidrato {r.carbs_g} g · gordura {r.fat_g} g · peso {r.portion_grams} g"
+    )
     if r.source_name:
         print(f"- fonte: {r.source_name} {r.source_url or ''}")
     print(f"- evidência: {r.evidence}")
@@ -42,11 +47,13 @@ async def main() -> None:
     p.add_argument("--sem-bases", action="store_true")
     args = p.parse_args()
 
-    settings = get_settings().model_copy(update={
-        "calorias_estimar_sempre": not args.economico,
-        "calorias_busca_web": not args.sem_web,
-        "calorias_buscar_bases": not args.sem_bases,
-    })
+    settings = get_settings().model_copy(
+        update={
+            "calorias_estimar_sempre": not args.economico,
+            "calorias_busca_web": not args.sem_web,
+            "calorias_buscar_bases": not args.sem_bases,
+        }
+    )
     item = carregar_item(args.item)
     print(f"Item: {item.name} ({item.merchant_name}) · opções: {args.opcao or 'nenhuma'}")
     inicio = time.perf_counter()

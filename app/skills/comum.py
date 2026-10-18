@@ -1,4 +1,5 @@
 """Peças compartilhadas pelas skills: o pedido de JSON e o trecho de ingredientes dos schemas."""
+
 import json
 
 # Valor numérico que o modelo pode deixar em branco (null) quando não sabe.

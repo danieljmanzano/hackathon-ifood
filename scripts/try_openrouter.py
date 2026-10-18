@@ -2,6 +2,7 @@
 
 Uso: .venv/bin/python -m scripts.try_openrouter ["sua pergunta"]
 """
+
 import asyncio
 import sys
 
@@ -10,7 +11,10 @@ from app.agent.skills import list_skills, load_skill
 
 
 async def main() -> None:
-    question = " ".join(sys.argv[1:]) or "Quero um almoço com bastante proteína, perto de casa. Pode buscar opções?"
+    question = (
+        " ".join(sys.argv[1:])
+        or "Quero um almoço com bastante proteína, perto de casa. Pode buscar opções?"
+    )
     print(f"Skills: {list_skills()}")
     print(f"System prompt: {len(build_system_prompt([load_skill('ifood_mcp')]))} caracteres\n")
     print(f"> {question}\n")

@@ -3,9 +3,9 @@ from typing import Any
 import httpx
 
 from app.core import logs
-from app.core.nutrition_budget import reserve_call, output_limit, check_input
 from app.core.config import Settings, get_settings
 from app.core.exceptions import AppError
+from app.core.nutrition_budget import check_input, output_limit, reserve_call
 
 Message = dict[str, Any]
 
@@ -38,9 +38,15 @@ async def chat_completion(
     models = [model or settings.openrouter_model, *settings.openrouter_fallback_models]
     errors: list[str] = []
 
-    async with httpx.AsyncClient(base_url=settings.openrouter_base_url, timeout=settings.openrouter_timeout) as client:
+    async with httpx.AsyncClient(
+        base_url=settings.openrouter_base_url, timeout=settings.openrouter_timeout
+    ) as client:
         for current in dict.fromkeys(models):
-            payload: dict[str, Any] = {"model": current, "messages": messages, "temperature": temperature}
+            payload: dict[str, Any] = {
+                "model": current,
+                "messages": messages,
+                "temperature": temperature,
+            }
             if max_tokens is not None:
                 payload["max_tokens"] = max_tokens
             if json_mode:
@@ -56,7 +62,10 @@ async def chat_completion(
                 except httpx.HTTPError as exc:
                     response = None
                     errors.append(f"{current}: rede ({exc})")
-                    logs.aviso("openrouter", f"{current}: falha de rede ({logs.curto(exc, 100)}) → próximo modelo")
+                    logs.aviso(
+                        "openrouter",
+                        f"{current}: falha de rede ({logs.curto(exc, 100)}) → próximo modelo",
+                    )
             if response is None:
                 continue
             logs.detalhe("openrouter", f"{current} → {response.status_code} em {t.texto}")
@@ -65,10 +74,16 @@ async def chat_completion(
                 try:
                     texto = response.json()["choices"][0]["message"]["content"] or ""
                     if current != models[0]:
-                        logs.info("openrouter", f"RESERVA respondeu: {current} no lugar de {models[0]} "
-                                                f"({len(errors)} falha(s) antes) em {t.texto}")
+                        logs.info(
+                            "openrouter",
+                            f"RESERVA respondeu: {current} no lugar de {models[0]} "
+                            f"({len(errors)} falha(s) antes) em {t.texto}",
+                        )
                         if log_content:  # o pedido da busca pede para não registrar conteúdo
-                            logs.info("openrouter", f"resposta da reserva: {logs.curto(texto, 500) or '(vazia)'}")
+                            logs.info(
+                                "openrouter",
+                                f"resposta da reserva: {logs.curto(texto, 500) or '(vazia)'}",
+                            )
                     elif log_content:
                         logs.detalhe("openrouter", f"resposta: {logs.curto(texto, 300)}")
                     return texto
@@ -84,13 +99,23 @@ async def chat_completion(
                 try:
                     message = str(response.json().get("error", {}).get("message", "")).lower()
                     invalid_model = "model" in message and any(
-                        phrase in message for phrase in ("not a valid", "not valid", "invalid", "not found", "does not exist")
+                        phrase in message
+                        for phrase in (
+                            "not a valid",
+                            "not valid",
+                            "invalid",
+                            "not found",
+                            "does not exist",
+                        )
                     )
                 except (ValueError, AttributeError):
                     pass
             retry = response.status_code in RETRYABLE_STATUS or invalid_model
-            logs.aviso("openrouter", f"{current}: {response.status_code} {logs.curto(detail, 110)}"
-                                     f"{' → próximo modelo' if retry else ''}")
+            logs.aviso(
+                "openrouter",
+                f"{current}: {response.status_code} {logs.curto(detail, 110)}"
+                f"{' → próximo modelo' if retry else ''}",
+            )
             if not retry:
                 break
 

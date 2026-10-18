@@ -2,6 +2,7 @@
 
 Uso: .venv/bin/python -m scripts.try_ifood_item MERCHANT_ID ITEM_ID LATITUDE LONGITUDE
 """
+
 import asyncio
 import json
 import sys
@@ -14,10 +15,14 @@ async def main() -> None:
         sys.exit(__doc__)
     merchant_id, item_id, lat, lon = sys.argv[1:]
     async with ifood_session() as session:
-        resposta = await session.call_tool("getItem", {
-            "merchantId": merchant_id, "itemId": item_id,
-            "userLocation": {"latitude": float(lat), "longitude": float(lon)},
-        })
+        resposta = await session.call_tool(
+            "getItem",
+            {
+                "merchantId": merchant_id,
+                "itemId": item_id,
+                "userLocation": {"latitude": float(lat), "longitude": float(lon)},
+            },
+        )
         for bloco in resposta.content:
             texto = getattr(bloco, "text", None)
             if texto:

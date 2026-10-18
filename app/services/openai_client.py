@@ -1,4 +1,5 @@
 """Cliente mínimo da OpenAI (Responses API) via HTTP: texto em JSON e busca na web."""
+
 import asyncio
 import base64
 import copy
@@ -6,10 +7,10 @@ from typing import Any
 
 import httpx
 
-from app.core.config import Settings, get_settings
 from app.core import logs
-from app.core.nutrition_budget import reserve_call, output_limit, check_input
+from app.core.config import Settings, get_settings
 from app.core.exceptions import AppError
+from app.core.nutrition_budget import check_input, output_limit, reserve_call
 
 RETRYABLE_STATUS = {429, 500, 502, 503, 504}
 TENTATIVAS = 3
@@ -44,8 +45,10 @@ def _texto(dados: dict[str, Any]) -> str:
         return dados["output_text"]
     partes = [
         parte.get("text", "")
-        for saida in dados.get("output", []) if saida.get("type") == "message"
-        for parte in saida.get("content") or [] if parte.get("type") == "output_text"
+        for saida in dados.get("output", [])
+        if saida.get("type") == "message"
+        for parte in saida.get("content") or []
+        if parte.get("type") == "output_text"
     ]
     return "".join(partes)
 
@@ -91,14 +94,27 @@ async def responder(
     modelo = model or settings.nutrition_model
     if imagem is not None:
         url = f"data:{imagem[1]};base64,{base64.b64encode(imagem[0]).decode()}"
-        corpo: Any = [{"role": "user", "content": [{"type": "input_text", "text": entrada},
-                                                    {"type": "input_image", "image_url": url}]}]
+        corpo: Any = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": entrada},
+                    {"type": "input_image", "image_url": url},
+                ],
+            }
+        ]
     else:
         corpo = entrada
     payload: dict[str, Any] = {"model": modelo, "input": corpo}
     if schema is not None:
-        payload["text"] = {"format": {"type": "json_schema", "name": "saida", "schema": _estrito(schema),
-                                      "strict": True}}
+        payload["text"] = {
+            "format": {
+                "type": "json_schema",
+                "name": "saida",
+                "schema": _estrito(schema),
+                "strict": True,
+            }
+        }
     elif not web and json_mode:
         payload["text"] = {"format": {"type": "json_object"}}
     if instrucoes:
@@ -107,23 +123,36 @@ async def responder(
         payload["tools"] = [{"type": "web_search"}]
         payload["include"] = ["web_search_call.action.sources"]
     if modelo.startswith(("gpt-5", "o")):  # só modelos de raciocínio aceitam o parâmetro
-        payload["reasoning"] = {"effort": settings.openai_reasoning_effort_web if web
-                                else settings.openai_reasoning_effort}
+        payload["reasoning"] = {
+            "effort": settings.openai_reasoning_effort_web
+            if web
+            else settings.openai_reasoning_effort
+        }
 
     if output_limit():
         payload["max_output_tokens"] = output_limit()
     erro = ""
-    async with httpx.AsyncClient(base_url=settings.openai_base_url, timeout=settings.openai_timeout) as client:
+    async with httpx.AsyncClient(
+        base_url=settings.openai_base_url, timeout=settings.openai_timeout
+    ) as client:
         for tentativa in range(TENTATIVAS):
             with logs.Cronometro() as t:
                 try:
                     reserve_call("openai")
-                    resposta = await client.post("/responses", json=payload,
-                                                 headers={"Authorization": f"Bearer {settings.openai_api_key.get_secret_value()}"})
+                    resposta = await client.post(
+                        "/responses",
+                        json=payload,
+                        headers={
+                            "Authorization": f"Bearer {settings.openai_api_key.get_secret_value()}"
+                        },
+                    )
                 except httpx.HTTPError as exc:
                     resposta, erro = None, f"rede ({exc!r})"
             if resposta is not None:
-                logs.detalhe("openai", f"{modelo}{' +web' if web else ''}{' +imagem' if imagem else ''} → {resposta.status_code} em {t.texto}")
+                logs.detalhe(
+                    "openai",
+                    f"{modelo}{' +web' if web else ''}{' +imagem' if imagem else ''} → {resposta.status_code} em {t.texto}",
+                )
                 if resposta.status_code == 200:
                     try:
                         dados = resposta.json()
@@ -131,14 +160,23 @@ async def responder(
                         raise OpenAIError("Resposta inesperada da OpenAI") from exc
                     texto, fontes = _texto(dados), _fontes(dados)
                     if tentativa > 0:
-                        logs.info("openai", f"{modelo} respondeu na tentativa {tentativa + 1}/{TENTATIVAS} em {t.texto}")
+                        logs.info(
+                            "openai",
+                            f"{modelo} respondeu na tentativa {tentativa + 1}/{TENTATIVAS} em {t.texto}",
+                        )
                     if log_content:
-                        logs.detalhe("openai", f"resposta: {logs.curto(texto, 300)} · fontes: {len(fontes)}")
+                        logs.detalhe(
+                            "openai", f"resposta: {logs.curto(texto, 300)} · fontes: {len(fontes)}"
+                        )
                     return texto, fontes
-                erro = f"{resposta.status_code} {resposta.text if log_content else 'conteúdo omitido'}"
+                erro = (
+                    f"{resposta.status_code} {resposta.text if log_content else 'conteúdo omitido'}"
+                )
                 if resposta.status_code not in RETRYABLE_STATUS:
                     raise OpenAIError(f"OpenAI {logs.curto(erro, 300)}")
-            logs.aviso("openai", f"tentativa {tentativa + 1}/{TENTATIVAS} falhou: {logs.curto(erro)}")
+            logs.aviso(
+                "openai", f"tentativa {tentativa + 1}/{TENTATIVAS} falhou: {logs.curto(erro)}"
+            )
             if tentativa < TENTATIVAS - 1:
                 await asyncio.sleep(2 ** (tentativa + 1))
     raise OpenAIError(f"OpenAI indisponível após {TENTATIVAS} tentativas: {logs.curto(erro)}")

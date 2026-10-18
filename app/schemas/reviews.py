@@ -1,4 +1,5 @@
 """Contratos dos dados fictícios para experimentos de recomendação por reviews."""
+
 from datetime import datetime
 
 from pydantic import Field

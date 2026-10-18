@@ -1,10 +1,19 @@
 """Hora local do usuário, dita ao modelo para ele raciocinar sobre o que costuma estar aberto."""
+
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from app.core.config import Settings
 
-DIAS = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
+DIAS = [
+    "segunda-feira",
+    "terça-feira",
+    "quarta-feira",
+    "quinta-feira",
+    "sexta-feira",
+    "sábado",
+    "domingo",
+]
 
 
 def periodo(hora: int) -> str:
@@ -24,6 +33,12 @@ def periodo(hora: int) -> str:
 
 def agora(settings: Settings, momento: datetime | None = None) -> dict:
     """{"data": "2026-10-18", "hora": "23:40", "dia_da_semana": "domingo", "periodo": "fim da noite"}"""
-    local = (momento or datetime.now(ZoneInfo(settings.timezone))).astimezone(ZoneInfo(settings.timezone))
-    return {"data": local.strftime("%Y-%m-%d"), "hora": local.strftime("%H:%M"),
-            "dia_da_semana": DIAS[local.weekday()], "periodo": periodo(local.hour)}
+    local = (momento or datetime.now(ZoneInfo(settings.timezone))).astimezone(
+        ZoneInfo(settings.timezone)
+    )
+    return {
+        "data": local.strftime("%Y-%m-%d"),
+        "hora": local.strftime("%H:%M"),
+        "dia_da_semana": DIAS[local.weekday()],
+        "periodo": periodo(local.hour),
+    }

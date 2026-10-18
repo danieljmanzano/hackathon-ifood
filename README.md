@@ -53,7 +53,9 @@ Abra **http://127.0.0.1:5180/** no navegador. O Vite encaminha automaticamente a
 │   ├── domain.py             # Regras de negócio, ranqueamento e busca
 │   ├── core/                 # Configurações (Settings) e tratamento de erros
 │   ├── api/
-│   │   ├── endpoints/        # Rotas da API (macro, health)
+│   │   ├── router.py         # Composição das rotas públicas
+│   │   ├── deps.py           # Provedor iFood, sessão e atualização atômica
+│   │   ├── endpoints/        # Sessões, endereços, diário, reviews, checkout e busca
 │   │   └── v1/               # Rotas versionadas
 │   ├── schemas/              # Modelos Pydantic (macro, health)
 │   ├── services/             # Clientes externos (OpenRouter, iFood MCP, Mock)
@@ -62,11 +64,14 @@ Abra **http://127.0.0.1:5180/** no navegador. O Vite encaminha automaticamente a
 ├── frontend/                 # Frontend React + TypeScript + Vite
 │   ├── src/
 │   │   ├── App.tsx           # Conversa e etapas da compra
+│   │   ├── chat-presentation.ts # Textos, fases e apresentação da nutrição
 │   │   ├── api.ts            # Cliente HTTP integrado com o backend
 │   │   ├── components.tsx    # Componentes de UI
 │   │   ├── types.ts          # Tipos TypeScript
 │   │   └── styles.css        # Estilos customizados
 ├── requirements.txt          # Dependências do backend Python
+├── requirements-dev.txt      # Dependências e ferramentas de desenvolvimento
+├── pyproject.toml            # Padrão de estilo e verificação Python
 └── README.md
 ```
 
@@ -84,6 +89,40 @@ cd frontend && npm run build
 # Comandos do chat (Node.js 22.6+)
 npm test
 ```
+
+## Padrão de código
+
+O backend segue a organização existente por camadas: `api` recebe e valida requisições,
+`services` integra os fluxos e provedores, `schemas` define os contratos e `storage`
+cuida da persistência. As rotas são agrupadas por responsabilidade e compartilham as
+dependências de sessão e provedor em `app/api/deps.py`. Novas rotas entram em
+`app/api/router.py`; a API versionada mantém seu próprio roteador.
+
+Ruff padroniza o Python com indentação de quatro espaços, limite de formatação de
+100 caracteres, imports ordenados e verificação de nomes e imports sem uso.
+Prettier padroniza o frontend com indentação de dois espaços, aspas duplas e ponto
+e vírgula. Componentes React, comandos do chat, apresentação e cliente HTTP ficam
+em módulos separados. Os nomes públicos, contratos, textos dos prompts e regras
+de negócio devem ser preservados em refatorações.
+
+```bash
+# Na raiz do repositório
+pip install -r requirements-dev.txt
+ruff check app scripts
+ruff format --check app scripts
+
+# Para aplicar a formatação Python
+ruff format app scripts
+
+# Na pasta frontend, após npm ci
+npm run format:check
+npm run format
+```
+
+O backend ativo fica em `app/`. O plano histórico está em
+`outputs/plano-implementacao-macro.md`; os relatórios de documentação e as capturas
+da interface permanecem em `outputs/` e `output/`, respectivamente. O notebook
+nutricional e seus arquivos de exemplo também são mantidos.
 
 ## Mocks para recomendação por reviews
 

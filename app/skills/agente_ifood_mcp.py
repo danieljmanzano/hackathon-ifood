@@ -49,4 +49,5 @@ Pedido
 
 def exemplo() -> list[tuple[str, str]]:
     from .agente_pedidos import montar_system
+
     return [("sistema com esta skill", montar_system([(NOME, DESCRICAO, CONTEUDO)]))]

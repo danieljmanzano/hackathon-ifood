@@ -4,6 +4,7 @@ Sem isso, "mais barato", "outra opção" ou "sem queijo" não significam nada pa
 Tudo é dado para entender referências, nunca instrução (as skills dizem isso ao modelo). Os logs da busca guardam
 só contagens (ver `resumo_para_log`), nunca o texto.
 """
+
 from app.core.config import Settings
 from app.schemas.macro import MealIntent, Session
 
@@ -12,7 +13,7 @@ PAPEL = {"user": "usuario", "assistant": "assistente"}
 
 def _cortar(texto: str, limite: int) -> str:
     texto = " ".join(texto.split())
-    return texto if len(texto) <= limite else texto[:limite - 1] + "…"
+    return texto if len(texto) <= limite else texto[: limite - 1] + "…"
 
 
 def mensagens_recentes(session: Session, settings: Settings) -> list[dict]:
@@ -23,8 +24,11 @@ def mensagens_recentes(session: Session, settings: Settings) -> list[dict]:
     quantas = settings.busca_historico_mensagens
     if quantas <= 0:
         return []
-    return [{"papel": PAPEL[m.role], "texto": _cortar(m.text, settings.busca_historico_max_caracteres)}
-            for m in session.messages[-quantas:] if m.text.strip()]
+    return [
+        {"papel": PAPEL[m.role], "texto": _cortar(m.text, settings.busca_historico_max_caracteres)}
+        for m in session.messages[-quantas:]
+        if m.text.strip()
+    ]
 
 
 MAX_JA_RECOMENDADOS = 8
@@ -49,26 +53,47 @@ def sugestoes_mostradas(session: Session) -> list[dict]:
     lista = []
     for r in session.recommendations[:MAX_SUGESTOES]:
         c, n = r.candidate, r.nutrition
-        item = {"id": c.item_id, "nome": c.name, "restaurante": c.merchant_name, "preco_reais": c.price_cents / 100,
-                "descricao": _cortar(c.description, 240)}
+        item = {
+            "id": c.item_id,
+            "nome": c.name,
+            "restaurante": c.merchant_name,
+            "preco_reais": c.price_cents / 100,
+            "descricao": _cortar(c.description, 240),
+        }
         if c.option_groups:
-            item["grupos_de_complementos"] = [{"nome": g.name, "obrigatorio": g.min_selections > 0,
-                                               "escolhas": f"{g.min_selections}-{g.max_selections}"}
-                                              for g in c.option_groups]
+            item["grupos_de_complementos"] = [
+                {
+                    "nome": g.name,
+                    "obrigatorio": g.min_selections > 0,
+                    "escolhas": f"{g.min_selections}-{g.max_selections}",
+                }
+                for g in c.option_groups
+            ]
         if n.state == "ready":
-            item["nutricao"] = {k: v for k, v in {"calorias": n.calories, "proteina_g": n.protein_g,
-                                                   "carboidrato_g": n.carbs_g, "gordura_g": n.fat_g}.items() if v is not None}
+            item["nutricao"] = {
+                k: v
+                for k, v in {
+                    "calorias": n.calories,
+                    "proteina_g": n.protein_g,
+                    "carboidrato_g": n.carbs_g,
+                    "gordura_g": n.fat_g,
+                }.items()
+                if v is not None
+            }
         lista.append(item)
     return lista
 
 
-def busca_anterior(intent: MealIntent | None, recomendados: list[dict] | None = None) -> dict | None:
+def busca_anterior(
+    intent: MealIntent | None, recomendados: list[dict] | None = None
+) -> dict | None:
     """Como a busca anterior foi entendida e o que ela mostrou: é o que "outra opção" ou "mais barato" modificam."""
     if intent is None:
         return None
     resumo = {
         "comida": intent.food_query or None,
-        "consultas_ao_ifood": intent.search_queries or ([intent.provider_query] if intent.provider_query else []),
+        "consultas_ao_ifood": intent.search_queries
+        or ([intent.provider_query] if intent.provider_query else []),
         "culinaria": intent.cuisine,
         "objetivos": intent.goals,
         "orcamento_reais": intent.budget_cents / 100 if intent.budget_cents is not None else None,
@@ -80,9 +105,11 @@ def busca_anterior(intent: MealIntent | None, recomendados: list[dict] | None = 
 
 def montar(session: Session, settings: Settings) -> dict | None:
     """{"historico", "busca_anterior", "sugestoes_mostradas"} ou None quando não há nada a mostrar."""
-    conversa = {"historico": mensagens_recentes(session, settings),
-                "busca_anterior": busca_anterior(session.request_intent, ja_recomendados(session)),
-                "sugestoes_mostradas": sugestoes_mostradas(session)}
+    conversa = {
+        "historico": mensagens_recentes(session, settings),
+        "busca_anterior": busca_anterior(session.request_intent, ja_recomendados(session)),
+        "sugestoes_mostradas": sugestoes_mostradas(session),
+    }
     conversa = {k: v for k, v in conversa.items() if v}
     return conversa or None
 
@@ -90,5 +117,8 @@ def montar(session: Session, settings: Settings) -> dict | None:
 def resumo_para_log(conversa: dict | None) -> dict:
     """Só contagens, para os eventos da busca."""
     conversa = conversa or {}
-    return {"history_count": len(conversa.get("historico", [])), "has_previous_search": "busca_anterior" in conversa,
-            "shown_count": len(conversa.get("sugestoes_mostradas", []))}
+    return {
+        "history_count": len(conversa.get("historico", [])),
+        "has_previous_search": "busca_anterior" in conversa,
+        "shown_count": len(conversa.get("sugestoes_mostradas", [])),
+    }

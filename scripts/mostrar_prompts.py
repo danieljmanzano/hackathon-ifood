@@ -5,6 +5,7 @@ Uso: .venv/bin/python -m scripts.mostrar_prompts              # todas as skills
      .venv/bin/python -m scripts.mostrar_prompts --lista      # só a lista, com quem usa cada uma
 Os arquivos ficam em app/skills/.
 """
+
 import sys
 
 from app.skills import SKILLS

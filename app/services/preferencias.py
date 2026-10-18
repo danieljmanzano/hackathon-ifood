@@ -3,6 +3,7 @@
 Valor fixo por enquanto: a feature de preferências troca `preferencias_do_cliente` por um texto montado a partir do
 perfil (e do que o cliente já avaliou). Quem usa: interpretação do pedido (llm_meal_intent) e montagem do pedido.
 """
+
 from app.schemas.macro import UserProfile
 
 PREFERENCIAS_DO_CLIENTE = "Sem preferências registradas."

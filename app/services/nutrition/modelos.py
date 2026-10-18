@@ -1,4 +1,5 @@
 """Tipos internos da pipeline de calorias (o contrato público é NutritionResult)."""
+
 from dataclasses import dataclass, field, replace
 from typing import Literal
 
@@ -13,6 +14,7 @@ class Macros:
     def escalar(self, fator: float) -> "Macros":
         def f(v):
             return None if v is None else v * fator
+
         return Macros(self.kcal * fator, f(self.proteina_g), f(self.carbo_g), f(self.gordura_g))
 
     def completo(self) -> bool:
@@ -28,6 +30,7 @@ class Ingrediente:
 @dataclass
 class Leitura:
     """Estimativa de uma fonte (modelo ou soma de ingredientes), para UMA unidade do item."""
+
     fonte: str
     macros: Macros
     faixa_min: float
@@ -36,7 +39,9 @@ class Leitura:
     porcao_base: str = ""
     peso_g: float | None = None
     ingredientes: list[Ingrediente] = field(default_factory=list)
-    itens_na_imagem: list[str] = field(default_factory=list)  # o que o modelo disse VER na foto (para conferência)
+    itens_na_imagem: list[str] = field(
+        default_factory=list
+    )  # o que o modelo disse VER na foto (para conferência)
     suposicoes: list[str] = field(default_factory=list)
     justificativa: str = ""
 
@@ -44,6 +49,7 @@ class Leitura:
 @dataclass
 class InfoOnline:
     """Dado vindo de base de dados ou da web. `base` diz a que os valores se referem."""
+
     macros: Macros
     base: Literal["item", "100g"]
     porcao_base: str
@@ -58,6 +64,7 @@ class InfoOnline:
 @dataclass
 class Porcao:
     """O que o texto do item declara sobre tamanho."""
+
     gramas: float | None = None
     pessoas_min: int | None = None
     pessoas_max: int | None = None
@@ -68,6 +75,7 @@ class Porcao:
 @dataclass
 class Estimativa:
     """Consenso entre as leituras disponíveis."""
+
     macros: Macros
     faixa_min: float
     faixa_max: float

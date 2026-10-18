@@ -4,6 +4,7 @@ Quem usa: etapas/web.py -> _tabela_oficial. Para pratos de restaurante ele não 
 Modelo:   LLM de texto (OpenRouter ou OpenAI, com a reserva do outro).
 Saída:    {"corresponde": true|false, "motivo": ...}.
 """
+
 from . import item_pedido
 from .comum import pedir_json
 
@@ -21,14 +22,24 @@ SCHEMA = {
 }
 
 
-def pedido(item: str, produto: str, fonte_nome: str, fonte_url: str, trecho: str, porcao_base: str) -> str:
-    return (f"Pedido:\n{item}\n\nEncontrado na web:\nProduto: {produto}\n"
-            f"Fonte: {fonte_nome} ({fonte_url})\nTrecho: {trecho}\n"
-            f"Base dos valores: {porcao_base}")
+def pedido(
+    item: str, produto: str, fonte_nome: str, fonte_url: str, trecho: str, porcao_base: str
+) -> str:
+    return (
+        f"Pedido:\n{item}\n\nEncontrado na web:\nProduto: {produto}\n"
+        f"Fonte: {fonte_nome} ({fonte_url})\nTrecho: {trecho}\n"
+        f"Base dos valores: {porcao_base}"
+    )
 
 
 def exemplo() -> list[tuple[str, str]]:
     item = item_pedido.exemplo()[0][1]
-    achado = pedido(item, "Pizza Margherita 35cm", "Pizza Express", "https://pizzaexpress.com.br/nutri",
-                    "Margherita: 1800 kcal", "pizza inteira")
+    achado = pedido(
+        item,
+        "Pizza Margherita 35cm",
+        "Pizza Express",
+        "https://pizzaexpress.com.br/nutri",
+        "Margherita: 1800 kcal",
+        "pizza inteira",
+    )
     return [("sistema", INSTRUCOES), ("usuário", pedir_json(achado, SCHEMA))]

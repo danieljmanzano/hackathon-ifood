@@ -9,6 +9,7 @@ Saída:    JSON: tentar de novo com consultas novas (e relaxar o orçamento padr
 Limites que o modelo NÃO pode relaxar (o código também garante): restrições, alergias, alimentos que o usuário
 evita e orçamento que o próprio usuário pediu.
 """
+
 import json
 
 from . import busca_mcp
@@ -49,25 +50,47 @@ Responda SOMENTE com um objeto JSON no formato pedido."""
 SCHEMA = {
     "type": "object",
     "properties": {
-        "diagnostico": {"type": "string", "description": "Por que a busca não achou nada (1 a 2 frases)"},
+        "diagnostico": {
+            "type": "string",
+            "description": "Por que a busca não achou nada (1 a 2 frases)",
+        },
         "acao": {"type": "string", "enum": ["buscar_de_novo", "desistir", "usar_ferramentas"]},
         "chamadas": {
             "type": "array",
-            "items": {"type": "object", "properties": {"ferramenta": {"type": "string"},
-                                                       "argumentos": {"type": "object"}},
-                      "required": ["ferramenta"]},
+            "items": {
+                "type": "object",
+                "properties": {"ferramenta": {"type": "string"}, "argumentos": {"type": "object"}},
+                "required": ["ferramenta"],
+            },
             "description": "Só com acao=usar_ferramentas (até 3)",
         },
-        "refinamentos": {"type": "object", "description": "Para a próxima busca: itemTaxonomy, maxDistanceKm, "
-                                                          "maxDeliveryTimeMinutes (só com ids/valores vistos)"},
-        "search_queries": {"type": "array", "items": {"type": "string"}, "description": "Consultas NOVAS (até 4)"},
-        "cuisine": {"type": "string", "description": "Culinária ou tipo de restaurante, se mudar; senão vazio"},
+        "refinamentos": {
+            "type": "object",
+            "description": "Para a próxima busca: itemTaxonomy, maxDistanceKm, "
+            "maxDeliveryTimeMinutes (só com ids/valores vistos)",
+        },
+        "search_queries": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Consultas NOVAS (até 4)",
+        },
+        "cuisine": {
+            "type": "string",
+            "description": "Culinária ou tipo de restaurante, se mudar; senão vazio",
+        },
         "relaxar_orcamento_padrao": {"type": "boolean"},
         "aviso_adaptacao": {"type": "string"},
         "mensagem_se_nada_for_encontrado": {"type": "string"},
     },
-    "required": ["diagnostico", "acao", "search_queries", "cuisine", "relaxar_orcamento_padrao", "aviso_adaptacao",
-                 "mensagem_se_nada_for_encontrado"],
+    "required": [
+        "diagnostico",
+        "acao",
+        "search_queries",
+        "cuisine",
+        "relaxar_orcamento_padrao",
+        "aviso_adaptacao",
+        "mensagem_se_nada_for_encontrado",
+    ],
 }
 
 CABECALHO = "Diagnóstico da busca:\n"
@@ -86,11 +109,27 @@ def pedido(diagnostico: dict) -> str:
 def exemplo() -> list[tuple[str, str]]:
     diagnostico = {
         "pedido": "quero comer japonês, tô com fome",
-        "agora": {"data": "2026-10-18", "hora": "23:40", "dia_da_semana": "domingo", "periodo": "fim da noite"},
+        "agora": {
+            "data": "2026-10-18",
+            "hora": "23:40",
+            "dia_da_semana": "domingo",
+            "periodo": "fim da noite",
+        },
         "orcamento": {"valor_reais": 30.0, "origem": "padrao_do_perfil"},
-        "tentativas": [{"consultas": ["sushi", "temaki"], "culinaria": "japonesa", "itens_encontrados": 6,
-                        "itens_abertos": 0, "restaurantes_fechados": 3, "mais_barato_aberto_reais": None,
-                        "descartes": {"restaurante fechado/indisponível": 6}}],
+        "tentativas": [
+            {
+                "consultas": ["sushi", "temaki"],
+                "culinaria": "japonesa",
+                "itens_encontrados": 6,
+                "itens_abertos": 0,
+                "restaurantes_fechados": 3,
+                "mais_barato_aberto_reais": None,
+                "descartes": {"restaurante fechado/indisponível": 6},
+            }
+        ],
     }
-    return [("sistema (sem MCP)", INSTRUCOES), ("sistema (com MCP, modo live)", instrucoes(True)),
-            ("usuário", pedido(diagnostico))]
+    return [
+        ("sistema (sem MCP)", INSTRUCOES),
+        ("sistema (com MCP, modo live)", instrucoes(True)),
+        ("usuário", pedido(diagnostico)),
+    ]

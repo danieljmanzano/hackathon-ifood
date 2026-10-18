@@ -23,8 +23,14 @@ GRUPO_OPCIONAL = "opcional"
 PESO_DECLARADO = "Peso informado do prato: "
 
 
-def descrever(nome: str, restaurante: str, descricao: str, opcoes: list[str] | None,
-              grupos: list[tuple[str, bool, int, list[str]]], peso_g: float | None = None) -> str:
+def descrever(
+    nome: str,
+    restaurante: str,
+    descricao: str,
+    opcoes: list[str] | None,
+    grupos: list[tuple[str, bool, int, list[str]]],
+    peso_g: float | None = None,
+) -> str:
     """`grupos`: (nome do grupo, obrigatório?, máximo de escolhas, nomes das opções)."""
     if opcoes:
         texto_opcoes = OPCOES_ESCOLHIDAS + "\n".join(f"- {o}" for o in opcoes)
@@ -37,14 +43,21 @@ def descrever(nome: str, restaurante: str, descricao: str, opcoes: list[str] | N
     else:
         texto_opcoes = OPCOES_NENHUMA
     peso = f"\n{PESO_DECLARADO}{peso_g:g} g" if peso_g else ""
-    return (f"{NOME}{nome}\n"
-            f"{RESTAURANTE}{restaurante}\n"
-            f"{DESCRICAO}{descricao or SEM_DESCRICAO}\n"
-            f"{texto_opcoes}{peso}")
+    return (
+        f"{NOME}{nome}\n"
+        f"{RESTAURANTE}{restaurante}\n"
+        f"{DESCRICAO}{descricao or SEM_DESCRICAO}\n"
+        f"{texto_opcoes}{peso}"
+    )
 
 
 def exemplo() -> list[tuple[str, str]]:
-    item = descrever("Pizza Margherita", "Pizza Express", "Mussarela e manjericão. 35cm, serves 1-2.", None,
-                     [("Borda", False, 1, ["Catupiry", "Cheddar"])])
+    item = descrever(
+        "Pizza Margherita",
+        "Pizza Express",
+        "Mussarela e manjericão. 35cm, serves 1-2.",
+        None,
+        [("Borda", False, 1, ["Catupiry", "Cheddar"])],
+    )
     escolhido = descrever("Pizza Margherita", "Pizza Express", "", ["Catupiry"], [], 400.0)
     return [("item, opções ainda não escolhidas", item), ("item, com opções e peso", escolhido)]

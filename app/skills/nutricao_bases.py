@@ -4,6 +4,7 @@ Quem usa: etapas/bases.py -> escolher_alimento. Roda depois da busca por título
 Modelo:   LLM de texto (OpenRouter ou OpenAI, com a reserva do outro).
 Saída:    {"escolha": índice do candidato | null, "motivo": ...}. null é o esperado para pratos compostos.
 """
+
 from . import item_pedido
 from .comum import pedir_json
 
@@ -25,11 +26,16 @@ CANDIDATOS = "Candidatos:\n"
 
 def pedido(item: str, candidatos: list[tuple[str, str]]) -> str:
     """`candidatos`: (nome, categoria) na ordem em que o índice da resposta será lido."""
-    lista = "\n".join(f"{i}: {nome} ({categoria})" for i, (nome, categoria) in enumerate(candidatos))
+    lista = "\n".join(
+        f"{i}: {nome} ({categoria})" for i, (nome, categoria) in enumerate(candidatos)
+    )
     return f"{ITEM_PEDIDO}{item}\n\n{CANDIDATOS}{lista}"
 
 
 def exemplo() -> list[tuple[str, str]]:
     item = item_pedido.exemplo()[0][1]
-    candidatos = [("Queijo, mozarela", "Leite e derivados"), ("Pizza, de mussarela", "Alimentos preparados")]
+    candidatos = [
+        ("Queijo, mozarela", "Leite e derivados"),
+        ("Pizza, de mussarela", "Alimentos preparados"),
+    ]
     return [("sistema", INSTRUCOES), ("usuário", pedir_json(pedido(item, candidatos), SCHEMA))]

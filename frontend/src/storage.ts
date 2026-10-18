@@ -3,10 +3,18 @@ import type { Consumption, Nutrition } from "./types";
 const key = (id: string) => `macro:consumption:v1:${id}`;
 // Cache local e migração dos registros anteriores para o backend. Não guarda credenciais.
 export function consumptionMigrated(id: string): boolean {
-  try { return localStorage.getItem(`${key(id)}:migrated`) === "yes"; } catch { return false; }
+  try {
+    return localStorage.getItem(`${key(id)}:migrated`) === "yes";
+  } catch {
+    return false;
+  }
 }
 export function markConsumptionMigrated(id: string) {
-  try { localStorage.setItem(`${key(id)}:migrated`, "yes"); } catch { /* O servidor continua sendo a fonte dos dados. */ }
+  try {
+    localStorage.setItem(`${key(id)}:migrated`, "yes");
+  } catch {
+    /* O servidor continua sendo a fonte dos dados. */
+  }
 }
 export function loadConsumption(id: string): Consumption[] {
   try {

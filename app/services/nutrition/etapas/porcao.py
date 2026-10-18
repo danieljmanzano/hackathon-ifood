@@ -1,11 +1,17 @@
 """Trilha das gramas: extrair_porcao, converter_em_gramas e calcular_porcao."""
+
 import re
 
 from app.schemas.macro import MealCandidate
+
 from ..modelos import InfoOnline, Macros, Porcao
 
-_MASSA = re.compile(r"(?<![\w.,])(\d+(?:[.,]\d+)?)\s*(kg|quilos?|gramas?|gr|g|litros?|ml|l)(?![a-zà-ú])", re.I)
-_SERVE = re.compile(r"serv(?:e|es|em|ir)\s+(?:até\s+|ate\s+)?(\d+)(?:\s*(?:-|–|a|ou|to)\s*(\d+))?", re.I)
+_MASSA = re.compile(
+    r"(?<![\w.,])(\d+(?:[.,]\d+)?)\s*(kg|quilos?|gramas?|gr|g|litros?|ml|l)(?![a-zà-ú])", re.I
+)
+_SERVE = re.compile(
+    r"serv(?:e|es|em|ir)\s+(?:até\s+|ate\s+)?(\d+)(?:\s*(?:-|–|a|ou|to)\s*(\d+))?", re.I
+)
 _CM = re.compile(r"(?<![\w.,])(\d+(?:[.,]\d+)?)\s*cm(?![a-zà-ú])", re.I)
 
 _FATOR_G = {"kg": 1000, "quilo": 1000, "quilos": 1000, "l": 1000, "litro": 1000, "litros": 1000}
@@ -42,13 +48,17 @@ def extrair_porcao(candidate: MealCandidate, opcoes: list[str] | None = None) ->
     return porcao
 
 
-def converter_em_gramas(declarada: Porcao, estimado_g: float | None) -> tuple[float | None, str, list[str]]:
+def converter_em_gramas(
+    declarada: Porcao, estimado_g: float | None
+) -> tuple[float | None, str, list[str]]:
     """Gramas do item e sua origem: "declarada" > "estimada" (pela imagem/modelo) > "ausente"."""
     avisos: list[str] = []
     if declarada.gramas:
         if estimado_g and abs(estimado_g - declarada.gramas) / declarada.gramas > 0.5:
-            avisos.append(f"Peso estimado ({estimado_g:.0f} g) difere do declarado ({declarada.gramas:.0f} g); "
-                          "usado o declarado.")
+            avisos.append(
+                f"Peso estimado ({estimado_g:.0f} g) difere do declarado ({declarada.gramas:.0f} g); "
+                "usado o declarado."
+            )
         return declarada.gramas, "declarada", avisos
     if estimado_g and estimado_g > 0:
         return estimado_g, "estimada", avisos

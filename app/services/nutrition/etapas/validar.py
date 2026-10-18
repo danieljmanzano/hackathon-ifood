@@ -1,4 +1,5 @@
 """Validação e confiança: regras (Atwater, limites) + dispersão e divergência entre fontes."""
+
 from dataclasses import dataclass, field
 
 from ..modelos import Fundido
@@ -29,7 +30,9 @@ def validar(fundido: Fundido, gramas: float | None, limiar: float) -> Validacao:
     if fundido.dispersao is not None:
         if fundido.dispersao > 0.5:
             score -= 0.25
-            motivos.append(f"Estimativas muito diferentes entre si (dispersão {fundido.dispersao:.0%}).")
+            motivos.append(
+                f"Estimativas muito diferentes entre si (dispersão {fundido.dispersao:.0%})."
+            )
         elif fundido.dispersao > 0.25:
             score -= 0.12
             motivos.append(f"Estimativas divergem entre si (dispersão {fundido.dispersao:.0%}).")
@@ -50,10 +53,14 @@ def validar(fundido: Fundido, gramas: float | None, limiar: float) -> Validacao:
         diferenca = abs(esperado - macros.kcal) / macros.kcal if macros.kcal else 1
         if diferenca > 0.25:
             score -= 0.2
-            motivos.append(f"Macros não fecham com as calorias (Atwater: {esperado:.0f} vs {macros.kcal:.0f} kcal).")
+            motivos.append(
+                f"Macros não fecham com as calorias (Atwater: {esperado:.0f} vs {macros.kcal:.0f} kcal)."
+            )
         elif diferenca > 0.15:
             score -= 0.1
-            motivos.append(f"Macros fecham mal com as calorias (Atwater: {esperado:.0f} vs {macros.kcal:.0f} kcal).")
+            motivos.append(
+                f"Macros fecham mal com as calorias (Atwater: {esperado:.0f} vs {macros.kcal:.0f} kcal)."
+            )
         if gramas and macros.proteina_g + macros.carbo_g + macros.gordura_g > gramas * 1.05:
             score -= 0.2
             motivos.append("Soma dos macros excede o peso do prato.")

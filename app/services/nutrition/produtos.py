@@ -1,4 +1,5 @@
 """Base local de produtos já calculados (JSON). Produto na base não é recalculado."""
+
 import hashlib
 import json
 import logging
@@ -20,18 +21,37 @@ def chave_produto(item: MealCandidate | SelectedItem) -> str:
     if isinstance(item, SelectedItem):
         candidate = item.candidate
         # "2 × Nutella" e "1 × Nutella" são pratos diferentes; a quantidade entra na chave.
-        opcoes = sorted(f"{o.option_id}×{o.quantity}" for o in item.options) or sorted(item.option_labels)
+        opcoes = sorted(f"{o.option_id}×{o.quantity}" for o in item.options) or sorted(
+            item.option_labels
+        )
     else:
         candidate, opcoes = item, None
     # Preço/disponibilidade/imagem com URL temporária não alteram a composição.
     # Nomes de adicionais e quantidades fazem parte da receita, inclusive para um ID já conhecido.
     grupos = [(g.id, [(o.id, o.name) for o in g.options]) for g in candidate.option_groups]
-    quantidades = sorted((o.option_id, o.quantity) for o in item.options) if isinstance(item, SelectedItem) else None
-    base = [candidate.merchant_id, candidate.item_id or candidate.name, candidate.simulated,
-            candidate.name, candidate.description,
-            [candidate.features.portion_size, candidate.features.serves, candidate.features.weight_grams],
-            grupos, opcoes, quantidades]
-    return hashlib.sha256(json.dumps(base, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:24]
+    quantidades = (
+        sorted((o.option_id, o.quantity) for o in item.options)
+        if isinstance(item, SelectedItem)
+        else None
+    )
+    base = [
+        candidate.merchant_id,
+        candidate.item_id or candidate.name,
+        candidate.simulated,
+        candidate.name,
+        candidate.description,
+        [
+            candidate.features.portion_size,
+            candidate.features.serves,
+            candidate.features.weight_grams,
+        ],
+        grupos,
+        opcoes,
+        quantidades,
+    ]
+    return hashlib.sha256(
+        json.dumps(base, ensure_ascii=False, sort_keys=True).encode()
+    ).hexdigest()[:24]
 
 
 class RepositorioProdutos:
@@ -61,11 +81,16 @@ class RepositorioProdutos:
         `versao_pipeline` pode ser uma tupla de versões aceitas (resultados ainda compatíveis)."""
         return self.get_many([chave], versao_pipeline).get(chave)
 
-    def get_many(self, chaves: list[str], versao_pipeline: str | tuple[str, ...]) -> dict[str, NutritionResult]:
+    def get_many(
+        self, chaves: list[str], versao_pipeline: str | tuple[str, ...]
+    ) -> dict[str, NutritionResult]:
         """Lê a base uma vez para consultar um catálogo inteiro, sem chamadas externas."""
         registros = self._ler()["produtos"]
-        return {chave: resultado for chave in chaves
-                if (resultado := self._validar(registros.get(chave), versao_pipeline)) is not None}
+        return {
+            chave: resultado
+            for chave in chaves
+            if (resultado := self._validar(registros.get(chave), versao_pipeline)) is not None
+        }
 
     @staticmethod
     def _validar(registro, versao_pipeline: str | tuple[str, ...]) -> NutritionResult | None:
@@ -98,7 +123,9 @@ class RepositorioProdutos:
             }
             self.caminho.parent.mkdir(parents=True, exist_ok=True)
             temporario = self.caminho.with_suffix(".tmp")
-            temporario.write_text(json.dumps(dados, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+            temporario.write_text(
+                json.dumps(dados, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8"
+            )
             os.replace(temporario, self.caminho)
 
 

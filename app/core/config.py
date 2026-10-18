@@ -36,15 +36,23 @@ class Settings(BaseSettings):
     # Quando a busca não acha nada, um modelo replaneja (outras consultas, relaxar o orçamento padrão) ou explica.
     busca_replanejar: bool = True
     busca_web_timeout_seconds: float = Field(default=10, gt=0, le=20)
-    montagem_max_tentativas: int = Field(default=3, ge=1, le=5)  # propostas avaliadas antes de pedir que o cliente monte
+    montagem_max_tentativas: int = Field(
+        default=3, ge=1, le=5
+    )  # propostas avaliadas antes de pedir que o cliente monte
     montagem_timeout_seconds: float = Field(default=240, gt=0, le=900)
-    busca_web_identificar: bool = True  # pesquisar na web o que é um produto/nome que o pedido cita e o sistema não conhece
+    busca_web_identificar: bool = (
+        True  # pesquisar na web o que é um produto/nome que o pedido cita e o sistema não conhece
+    )
     busca_max_replanejamentos: int = Field(default=1, ge=0, le=2)
-    busca_prazo_total_segundos: float = Field(default=28, gt=0, le=29)  # o frontend desiste aos 30 s
+    busca_prazo_total_segundos: float = Field(
+        default=28, gt=0, le=29
+    )  # o frontend desiste aos 30 s
     busca_replanejar_timeout_seconds: float = Field(default=10, gt=0, le=20)
     # No modo live o planejador pode explorar o iFood com tools de LEITURA do MCP (categorias, restaurantes, cardápio).
     busca_mcp_ferramentas: bool = True
-    busca_max_passos_planejador: int = Field(default=2, ge=1, le=3)  # perguntas ao modelo por rodada (1 pode ser exploração)
+    busca_max_passos_planejador: int = Field(
+        default=2, ge=1, le=3
+    )  # perguntas ao modelo por rodada (1 pode ser exploração)
     # Por privacidade os logs da busca só têm contagens. Ligue para ver consultas e respostas dos modelos (depuração).
     busca_log_conteudo: bool = False
     # Quanto da conversa o agente de busca lê (0 desliga): últimas N mensagens, cortadas em M caracteres cada.
@@ -124,10 +132,16 @@ class Settings(BaseSettings):
     live_mock_reviews: bool = True
 
     # Cascata de calorias (ver pipeline_calorias_v2.dot).
-    calorias_estimar_sempre: bool = False  # True: estima mesmo se bases ou web acharem (mede divergência, gasta mais)
+    calorias_estimar_sempre: bool = (
+        False  # True: estima mesmo se bases ou web acharem (mede divergência, gasta mais)
+    )
     calorias_buscar_bases: bool = True
-    calorias_classificar: bool = True  # produto de marca: tabela oficial na web ANTES das bases genéricas
-    calorias_busca_web: bool = True  # OpenAI web_search ou Gemini+Google Search; só roda se as bases não acharem
+    calorias_classificar: bool = (
+        True  # produto de marca: tabela oficial na web ANTES das bases genéricas
+    )
+    calorias_busca_web: bool = (
+        True  # OpenAI web_search ou Gemini+Google Search; só roda se as bases não acharem
+    )
     calorias_log: Literal["off", "resumo", "detalhe"] = "resumo"  # ver app/core/logs.py
     calorias_amostras: int = Field(default=1, ge=1, le=5)
     calorias_limiar_confianca: float = Field(default=0.55, ge=0, le=1)
@@ -138,14 +152,19 @@ class Settings(BaseSettings):
     def llm_api_key(self) -> str:
         """Chave do provedor de texto escolhido (ou a do outro, se faltar e o fallback estiver ligado)."""
         openai, openrouter = self.openai_api_key.get_secret_value(), self.openrouter_api_key
-        principal, outro = (openai, openrouter) if self.nutrition_provider == "openai" else (openrouter, openai)
+        principal, outro = (
+            (openai, openrouter) if self.nutrition_provider == "openai" else (openrouter, openai)
+        )
         return principal or (outro if self.llm_fallback else "")
 
     @property
     def web_api_key(self) -> str:
         """Chave de quem faz a busca na web: OpenAI (web_search) ou Gemini (Google Search)."""
-        return (self.openai_api_key.get_secret_value() if self.nutrition_provider == "openai"
-                else self.gemini_api_key)
+        return (
+            self.openai_api_key.get_secret_value()
+            if self.nutrition_provider == "openai"
+            else self.gemini_api_key
+        )
 
     @property
     def nutrition_enabled(self) -> bool:
@@ -167,7 +186,9 @@ class Settings(BaseSettings):
             "live_orders_enabled": False,
             "reviews_simulated": self.ifood_mode == "mock" or self.live_mock_reviews,
             "nutrition": "enabled" if self.nutrition_enabled else "unavailable",
-            "intent_interpretation": "llm_configured" if self.intent_llm_enabled and self.llm_api_key else "rules",
+            "intent_interpretation": "llm_configured"
+            if self.intent_llm_enabled and self.llm_api_key
+            else "rules",
             "timezone": self.timezone,
             "issues": (
                 ["Demonstração com catálogo, endereço, preços e pedidos fictícios."]

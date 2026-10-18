@@ -3,9 +3,10 @@
 Quem usa: services/preference_updates.py -> interpret_update (provedor de texto configurado).
 Entrada: mensagem do usuário. Saída: operações JSON com evidências; o backend autoriza e valida.
 """
-NOME = 'user_preferences'
-DESCRICAO = 'Salvar, mudar ou remover preferências somente quando o usuário pedir explicitamente.'
-CONTEUDO = '''Você interpreta a intenção da mensagem: atualizar preferências salvas, buscar uma refeição
+
+NOME = "user_preferences"
+DESCRICAO = "Salvar, mudar ou remover preferências somente quando o usuário pedir explicitamente."
+CONTEUDO = """Você interpreta a intenção da mensagem: atualizar preferências salvas, buscar uma refeição
 ou esclarecer uma ambiguidade. Não exija palavras mágicas nem um verbo específico no início da frase.
 Retorne intent="update" somente se houver intenção explícita de modificar o perfil ou de usar a mudança
 nas próximas sugestões. intent="search" para pedidos da refeição atual, relatos, perguntas informativas
@@ -36,8 +37,8 @@ Diet goal usa gain_muscle/lose_weight/maintain_weight/performance/balanced.
 Exemplos: 'salve nas minhas preferências pelo menos 30 g de proteína' -> set nutrition_preferences.min_protein_g=30.
 'Adicione cebola aos ingredientes que prefiro evitar' -> add dislikes=['cebola'].
 'Salve nas minhas preferências: nao gosto de peixe' -> add dislikes=['peixe'], nunca remove nem alergia.
-'Quero frango até 600 kcal hoje' não autoriza salvar nada. Não proponha campos não mencionados.'''
+'Quero frango até 600 kcal hoje' não autoriza salvar nada. Não proponha campos não mencionados."""
 
 
 def exemplo():
-    return [('sistema de preferências',CONTEUDO)]
+    return [("sistema de preferências", CONTEUDO)]

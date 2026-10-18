@@ -32,8 +32,7 @@ async function request<T>(
     response = await fetch(`/api${path}`, {
       method: body === undefined ? "GET" : method,
       credentials: "same-origin",
-      headers:
-        body === undefined ? undefined : { "Content-Type": "application/json" },
+      headers: body === undefined ? undefined : { "Content-Type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
       signal: AbortSignal.timeout(timeoutMs),
     });
@@ -56,21 +55,22 @@ export const api = {
   session: () => request<Session>("/session"),
   health: () => request<Health>("/health"),
   addresses: () => request<Address[]>("/addresses"),
-  geocode: (address: string) =>
-    request<GeocodeResult>("/addresses/geocode", { address }),
+  geocode: (address: string) => request<GeocodeResult>("/addresses/geocode", { address }),
   createAddress: (payload: NewAddress) =>
     request<{ session: Session; addresses: Address[] }>("/addresses", payload),
-  address: (address_id: string) =>
-    request<Session>("/session/address", { address_id }, "PUT"),
+  address: (address_id: string) => request<Session>("/session/address", { address_id }, "PUT"),
   profile: (profile: Profile) => request<Session>("/profile", profile, "PUT"),
   consumption: () => request<Consumption[]>("/consumption"),
-  saveConsumption: (entries: Consumption[]) => request<Consumption[]>("/consumption", entries, "PUT"),
+  saveConsumption: (entries: Consumption[]) =>
+    request<Consumption[]>("/consumption", entries, "PUT"),
   dailyContext: () => request<DailyFoodDiary>("/daily-context"),
   addFood: (description: string, nutrition: DailyNutrients) =>
     request<FoodDiaryEntry>("/food-diary", { description, nutrition }),
   removeFood: async (id: string) => {
     const response = await fetch(`/api/food-diary/${encodeURIComponent(id)}`, {
-      method: "DELETE", credentials: "same-origin", signal: AbortSignal.timeout(30_000),
+      method: "DELETE",
+      credentials: "same-origin",
+      signal: AbortSignal.timeout(30_000),
     });
     if (!response.ok) throw new Error("Não foi possível excluir o alimento.");
   },
@@ -78,21 +78,26 @@ export const api = {
   myReviews: () => request<UserReview[]>("/reviews/me"),
   saveReview: (review: ReviewInput) => request<UserReview>("/reviews", review, "PUT"),
   search: (text: string) => request<Session>("/search", { text }, "POST", 60_000),
-  chat: (text: string, message_id: string) => request<Session>("/chat", { text, message_id }, "POST", 60_000),
+  chat: (text: string, message_id: string) =>
+    request<Session>("/chat", { text, message_id }, "POST", 60_000),
   newOrder: () => request<Session>("/session/new-order", {}, "POST"),
   merchants: () => request<MerchantSummary[]>("/merchants"),
   menu: (merchantId: string) =>
     request<Candidate[]>(`/merchants/${encodeURIComponent(merchantId)}/menu`),
   assembly: () => request<Session>("/assembly"),
   selectionNutrition: () => request<Session>("/selection/nutrition"),
-  recommendationsNutrition: () =>
-    request<Session>("/recommendations/nutrition"),
+  recommendationsNutrition: () => request<Session>("/recommendations/nutrition"),
   item: (item: Candidate) =>
     request<Candidate>(
       `/items/${encodeURIComponent(item.merchant_id)}/${encodeURIComponent(item.item_id)}`,
     ),
   /** Calorias e macros do prato montado, sem escolhê-lo. aguardar=false só consulta um cálculo em andamento. */
-  previewNutrition: (item: Candidate, quantity: number, options: SelectedOption[], aguardar = true) =>
+  previewNutrition: (
+    item: Candidate,
+    quantity: number,
+    options: SelectedOption[],
+    aguardar = true,
+  ) =>
     request<SelectedItem>(
       `/selection/preview?aguardar=${aguardar}`,
       { merchant_id: item.merchant_id, item_id: item.item_id, quantity, options },
@@ -122,13 +127,9 @@ export const api = {
 };
 
 export const money = (cents: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-    cents / 100,
-  );
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
 export const dayKey = (value: string | Date) =>
-  new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
-    new Date(value),
-  );
+  new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date(value));
 export const safeUrl = (url: string | null | undefined) => {
   try {
     const u = new URL(url || "");

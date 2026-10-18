@@ -1,6 +1,6 @@
+import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
-import sqlite3
 
 from app.schemas.macro import Address, ConsumptionRecord, FoodDiaryEntry, Session
 from app.schemas.reviews import ProcessedReview, Review, UserTastes
@@ -55,38 +55,53 @@ class Database:
 
     def save_mock_address(self, user_id: str, address: Address):
         with self.transaction() as connection:
-            connection.execute("INSERT INTO mock_addresses VALUES (?, ?, ?) ON CONFLICT(user_id, id) "
-                               "DO UPDATE SET payload=excluded.payload", (user_id, address.id, address.model_dump_json()))
+            connection.execute(
+                "INSERT INTO mock_addresses VALUES (?, ?, ?) ON CONFLICT(user_id, id) "
+                "DO UPDATE SET payload=excluded.payload",
+                (user_id, address.id, address.model_dump_json()),
+            )
 
     def food_entries(self, user_id: str) -> list[FoodDiaryEntry]:
         with self.transaction() as connection:
-            rows = connection.execute("SELECT payload FROM food_diary WHERE user_id = ?", (user_id,)).fetchall()
+            rows = connection.execute(
+                "SELECT payload FROM food_diary WHERE user_id = ?", (user_id,)
+            ).fetchall()
         return [FoodDiaryEntry.model_validate_json(row[0]) for row in rows]
 
     def save_food_entry(self, user_id: str, entry: FoodDiaryEntry):
         with self.transaction() as connection:
-            connection.execute("INSERT INTO food_diary VALUES (?, ?, ?) ON CONFLICT(user_id, id) "
-                               "DO UPDATE SET payload=excluded.payload", (user_id, entry.id, entry.model_dump_json()))
+            connection.execute(
+                "INSERT INTO food_diary VALUES (?, ?, ?) ON CONFLICT(user_id, id) "
+                "DO UPDATE SET payload=excluded.payload",
+                (user_id, entry.id, entry.model_dump_json()),
+            )
 
     def delete_food_entry(self, user_id: str, entry_id: str):
         with self.transaction() as connection:
-            connection.execute("DELETE FROM food_diary WHERE user_id = ? AND id = ?", (user_id, entry_id))
+            connection.execute(
+                "DELETE FROM food_diary WHERE user_id = ? AND id = ?", (user_id, entry_id)
+            )
 
     def consumption(self, user_id: str) -> list[ConsumptionRecord]:
         with self.transaction() as connection:
-            rows = connection.execute("SELECT payload FROM consumption WHERE user_id = ?", (user_id,)).fetchall()
+            rows = connection.execute(
+                "SELECT payload FROM consumption WHERE user_id = ?", (user_id,)
+            ).fetchall()
         return [ConsumptionRecord.model_validate_json(row[0]) for row in rows]
 
     def replace_consumption(self, user_id: str, entries: list[ConsumptionRecord]):
         with self.transaction() as connection:
             connection.execute("DELETE FROM consumption WHERE user_id = ?", (user_id,))
-            connection.executemany("INSERT INTO consumption VALUES (?, ?, ?, ?)",
-                                   [(user_id, e.order_id, e.item_id, e.model_dump_json()) for e in entries])
+            connection.executemany(
+                "INSERT INTO consumption VALUES (?, ?, ?, ?)",
+                [(user_id, e.order_id, e.item_id, e.model_dump_json()) for e in entries],
+            )
 
     def processed_reviews(self, simulated: bool) -> dict[str, ProcessedReview]:
         with self.transaction() as connection:
             rows = connection.execute(
-                "SELECT fingerprint, payload FROM processed_reviews WHERE simulated = ?", (simulated,)
+                "SELECT fingerprint, payload FROM processed_reviews WHERE simulated = ?",
+                (simulated,),
             ).fetchall()
         return {key: ProcessedReview.model_validate_json(payload) for key, payload in rows}
 
@@ -102,7 +117,8 @@ class Database:
     def get_tastes(self, user_id: str, simulated: bool) -> UserTastes | None:
         with self.transaction() as connection:
             row = connection.execute(
-                "SELECT payload FROM user_tastes WHERE user_id = ? AND simulated = ?", (user_id, simulated)
+                "SELECT payload FROM user_tastes WHERE user_id = ? AND simulated = ?",
+                (user_id, simulated),
             ).fetchone()
         return UserTastes.model_validate_json(row[0]) if row else None
 
@@ -126,8 +142,13 @@ class Database:
                 "INSERT INTO reviews VALUES (?, ?, ?, ?, ?) "
                 "ON CONFLICT(user_id, simulated, merchant_id, item_id) "
                 "DO UPDATE SET payload=excluded.payload",
-                (review.user_id, review.simulated, review.merchant_id, review.item_id,
-                 review.model_dump_json()),
+                (
+                    review.user_id,
+                    review.simulated,
+                    review.merchant_id,
+                    review.item_id,
+                    review.model_dump_json(),
+                ),
             )
 
     @contextmanager

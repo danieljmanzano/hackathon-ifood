@@ -9,6 +9,7 @@ Saída:    JSON (LLMIntent): objetivos, comida pedida, `search_queries` (consult
           `cuisine` (para achar restaurantes), orçamento, pessoas, prazo e um resumo em português.
 O schema é anexado ao fim do texto em tempo de execução (vem do modelo pydantic LLMIntent).
 """
+
 import json
 
 TEXTO = """Interprete a intenção de uma mensagem de pedido de comida em português.
@@ -102,8 +103,13 @@ def system(schema: str) -> str:
     return TEXTO + schema
 
 
-def mensagem_usuario(texto: str, agora: dict | None = None, diet_context: dict | None = None,
-                     conversa: dict | None = None, preferencias: str | None = None) -> str:
+def mensagem_usuario(
+    texto: str,
+    agora: dict | None = None,
+    diet_context: dict | None = None,
+    conversa: dict | None = None,
+    preferencias: str | None = None,
+) -> str:
     """O pedido e, se houver: a hora local, o contexto de dieta, a conversa ({"historico", "busca_anterior",
     "sugestoes_mostradas"}) e as preferências do cliente (texto)."""
     corpo = {"message": texto}
@@ -119,10 +125,33 @@ def mensagem_usuario(texto: str, agora: dict | None = None, diet_context: dict |
 
 
 def exemplo() -> list[tuple[str, str]]:
-    return [("sistema (sem o schema anexado)", TEXTO), ("usuário", mensagem_usuario(
-        "mais barato",
-        {"data": "2026-10-18", "hora": "23:40", "dia_da_semana": "domingo", "periodo": "fim da noite"},
-        conversa={"historico": [{"papel": "usuario", "texto": "quero comer japonês, tô com fome"},
-                                {"papel": "assistente", "texto": "Busquei opções considerando: porção grande."}],
-                  "busca_anterior": {"comida": "comida japonesa", "consultas_ao_ifood": ["sushi", "temaki"],
-                                     "culinaria": "japonesa", "objetivos": ["large_portion"]}}))]
+    return [
+        ("sistema (sem o schema anexado)", TEXTO),
+        (
+            "usuário",
+            mensagem_usuario(
+                "mais barato",
+                {
+                    "data": "2026-10-18",
+                    "hora": "23:40",
+                    "dia_da_semana": "domingo",
+                    "periodo": "fim da noite",
+                },
+                conversa={
+                    "historico": [
+                        {"papel": "usuario", "texto": "quero comer japonês, tô com fome"},
+                        {
+                            "papel": "assistente",
+                            "texto": "Busquei opções considerando: porção grande.",
+                        },
+                    ],
+                    "busca_anterior": {
+                        "comida": "comida japonesa",
+                        "consultas_ao_ifood": ["sushi", "temaki"],
+                        "culinaria": "japonesa",
+                        "objetivos": ["large_portion"],
+                    },
+                },
+            ),
+        ),
+    ]

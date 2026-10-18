@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import type { OrderAspects, OrderReview, ReviewAspects } from "./types";
+import type { OrderAspects, OrderReview, OrderReviewInput, ReviewAspects } from "./types";
 
 const aspects: [keyof ReviewAspects, string][] = [
   ["taste", "Sabor"],
@@ -12,11 +12,17 @@ const aspects: [keyof ReviewAspects, string][] = [
 export function effectiveReview(review: OrderReview) {
   const inferred = review.interpretation;
   const rating = review.rating ?? inferred?.rating ?? null;
-  const scores = Object.fromEntries(aspects.map(([key]) => [key, review.aspects[key] ?? inferred?.aspects[key] ?? null])) as OrderAspects;
+  const scores = Object.fromEntries(
+    aspects.map(([key]) => [key, review.aspects[key] ?? inferred?.aspects[key] ?? null]),
+  ) as OrderAspects;
   return { rating, scores };
 }
 
-export function OrderReviewCard({ review, busy, onSave }: {
+export function OrderReviewCard({
+  review,
+  busy,
+  onSave,
+}: {
   review: OrderReview;
   busy: boolean;
   onSave: (rating: number, aspects: OrderAspects) => Promise<boolean>;
@@ -34,9 +40,15 @@ export function OrderReviewCard({ review, busy, onSave }: {
   async function submit(event: FormEvent) {
     event.preventDefault();
     // Só envia como correção o que difere do interpretado, para a interpretação continuar valendo no resto.
-    const changed = Object.fromEntries(aspects
-      .filter(([key]) => draftScores[key] != null && draftScores[key] !== (review.interpretation?.aspects[key] ?? null))
-      .map(([key]) => [key, draftScores[key]])) as OrderAspects;
+    const changed = Object.fromEntries(
+      aspects
+        .filter(
+          ([key]) =>
+            draftScores[key] != null &&
+            draftScores[key] !== (review.interpretation?.aspects[key] ?? null),
+        )
+        .map(([key]) => [key, draftScores[key]]),
+    ) as OrderAspects;
     if (await onSave(draftRating, { ...review.aspects, ...changed })) setEditing(false);
   }
   return (
@@ -44,7 +56,9 @@ export function OrderReviewCard({ review, busy, onSave }: {
       <h3>Sua avaliação</h3>
       {review.comment && <p className="order-review-quote">“{review.comment}”</p>}
       {review.interpretation_state === "pending" ? (
-        <p className="muted small" role="status">Interpretando seu comentário…</p>
+        <p className="muted small" role="status">
+          Interpretando seu comentário…
+        </p>
       ) : (
         <>
           <p className="order-review-reading">
@@ -52,46 +66,149 @@ export function OrderReviewCard({ review, busy, onSave }: {
             {rating != null ? <strong>★ {rating}/5</strong> : "Sem nota"}
             {mentioned.map(([key, label]) => ` · ${label} ${scores[key]}`)}
           </p>
-          {review.interpretation?.summary && <p className="muted small">{review.interpretation.summary}</p>}
+          {review.interpretation?.summary && (
+            <p className="muted small">{review.interpretation.summary}</p>
+          )}
           {!!review.interpretation?.tags.length && (
-            <div className="order-review-tags">{review.interpretation.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
+            <div className="order-review-tags">
+              {review.interpretation.tags.map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
+            </div>
           )}
           {review.interpretation_state === "failed" && (
-            <p className="muted small">Não conseguimos interpretar o comentário. Valem a nota e o texto que você deixou.</p>
+            <p className="muted small">
+              Não conseguimos interpretar o comentário. Valem a nota e o texto que você deixou.
+            </p>
           )}
           {rating == null && (
-            <p className="muted small">Sem nota, esta avaliação não ajusta suas próximas sugestões.</p>
+            <p className="muted small">
+              Sem nota, esta avaliação não ajusta suas próximas sugestões.
+            </p>
           )}
           {editing ? (
             <form onSubmit={(event) => void submit(event)}>
-              <label className="form-field">Nota geral
-                <select value={draftRating} onChange={(event) => setDraftRating(Number(event.target.value))} disabled={busy}>
-                  {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}/5</option>)}
+              <label className="form-field">
+                Nota geral
+                <select
+                  value={draftRating}
+                  onChange={(event) => setDraftRating(Number(event.target.value))}
+                  disabled={busy}
+                >
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <option key={n} value={n}>
+                      {n}/5
+                    </option>
+                  ))}
                 </select>
               </label>
               <div className="review-aspects">
                 {aspects.map(([key, label]) => (
-                  <label className="form-field" key={key}>{label}
-                    <select value={draftScores[key] ?? ""} disabled={busy}
-                      onChange={(event) => setDraftScores({ ...draftScores, [key]: event.target.value ? Number(event.target.value) : null })}>
+                  <label className="form-field" key={key}>
+                    {label}
+                    <select
+                      value={draftScores[key] ?? ""}
+                      disabled={busy}
+                      onChange={(event) =>
+                        setDraftScores({
+                          ...draftScores,
+                          [key]: event.target.value ? Number(event.target.value) : null,
+                        })
+                      }
+                    >
                       <option value="">Não avaliado</option>
-                      {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}/5</option>)}
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <option key={n} value={n}>
+                          {n}/5
+                        </option>
+                      ))}
                     </select>
                   </label>
                 ))}
               </div>
               <div className="order-review-actions">
-                <button className="primary-button" type="submit" disabled={busy}>Salvar ajuste</button>
-                <button className="secondary-button" type="button" onClick={() => setEditing(false)} disabled={busy}>Cancelar</button>
+                <button className="primary-button" type="submit" disabled={busy}>
+                  Salvar ajuste
+                </button>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  disabled={busy}
+                >
+                  Cancelar
+                </button>
               </div>
             </form>
           ) : (
             <button className="secondary-button" type="button" onClick={startEditing}>
-              {review.interpretation_state === "done" ? "Não foi isso? Ajustar" : rating == null ? "Dar uma nota" : "Ajustar nota"}
+              {review.interpretation_state === "done"
+                ? "Não foi isso? Ajustar"
+                : rating == null
+                  ? "Dar uma nota"
+                  : "Ajustar nota"}
             </button>
           )}
         </>
       )}
     </section>
+  );
+}
+
+export function QuickReview({
+  busy,
+  onSave,
+}: {
+  busy: boolean;
+  onSave: (review: OrderReviewInput) => Promise<boolean>;
+}) {
+  const [rating, setRating] = useState<number | null>(null);
+  const [comment, setComment] = useState("");
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (rating != null || comment.trim()) await onSave({ rating, comment: comment.trim() });
+  }
+  return (
+    <form className="quick-review" onSubmit={(event) => void submit(event)}>
+      <h3>Quer deixar uma avaliação?</h3>
+      <p>Escreva do seu jeito. Você pode corrigir o que entendermos depois.</p>
+      <div className="order-review-stars" role="radiogroup" aria-label="Nota do pedido">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            role="radio"
+            aria-checked={rating === n}
+            aria-label={`${n} de 5`}
+            disabled={busy}
+            className={rating != null && n <= rating ? "filled" : ""}
+            onClick={() => setRating(rating === n ? null : n)}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+      <label className="form-field">
+        Conte como foi <span className="optional">Opcional</span>
+        <textarea
+          maxLength={200}
+          rows={3}
+          value={comment}
+          onChange={(event) => setComment(event.target.value)}
+          placeholder="Ex.: demorou um pouco, mas o sabor estava ótimo"
+          disabled={busy}
+        />
+      </label>
+      <div className="review-form-footer">
+        <small>{comment.length}/200 · Sua nota escolhida prevalece.</small>
+        <button
+          className="primary-button"
+          type="submit"
+          disabled={busy || (rating == null && !comment.trim())}
+        >
+          Salvar avaliação
+        </button>
+      </div>
+    </form>
   );
 }

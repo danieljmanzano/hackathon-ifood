@@ -6,6 +6,7 @@ Dois resultados, conforme o "tipo_item" que o próprio modelo informa:
   industrializado -> tabela nutricional OFICIAL do produto exato (depois confirmada por `nutricao_juiz_web`);
   prato           -> uma ESTIMATIVA pesquisada a partir de pratos equivalentes, que entra no consenso.
 """
+
 from . import item_pedido
 from .comum import NUM, SCHEMA_INGREDIENTES, schema_json
 
@@ -54,7 +55,10 @@ SCHEMA = {
     "properties": {
         "tipo_item": {"type": "string", "enum": ["industrializado", "prato"]},
         "encontrado": {"type": "boolean"},
-        "produto_na_fonte": {"type": "string", "description": "Produto da tabela (industrializado) ou prato de referência usado (prato)"},
+        "produto_na_fonte": {
+            "type": "string",
+            "description": "Produto da tabela (industrializado) ou prato de referência usado (prato)",
+        },
         "calorias": {**NUM, "description": "kcal do item inteiro como vendido"},
         "faixa_min": NUM,
         "faixa_max": NUM,
@@ -62,25 +66,57 @@ SCHEMA = {
         "carbo_g": NUM,
         "gordura_g": NUM,
         "porcao_g": {**NUM, "description": "peso (g) ou volume (ml) do item inteiro"},
-        "tabela_base_g": {**NUM, "description": "g/ml a que a tabela da fonte se refere (100, ou o tamanho da porção)"},
+        "tabela_base_g": {
+            **NUM,
+            "description": "g/ml a que a tabela da fonte se refere (100, ou o tamanho da porção)",
+        },
         "tabela_kcal": {**NUM, "description": "kcal da tabela, copiados da fonte, sem converter"},
         "tabela_proteina_g": {**NUM, "description": "proteína da tabela, sem converter"},
         "tabela_carbo_g": {**NUM, "description": "carboidrato da tabela, sem converter"},
         "tabela_gordura_g": {**NUM, "description": "gordura da tabela, sem converter"},
-        "porcao_base": {"type": "string", "description": "A que se refere o valor, ex.: 'marmita ~600 g'"},
+        "porcao_base": {
+            "type": "string",
+            "description": "A que se refere o valor, ex.: 'marmita ~600 g'",
+        },
         "confianca": {"type": "string", "enum": ["baixa", "media", "alta"]},
         "fonte_nome": {"type": "string"},
         "fonte_url": {"type": "string"},
         "trecho_fonte": {"type": "string", "description": "Texto da fonte que sustenta o valor"},
         "ingredientes": SCHEMA_INGREDIENTES,
-        "itens_na_foto": {"type": "array", "items": {"type": "string"}, "description": "Só o que se VÊ na foto"},
+        "itens_na_foto": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Só o que se VÊ na foto",
+        },
         "suposicoes": {"type": "array", "items": {"type": "string"}},
         "justificativa": {"type": "string"},
     },
-    "required": ["tipo_item", "encontrado", "produto_na_fonte", "calorias", "faixa_min", "faixa_max", "proteina_g",
-                 "carbo_g", "gordura_g", "porcao_g", "tabela_base_g", "tabela_kcal", "tabela_proteina_g",
-                 "tabela_carbo_g", "tabela_gordura_g", "porcao_base", "confianca", "fonte_nome", "fonte_url",
-                 "trecho_fonte", "ingredientes", "itens_na_foto", "suposicoes", "justificativa"],
+    "required": [
+        "tipo_item",
+        "encontrado",
+        "produto_na_fonte",
+        "calorias",
+        "faixa_min",
+        "faixa_max",
+        "proteina_g",
+        "carbo_g",
+        "gordura_g",
+        "porcao_g",
+        "tabela_base_g",
+        "tabela_kcal",
+        "tabela_proteina_g",
+        "tabela_carbo_g",
+        "tabela_gordura_g",
+        "porcao_base",
+        "confianca",
+        "fonte_nome",
+        "fonte_url",
+        "trecho_fonte",
+        "ingredientes",
+        "itens_na_foto",
+        "suposicoes",
+        "justificativa",
+    ],
 }
 
 # Mensagem de sistema curta que acompanha o pedido quando o provedor é a OpenAI (o resto vai no pedido).
@@ -92,13 +128,17 @@ COM_FOTO = " (a foto dele está anexada)"
 SEM_FOTO = " (sem foto)"
 
 
-MARCA_LIDA = "\n\nMarca identificada na embalagem/nome do item (use-a na pesquisa da tabela oficial): "
+MARCA_LIDA = (
+    "\n\nMarca identificada na embalagem/nome do item (use-a na pesquisa da tabela oficial): "
+)
 
 
 def pedido(item: str, com_foto: bool, marca: str = "") -> str:
     dica = f"{MARCA_LIDA}{marca.strip()}" if marca.strip() else ""
-    return (f"{INSTRUCOES}\n\n{FORMATO}{schema_json(SCHEMA)}\n\n"
-            f"{PEDIDO}{COM_FOTO if com_foto else SEM_FOTO}.\n\n{item}{dica}")
+    return (
+        f"{INSTRUCOES}\n\n{FORMATO}{schema_json(SCHEMA)}\n\n"
+        f"{PEDIDO}{COM_FOTO if com_foto else SEM_FOTO}.\n\n{item}{dica}"
+    )
 
 
 def exemplo() -> list[tuple[str, str]]:

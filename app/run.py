@@ -7,6 +7,7 @@ Uso: python -m app.run [--llm openrouter|openai] [--log off|resumo|detalhe] [--h
 A web só é consultada se as bases de dados não acharem.
 --check: só valida a configuração e mostra o resumo, sem subir o servidor.
 """
+
 import argparse
 import os
 import sys
@@ -15,20 +16,33 @@ from app.core.config import get_settings
 
 
 def resumo(settings) -> str:
-    texto = settings.nutrition_model if settings.nutrition_provider == "openai" else settings.openrouter_model
+    texto = (
+        settings.nutrition_model
+        if settings.nutrition_provider == "openai"
+        else settings.openrouter_model
+    )
     openai = settings.nutrition_provider == "openai"
     web = "OpenAI web_search" if openai else "desligada (só com openai)"
-    return (f"Provedor de texto: {settings.nutrition_provider} ({texto}) · chave: {'sim' if settings.llm_api_key else 'NÃO'}\n"
-            f"Busca na web: {web} · só se as bases não acharem · chave: {'sim' if settings.web_api_key else 'NÃO'}\n"
-            f"Logs do pipeline: {settings.calorias_log}\n"
-            f"Imagens: {f'OpenAI ({settings.nutrition_model})' if openai else 'desligadas (só com openai)'}")
+    return (
+        f"Provedor de texto: {settings.nutrition_provider} ({texto}) · chave: {'sim' if settings.llm_api_key else 'NÃO'}\n"
+        f"Busca na web: {web} · só se as bases não acharem · chave: {'sim' if settings.web_api_key else 'NÃO'}\n"
+        f"Logs do pipeline: {settings.calorias_log}\n"
+        f"Imagens: {f'OpenAI ({settings.nutrition_model})' if openai else 'desligadas (só com openai)'}"
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Sobe o backend Macro.")
-    parser.add_argument("--llm", choices=["openrouter", "openai"], help="provedor de LLM (padrão: NUTRITION_PROVIDER do .env, openai)")
-    parser.add_argument("--log", choices=["off", "resumo", "detalhe"],
-                        help="verbosidade dos logs do pipeline (padrão: CALORIAS_LOG do .env, resumo)")
+    parser.add_argument(
+        "--llm",
+        choices=["openrouter", "openai"],
+        help="provedor de LLM (padrão: NUTRITION_PROVIDER do .env, openai)",
+    )
+    parser.add_argument(
+        "--log",
+        choices=["off", "resumo", "detalhe"],
+        help="verbosidade dos logs do pipeline (padrão: CALORIAS_LOG do .env, resumo)",
+    )
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--reload", action="store_true")
@@ -52,6 +66,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     import uvicorn
+
     uvicorn.run("app.main:app", host=args.host, port=args.port, reload=args.reload)
     return 0
 

@@ -5,10 +5,9 @@ from typing import Any
 import httpx
 
 from app.core import logs
-from app.core.nutrition_budget import reserve_call, output_limit, check_input
 from app.core.config import Settings, get_settings
 from app.core.exceptions import AppError
-
+from app.core.nutrition_budget import check_input, output_limit, reserve_call
 
 # Falhas transitórias: vale tentar de novo / trocar de modelo.
 RETRYABLE_STATUS = {404, 429, 500, 503, 504}
@@ -24,7 +23,9 @@ async def _gerar(payload: dict[str, Any], model: str | None, settings: Settings)
     if not settings.gemini_api_key:
         raise GeminiError("GEMINI_API_KEY não configurada", status_code=500)
 
-    check_input([p.get("text", "") for c in payload.get("contents", []) for p in c.get("parts", [])])
+    check_input(
+        [p.get("text", "") for c in payload.get("contents", []) for p in c.get("parts", [])]
+    )
     if output_limit():
         payload.setdefault("generationConfig", {})["maxOutputTokens"] = output_limit()
     models = list(dict.fromkeys([model or settings.gemini_model, *settings.gemini_fallback_models]))
@@ -37,15 +38,22 @@ async def _gerar(payload: dict[str, Any], model: str | None, settings: Settings)
                 with logs.Cronometro() as t:
                     try:
                         reserve_call("gemini")
-                        response = await client.post(url, json=payload,
-                                                     headers={"x-goog-api-key": settings.gemini_api_key})
+                        response = await client.post(
+                            url, json=payload, headers={"x-goog-api-key": settings.gemini_api_key}
+                        )
                     except httpx.HTTPError as exc:
                         response = None
                         errors.append(f"{current}: rede ({exc})")
-                        logs.aviso("gemini", f"{current}: falha de rede ({logs.curto(exc, 100)}) → próximo modelo")
+                        logs.aviso(
+                            "gemini",
+                            f"{current}: falha de rede ({logs.curto(exc, 100)}) → próximo modelo",
+                        )
                 if response is None:
                     break
-                logs.detalhe("gemini", f"{current} → {response.status_code} em {t.texto} (tentativa {attempt + 1})")
+                logs.detalhe(
+                    "gemini",
+                    f"{current} → {response.status_code} em {t.texto} (tentativa {attempt + 1})",
+                )
 
                 if response.status_code == 200:
                     try:
@@ -53,15 +61,26 @@ async def _gerar(payload: dict[str, Any], model: str | None, settings: Settings)
                     except ValueError as exc:
                         raise GeminiError("Resposta inesperada do Gemini") from exc
                     if current != models[0]:
-                        logs.info("gemini", f"RESERVA respondeu: {current} no lugar de {models[0]} em {t.texto}")
-                        logs.info("gemini", f"resposta da reserva: {logs.curto(_texto_ou_vazio(dados), 500) or '(vazia)'}")
+                        logs.info(
+                            "gemini",
+                            f"RESERVA respondeu: {current} no lugar de {models[0]} em {t.texto}",
+                        )
+                        logs.info(
+                            "gemini",
+                            f"resposta da reserva: {logs.curto(_texto_ou_vazio(dados), 500) or '(vazia)'}",
+                        )
                     elif attempt > 0:
-                        logs.info("gemini", f"{current} respondeu na tentativa {attempt + 1}/{settings.gemini_retries}"
-                                            f" em {t.texto}")
+                        logs.info(
+                            "gemini",
+                            f"{current} respondeu na tentativa {attempt + 1}/{settings.gemini_retries}"
+                            f" em {t.texto}",
+                        )
                     return dados
 
                 errors.append(f"{current}: {response.status_code} {response.text[:150]}")
-                logs.aviso("gemini", f"{current}: {response.status_code} {logs.curto(response.text, 110)}")
+                logs.aviso(
+                    "gemini", f"{current}: {response.status_code} {logs.curto(response.text, 110)}"
+                )
                 if response.status_code not in RETRYABLE_STATUS:
                     raise GeminiError("\n".join(errors))
                 if response.status_code == 404:
@@ -102,7 +121,12 @@ async def analyze_image(
             {
                 "parts": [
                     {"text": prompt},
-                    {"inline_data": {"mime_type": mime_type, "data": base64.b64encode(image).decode()}},
+                    {
+                        "inline_data": {
+                            "mime_type": mime_type,
+                            "data": base64.b64encode(image).decode(),
+                        }
+                    },
                 ]
             }
         ]
@@ -126,7 +150,9 @@ async def search_web(
     settings = settings or get_settings()
     partes: list[dict[str, Any]] = [{"text": prompt}]
     if imagem is not None:
-        partes.append({"inline_data": {"mime_type": imagem[1], "data": base64.b64encode(imagem[0]).decode()}})
+        partes.append(
+            {"inline_data": {"mime_type": imagem[1], "data": base64.b64encode(imagem[0]).decode()}}
+        )
     payload = {"contents": [{"parts": partes}], "tools": [{"google_search": {}}]}
     dados = await _gerar(payload, model, settings)
     dominios: list[str] = []
@@ -142,7 +168,9 @@ async def search_web(
     return _texto(dados), dominios
 
 
-async def generate_text(prompt: str, *, model: str | None = None, settings: Settings | None = None) -> str:
+async def generate_text(
+    prompt: str, *, model: str | None = None, settings: Settings | None = None
+) -> str:
     """Pergunta só de texto (usada para checar se o Gemini está de pé)."""
     settings = settings or get_settings()
     return _texto(await _gerar({"contents": [{"parts": [{"text": prompt}]}]}, model, settings))

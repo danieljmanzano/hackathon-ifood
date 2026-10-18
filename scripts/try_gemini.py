@@ -3,12 +3,13 @@
 Uso:
     .venv/bin/python -m scripts.try_gemini foto_prato.jpg ["Estime as calorias deste prato"]
 """
+
 import base64
 import json
 import mimetypes
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import httpx
 from dotenv import load_dotenv
@@ -125,25 +126,35 @@ def call_openrouter_api(api_key: str, image_b64: str, mime_type: str, prompt: st
 def main() -> None:
     if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
         print("Uso: .venv/bin/python -m scripts.try_gemini <caminho_imagem> [prompt]")
-        print("Exemplo: .venv/bin/python -m scripts.try_gemini foto_prato.jpg 'Estime as calorias deste prato'")
+        print(
+            "Exemplo: .venv/bin/python -m scripts.try_gemini foto_prato.jpg 'Estime as calorias deste prato'"
+        )
         sys.exit(1)
 
     source = sys.argv[1]
-    prompt = sys.argv[2] if len(sys.argv) > 2 else "Estime as calorias desta refeição e descreva os alimentos visíveis."
+    prompt = (
+        sys.argv[2]
+        if len(sys.argv) > 2
+        else "Estime as calorias desta refeição e descreva os alimentos visíveis."
+    )
 
     gemini_key = os.getenv("GEMINI_API_KEY")
     openrouter_key = os.getenv("OPENROUTER_API_KEY")
 
     if not gemini_key and not openrouter_key:
         print("❌ Nenhuma chave de API encontrada!")
-        print("Configure GEMINI_API_KEY ou OPENROUTER_API_KEY no arquivo .env para executar a estimativa visual.")
+        print(
+            "Configure GEMINI_API_KEY ou OPENROUTER_API_KEY no arquivo .env para executar a estimativa visual."
+        )
         sys.exit(1)
 
     try:
         image_b64, mime_type = load_image(source)
     except FileNotFoundError:
         print(f"❌ Erro: Arquivo de imagem '{source}' não encontrado.")
-        print("💡 Dica: Verifique se o caminho do arquivo está correto ou se a imagem está na raiz do projeto.")
+        print(
+            "💡 Dica: Verifique se o caminho do arquivo está correto ou se a imagem está na raiz do projeto."
+        )
         sys.exit(1)
     except Exception as e:
         print(f"❌ Erro ao carregar imagem: {e}")
@@ -163,7 +174,9 @@ def main() -> None:
         print("🥗 RESULTADO DA ESTIMATIVA CALÓRICA")
         print("=" * 50)
         print(f"🔥 Calorias Estimadas: {resultado.get('calorias_estimadas', 'N/A')} kcal")
-        print(f"📊 Faixa de Incerteza: {resultado.get('faixa_min', 'N/A')} a {resultado.get('faixa_max', 'N/A')} kcal")
+        print(
+            f"📊 Faixa de Incerteza: {resultado.get('faixa_min', 'N/A')} a {resultado.get('faixa_max', 'N/A')} kcal"
+        )
         print(f"🎯 Nível de Confiança: {str(resultado.get('confianca', 'N/A')).upper()}")
         print(f"📝 Justificativa: {resultado.get('justificativa', '')}\n")
 
