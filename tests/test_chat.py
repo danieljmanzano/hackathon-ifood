@@ -1,6 +1,7 @@
 import json
 
 import pytest
+from pydantic import SecretStr
 from fastapi.testclient import TestClient
 
 from app.core.config import Settings, get_settings
@@ -11,8 +12,7 @@ from tests.test_review_endpoint import checkout, confirm, settled
 def client(tmp_path, monkeypatch):
     import app.main as main
     settings = Settings(_env_file=None, database_path=tmp_path / 'chat.sqlite3', ifood_mode='mock',
-                        intent_llm_enabled=False, openrouter_api_key='', openai_api_key='', gemini_api_key='',
-                        calorias_base_path=tmp_path / 'nutrition.json')
+                        intent_llm_enabled=False, openrouter_api_key='', openai_api_key='', calorias_base_path=tmp_path / 'nutrition.json')
     monkeypatch.setattr(main, 'get_settings', lambda: settings)
     application = main.create_app()
     application.dependency_overrides[get_settings] = lambda: settings
@@ -94,7 +94,7 @@ def test_post_order_review_uses_existing_llm_pipeline_and_blocks_reset_while_pen
     import app.services.review_interpretation as interpretation
     import asyncio
     configured = client.app.dependency_overrides[get_settings]().model_copy(update={
-        'openrouter_api_key': 'test', 'nutrition_provider': 'openai', 'review_llm_enabled': True,
+        'openai_api_key': SecretStr('test'), 'nutrition_provider': 'openai', 'review_llm_enabled': True,
     })
     client.app.dependency_overrides[get_settings] = lambda: configured
     async def complete(*args, **kwargs):

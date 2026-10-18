@@ -163,7 +163,7 @@ def test_api_ranks_using_stored_nutrition_and_preserves_preferences(tmp_path, mo
     known = [nutrition(400, 10, 10), nutrition(900, 20, 80), nutrition(550, 50, 35),
              nutrition(450, 30, 15), nutrition(1000, 60, 60), nutrition(500, 40, 25)]
     settings = Settings(_env_file=None, ifood_mode='mock', intent_llm_enabled=False,
-                        openrouter_api_key='', gemini_api_key='', openai_api_key='',
+                        openrouter_api_key='', openai_api_key='',
                         database_path=tmp_path / 'sessions.sqlite3', calorias_base_path=tmp_path / 'products.json')
     repository = RepositorioProdutos(settings.calorias_base_path)
     for candidate, result in zip(candidates, known):
@@ -208,7 +208,7 @@ def test_api_limits_estimation_pool_and_refreshes_nutritional_reasons(tmp_path, 
     import app.main as main
     from app.api.endpoints import macro
     settings = Settings(_env_file=None, ifood_mode='mock', intent_llm_enabled=False,
-                        openrouter_api_key='', gemini_api_key='', openai_api_key='',
+                        openrouter_api_key='', openai_api_key='',
                         database_path=tmp_path / 'pending.sqlite3', calorias_base_path=tmp_path / 'empty.json')
     class Provider:
         async def search(self, *args):

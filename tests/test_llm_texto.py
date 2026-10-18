@@ -11,9 +11,14 @@ from app.services.llm_meal_intent import chat_completion as chat_da_busca
 from app.services.llm_texto import chat_completion_fallback, ordem
 from app.services.openai_client import OpenAIError
 from app.services.openrouter import OpenRouterError
-from tests.nutricao_comum import settings
+from tests.nutricao_comum import settings as _settings_base
 
 MSGS = [{"role": "system", "content": "Seja breve."}, {"role": "user", "content": "oi"}]
+
+
+def settings(tmp_path, **extra):
+    """Estes testes cobrem o roteador entre provedores: OpenRouter preferido e reserva ligada, salvo se pedirem outro."""
+    return _settings_base(tmp_path, **{"nutrition_provider": "openrouter", "llm_fallback": True, **extra})
 
 
 def _s(tmp_path, **extra):
@@ -131,9 +136,9 @@ def test_chave_do_pipeline_cai_para_a_do_outro_provedor_so_com_fallback(tmp_path
 
 import logging
 
-from app.services import gemini, openai_client, openrouter
+from app.services import openai_client, openrouter
 from tests.test_nutricao_logs import Coletor
-from tests.test_nutricao_resiliencia import _com_respostas, _ok_gemini, _ok_openrouter
+from tests.test_nutricao_resiliencia import _com_respostas, _ok_openrouter
 import httpx
 
 
@@ -173,23 +178,6 @@ def test_log_openrouter_nao_fala_de_reserva_quando_o_principal_responde(tmp_path
     finally:
         restaurar()
     assert "RESERVA" not in _linhas(coletor)
-
-
-def test_log_gemini_reserva_e_nova_tentativa(tmp_path):
-    from unittest.mock import AsyncMock, patch
-    s = settings(tmp_path)
-    for respostas, esperado in (
-        ([httpx.Response(404), _ok_gemini()], f"RESERVA respondeu: {s.gemini_fallback_models[0]} no lugar de {s.gemini_model}"),
-        ([httpx.Response(503), _ok_gemini()], f"{s.gemini_model} respondeu na tentativa 2/3"),
-    ):
-        coletor, restaurar = _capturar()
-        patcher, _ = _com_respostas(gemini, respostas)
-        try:
-            with patcher, patch.object(gemini.asyncio, "sleep", AsyncMock()):
-                asyncio.run(gemini.generate_text("x", settings=s))
-        finally:
-            restaurar()
-        assert esperado in _linhas(coletor)
 
 
 def test_log_openai_nova_tentativa(tmp_path):

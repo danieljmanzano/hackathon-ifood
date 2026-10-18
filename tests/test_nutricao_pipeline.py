@@ -3,6 +3,8 @@ import asyncio
 from contextlib import ExitStack
 from unittest.mock import AsyncMock, patch
 
+from pydantic import SecretStr
+
 from app.core.exceptions import AppError
 from app.services.nutrition import pipeline
 from app.services.nutrition.etapas.bases import carregar_taco
@@ -45,7 +47,7 @@ def rodar(s, c=None, *, bases=None, web=None, a=None, b=None, casados=CASADOS, i
 
 
 def test_so_estimativas_com_taco_vira_consenso_com_macros(tmp_path):
-    r, m = rodar(settings(tmp_path), a=leitura("openrouter", 800, peso=None), b=leitura("gemini", 820, peso=380),
+    r, m = rodar(settings(tmp_path), a=leitura("openrouter", 800, peso=None), b=leitura("imagem", 820, peso=380),
                  imagem=(b"x", "image/jpeg"))
     assert r.state == "ready" and r.method == "consensus"
     assert r.protein_g is not None and r.carbs_g is not None and r.fat_g is not None
@@ -55,7 +57,7 @@ def test_so_estimativas_com_taco_vira_consenso_com_macros(tmp_path):
 
 
 def test_base_vence_estimativa_e_web_nao_e_chamada(tmp_path):
-    r, m = rodar(settings(tmp_path), bases=info_base(), a=leitura("openrouter", 500), b=leitura("gemini", 520))
+    r, m = rodar(settings(tmp_path), bases=info_base(), a=leitura("openrouter", 500), b=leitura("imagem", 520))
     assert r.method == "database" and r.source_name == "TACO"
     assert r.portion_grams == 400  # "400 g" da descrição
     assert r.calories == round(128 * 4)
@@ -84,7 +86,7 @@ def test_fonte_por_100g_sem_peso_e_descartada_e_estimativa_assume(tmp_path):
 
 def test_peso_estimado_pela_imagem_destrava_fonte_por_100g(tmp_path):
     c = candidato(description="Sem peso informado")
-    r, _ = rodar(settings(tmp_path), c=c, bases=info_base(), b=leitura("gemini", 600, peso=300),
+    r, _ = rodar(settings(tmp_path), c=c, bases=info_base(), b=leitura("imagem", 600, peso=300),
                  imagem=(b"x", "image/jpeg"), casados=None)
     assert r.method == "database" and r.portion_grams == 300 and r.calories == round(128 * 3)
 
@@ -111,7 +113,7 @@ def test_modo_economico_fonte_100g_sem_peso_cai_na_estimativa(tmp_path):
 
 
 def test_falha_de_uma_fonte_nao_derruba(tmp_path):
-    r, _ = rodar(settings(tmp_path), a=leitura("openrouter", 800), b=AppError("gemini fora do ar"),
+    r, _ = rodar(settings(tmp_path), a=leitura("openrouter", 800), b=AppError("imagem fora do ar"),
                  imagem=(b"x", "image/jpeg"))
     assert r.state == "ready"
 
@@ -124,7 +126,7 @@ def test_tudo_falha_vira_indisponivel(tmp_path):
 def test_macros_que_nao_fecham_marcam_revisao(tmp_path):
     ruim = dict(prot=5, carb=5, gord=5)
     r, _ = rodar(settings(tmp_path, calorias_limiar_confianca=0.9), a=leitura("openrouter", 800, **ruim),
-                 b=leitura("gemini", 1500, **ruim), imagem=(b"x", "image/jpeg"), casados=None)
+                 b=leitura("imagem", 1500, **ruim), imagem=(b"x", "image/jpeg"), casados=None)
     assert r.revisar and r.motivo_revisao and r.confidence in ("low", "medium")
 
 
@@ -145,8 +147,8 @@ def test_decompoe_so_quando_nenhuma_estimativa_trouxe_ingredientes(tmp_path):
     m2["decompor_ingredientes"].assert_not_called()
 
 
-def test_sem_chaves_de_openrouter_so_gemini_estima(tmp_path):
-    r, m = rodar(settings(tmp_path, openrouter_api_key=""), b=leitura("gemini", 800), imagem=(b"x", "image/jpeg"))
+def test_sem_chave_de_texto_so_a_estimativa_com_foto_responde(tmp_path):
+    r, m = rodar(settings(tmp_path, openrouter_api_key="", openai_api_key=SecretStr("")), b=leitura("imagem", 800), imagem=(b"x", "image/jpeg"))
     assert r.state == "ready" and r.method == "estimated"
     m["estimar_a"].assert_not_called()
     m["consultar_bases"].assert_not_called()
@@ -154,7 +156,7 @@ def test_sem_chaves_de_openrouter_so_gemini_estima(tmp_path):
 
 def test_estimativa_pesquisada_na_web_entra_no_consenso_e_nao_vira_fonte_oficial(tmp_path):
     r, m = rodar(settings(tmp_path), web=leitura("web", 950, peso=330), a=leitura("openrouter", 900),
-                 b=leitura("gemini", 1000), imagem=(b"x", "image/jpeg"), casados=None)
+                 b=leitura("imagem", 1000), imagem=(b"x", "image/jpeg"), casados=None)
     assert r.method == "consensus" and r.calories == 950  # mediana de 900, 950 e 1000
     assert r.source_name is None and r.source_url is None  # não é tabela oficial
     assert any("suposição web" in x for x in r.assumptions)
@@ -167,10 +169,11 @@ def test_modo_economico_estimativa_pesquisada_basta_e_poupa_os_estimadores(tmp_p
     m["estimar_b"].assert_not_called()
 
 
-def test_foto_chega_a_pesquisa_da_web(tmp_path):
+def test_foto_nao_vai_para_a_pesquisa_da_web_so_para_a_estimativa_b(tmp_path):
     foto = (b"x" * 10, "image/jpeg")
     _, m = rodar(settings(tmp_path), web=leitura("web", 950), a=leitura("openrouter", 900), imagem=foto, casados=None)
-    assert m["buscar_na_web"].call_args.args[3] == foto
+    assert len(m["buscar_na_web"].call_args.args) == 3 and "imagem" not in m["buscar_na_web"].call_args.kwargs
+    assert m["estimar_b"].call_args.args[4] == foto
 
 
 def test_industrializado_com_tabela_continua_vencendo_as_estimativas(tmp_path):

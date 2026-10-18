@@ -1,10 +1,10 @@
 """Skill: estimar calorias e macros de um prato (estimativas A e B do pipeline).
 
-Quem usa: etapas/estimar.py -> estimar_a (LLM de texto: OpenRouter ou OpenAI) e estimar_b (Gemini, com a foto).
+Quem usa: etapas/estimar.py -> estimar_a (LLM de texto: OpenRouter ou OpenAI) e estimar_b (OpenAI, com a foto).
 Entrada:  o item descrito por `item_pedido` (+ foto, só no B).
 Saída:    JSON conforme SCHEMA: calorias, faixa, macros, peso, ingredientes, suposições.
 Diferença entre A e B: o A recebe INSTRUCOES como mensagem de sistema e o formato JSON no fim do pedido;
-          o B (Gemini) recebe tudo numa mensagem só, com a imagem anexada.
+          o B (OpenAI) recebe tudo numa mensagem só, com a imagem anexada.
 """
 from . import item_pedido
 from .comum import FORMATO_JSON, NUM, SCHEMA_INGREDIENTES, pedir_json, schema_json
@@ -70,10 +70,10 @@ def pedido_a(item: str) -> str:
 
 
 def pedido_b(item: str) -> str:
-    """Mensagem única do estimador B (Gemini): instruções, formato e pedido juntos."""
+    """Mensagem única do estimador B (com a foto): instruções, formato e pedido juntos."""
     return f"{INSTRUCOES}\n\n{FORMATO_JSON}{schema_json(SCHEMA)}\n\n{PEDIDO}{item}"
 
 
 def exemplo() -> list[tuple[str, str]]:
     item = item_pedido.exemplo()[1][1]
-    return [("A - sistema", INSTRUCOES), ("A - usuário", pedir_json(pedido_a(item), SCHEMA)), ("B (Gemini) - mensagem única", pedido_b(item))]
+    return [("A - sistema", INSTRUCOES), ("A - usuário", pedir_json(pedido_a(item), SCHEMA)), ("B (com a foto) - mensagem única", pedido_b(item))]

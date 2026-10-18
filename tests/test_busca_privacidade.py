@@ -10,7 +10,7 @@ import pytest
 from pydantic import SecretStr
 
 from app.schemas.macro import MealIntent, MealRequest, UserProfile
-from app.services import busca_agente, gemini, llm_texto, openai_client, openrouter
+from app.services import busca_agente, llm_texto, openai_client, openrouter
 from app.services.ifood_live import MCPIFood
 from tests.nutricao_comum import candidato, settings
 from tests.test_busca_agente import LLM, FECHADO, Provedor, plano

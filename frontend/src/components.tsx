@@ -294,10 +294,11 @@ export function MealCard({
           </p>
         )}
         <NutritionBadge nutrition={nutrition} />
+        {recommendation.approximate_match && <p className="match-warning"><Info size={16} aria-hidden="true" />Alternativa aproximada · baixa certeza de adequação</p>}
         {recommendation.review_signal && recommendation.review_signal.source !== "unavailable" && (
           <p className="review-summary">
             <Star size={14} aria-hidden="true" />
-            {recommendation.review_signal.source === "personalized" ? "Com base nas suas avaliações" : "Avaliações da comunidade"}
+            {recommendation.review_signal.simulated ? "Avaliações simuladas · demonstração" : recommendation.review_signal.source === "personalized" ? "Com base nas suas avaliações" : "Avaliações da comunidade"}
             {recommendation.review_signal.community_rating != null && ` · ${recommendation.review_signal.community_rating.toFixed(1)}/5`}
           </p>
         )}
@@ -305,7 +306,7 @@ export function MealCard({
           <strong>Por que este prato?</strong>
           <ul>
             {reasons.slice(0, 3).map((reason) => (
-              <li key={reason}><Check size={14} aria-hidden="true" /><span>{reason}</span></li>
+              <li key={reason}>{recommendation.approximate_match ? <Info size={14} aria-hidden="true" /> : <Check size={14} aria-hidden="true" />}<span>{reason}</span></li>
             ))}
           </ul>
         </div>

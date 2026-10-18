@@ -1,4 +1,4 @@
-"""Busca na web (OpenAI web_search ou Gemini + Google Search). Só roda quando as bases não acharam.
+"""Busca na web (OpenAI web_search). Só roda quando as bases não acharam.
 
 Dois resultados possíveis, conforme o tipo do item:
 - industrializado (produto de mercado): tabela nutricional oficial do produto exato -> InfoOnline (vence as estimativas).
@@ -43,13 +43,40 @@ async def _pesquisar(settings: Settings, prompt: str, imagem: tuple[bytes, str] 
     return await search_web(prompt, imagem=imagem, settings=settings)
 
 
+TOLERANCIA_SOMA = 1.05  # proteína+carbo+gordura acima disso da base declarada: o rótulo da fonte está errado
+
+
+def _da_tabela(dados: dict) -> Macros | None | bool:
+    """Conta a tabela copiada da fonte para o peso do item (a conta é do código, não do modelo).
+
+    None = o modelo não copiou a tabela (vale o que ele converteu); False = não dá para confiar nela;
+    senão, os macros do item inteiro.
+    """
+    kcal, base, peso = dados.get("tabela_kcal"), dados.get("tabela_base_g"), dados.get("porcao_g")
+    if not _numero_valido(kcal):
+        return None
+    macros = [_opcional(dados.get(c)) for c in ("tabela_proteina_g", "tabela_carbo_g", "tabela_gordura_g")]
+    if not _numero_valido(base) or base <= 0:
+        return None  # a fonte não diz a que se refere: sem base não há conversão confiável aqui
+    if sum(m or 0 for m in macros) > base * TOLERANCIA_SOMA:
+        logs.info("web", f"tabela incoerente: macros somam {sum(m or 0 for m in macros):.0f} g numa base de {base:.0f} g "
+                         "→ os valores devem ser por 100 g; convertendo assim")
+        base = 100.0
+    if not _numero_valido(peso) or peso <= 0:
+        logs.info("web", "tabela copiada, mas sem o peso do item para converter → descartada")
+        return False
+    fator = peso / base
+    logs.info("web", f"conversão no código: tabela {kcal:.0f} kcal por {base:.0f} g × {fator:.3f} (item {peso:.0f} g)")
+    return Macros(kcal * fator, *(None if m is None else m * fator for m in macros))
+
+
 def _opcional(v) -> float | None:
     return float(v) if _numero_valido(v) else None
 
 
 async def buscar_na_web(settings: Settings, candidate: MealCandidate, opcoes: list[str] | None,
-                        imagem: tuple[bytes, str] | None = None) -> InfoOnline | Leitura | None:
-    prompt = nutricao_web.pedido(montar_prompt(candidate, opcoes), com_foto=bool(imagem))
+                        imagem: tuple[bytes, str] | None = None, marca: str = "") -> InfoOnline | Leitura | None:
+    prompt = nutricao_web.pedido(montar_prompt(candidate, opcoes), com_foto=bool(imagem), marca=marca)
     fornecedor = "OpenAI web_search" if settings.nutrition_provider == "openai" else "Gemini + Google Search"
     logs.info("web", f"pesquisando \"{candidate.name}\" de {candidate.merchant_name} via {fornecedor}"
                      f"{' com a foto' if imagem else ' (sem foto)'}")
@@ -78,6 +105,14 @@ async def buscar_na_web(settings: Settings, candidate: MealCandidate, opcoes: li
     if dominio(dados["fonte_url"]) not in {dominio(c) for c in consultados}:
         logs.info("web", f"descartada: {dominio(dados['fonte_url'])} não está entre os sites realmente consultados")
         return None
+    tabela = _da_tabela(dados) if dados["tipo_item"] == "industrializado" else None
+    if tabela is False:
+        return None
+    if tabela is not None:
+        modelo = dados["calorias"]
+        if _numero_valido(modelo) and abs(modelo - tabela.kcal) > 0.05 * tabela.kcal:
+            logs.info("web", f"o modelo converteu para {modelo:.0f} kcal; vale a conta do código: {tabela.kcal:.0f} kcal")
+        dados = {**dados, "calorias": tabela.kcal}
     kcal = dados["calorias"]
     if not _numero_valido(kcal) or kcal == 0 and dados["tipo_item"] == "prato":
         logs.info("web", "descartada: calorias ausentes ou inválidas na resposta")
@@ -86,8 +121,8 @@ async def buscar_na_web(settings: Settings, candidate: MealCandidate, opcoes: li
     if _numero_valido(dados["faixa_min"]) and _numero_valido(dados["faixa_max"]) \
             and dados["faixa_min"] <= kcal <= dados["faixa_max"]:
         faixa = (float(dados["faixa_min"]), float(dados["faixa_max"]))
-    macros = Macros(float(kcal), _opcional(dados["proteina_g"]), _opcional(dados["carbo_g"]),
-                    _opcional(dados["gordura_g"]))
+    macros = tabela if tabela is not None else Macros(float(kcal), _opcional(dados["proteina_g"]),
+                                                      _opcional(dados["carbo_g"]), _opcional(dados["gordura_g"]))
     fonte = f"{dados['fonte_nome'] or dominio(dados['fonte_url'])} ({dominio(dados['fonte_url'])})"
 
     if dados["tipo_item"] == "prato":

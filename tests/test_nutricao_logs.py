@@ -4,6 +4,7 @@ import logging
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from pydantic import SecretStr
 
 from app.core import logs
 from app.core.logs import Legivel, configurar_logs, curto
@@ -58,7 +59,7 @@ def test_curto_trunca_e_une_linhas():
 
 
 def test_pipeline_conta_a_historia_na_ordem(tmp_path, capturar):
-    rodar(settings(tmp_path), bases=info_base(), a=leitura("openrouter", 500), b=leitura("gemini", 520),
+    rodar(settings(tmp_path), bases=info_base(), a=leitura("openrouter", 500), b=leitura("imagem", 520),
           imagem=(b"x" * 2048, "image/jpeg"))
     etapas = _etapas(capturar)
     ordem = ["início", "modo", "porção", "imagem", "estimar A", "estimar B", "consenso", "gramas", "fusão",
@@ -73,13 +74,13 @@ def test_pipeline_conta_a_historia_na_ordem(tmp_path, capturar):
 
 def test_toda_linha_do_pipeline_traz_o_item_inclusive_nas_tasks_paralelas(tmp_path, capturar):
     rodar(settings(tmp_path), c=candidato(name="Frango Grelhado da Casa"), a=leitura("openrouter", 500),
-          b=leitura("gemini", 520), imagem=(b"x", "image/jpeg"))
+          b=leitura("imagem", 520), imagem=(b"x", "image/jpeg"))
     com_etapa = [l for l in capturar if "│" in l]
     assert com_etapa and all("Frango Grelhado da" in l for l in com_etapa)
 
 
 def test_motivos_de_pulo_aparecem(tmp_path, capturar):
-    rodar(settings(tmp_path, openrouter_api_key="", gemini_api_key="", calorias_busca_web=False),
+    rodar(settings(tmp_path, openrouter_api_key="", openai_api_key=SecretStr(""), calorias_busca_web=False),
           c=candidato(image_url=None), b=None)
     texto = " ".join("\n".join(capturar).split())  # ignora o alinhamento em colunas
     assert "estimar B │ pulada: sem imagem" in texto
@@ -96,7 +97,7 @@ def test_modo_economico_explica_o_que_dispensou(tmp_path, capturar):
 def test_falha_de_etapa_vira_aviso_de_uma_linha(tmp_path, capturar):
     from app.core.exceptions import AppError
     rodar(settings(tmp_path), a=AppError("OpenAI 400 {\n  \"error\": {\n \"message\": \"Web Search cannot be used\"}}"),
-          b=leitura("gemini", 600), imagem=(b"x", "image/jpeg"))
+          b=leitura("imagem", 600), imagem=(b"x", "image/jpeg"))
     falha = next(l for l in capturar if "FALHOU" in l)
     assert "\n" not in falha and " ! " in falha and "Web Search cannot be used" in falha
 
@@ -159,7 +160,7 @@ def test_modelo_que_diz_nao_ter_informacao_nao_falha_em_silencio(capturar):
 def test_log_mostra_o_que_o_modelo_viu_na_foto_o_link_e_os_ingredientes(tmp_path, capturar):
     from tests.test_nutricao_pipeline import rodar
     from tests.nutricao_comum import leitura
-    b = leitura("gemini", 985, peso=340, itens_na_imagem=["hambúrguer com queijo", "batata frita"])
+    b = leitura("imagem", 985, peso=340, itens_na_imagem=["hambúrguer com queijo", "batata frita"])
     rodar(settings(tmp_path), c=candidato(image_url="https://cdn.ifood.com.br/items/4592.jpg"),
           b=b, imagem=(b"x" * 2048, "image/jpeg"), casados=None)
     texto = " ".join("\n".join(capturar).split())
@@ -171,7 +172,7 @@ def test_log_mostra_o_que_o_modelo_viu_na_foto_o_link_e_os_ingredientes(tmp_path
 def test_log_avisa_quando_o_modelo_nao_listou_nada_visivel(tmp_path, capturar):
     from tests.test_nutricao_pipeline import rodar
     from tests.nutricao_comum import leitura
-    rodar(settings(tmp_path), b=leitura("gemini", 985), imagem=(b"x", "image/jpeg"), casados=None)
+    rodar(settings(tmp_path), b=leitura("imagem", 985), imagem=(b"x", "image/jpeg"), casados=None)
     texto = " ".join("\n".join(capturar).split())
     assert "estimar B │ não listou nada visível na foto" in texto
     assert any(" ! " in l and "não listou nada visível" in l for l in capturar)
@@ -190,6 +191,6 @@ def test_leitura_guarda_os_itens_vistos_do_json_e_ignora_vazios():
              "carbo_g": 80, "gordura_g": 40, "peso_estimado_g": 350, "confianca": "media", "porcao_base": "prato",
              "justificativa": "j", "ingredientes": [], "suposicoes": [],
              "itens_visiveis_na_imagem": ["pizza ", "", "borda recheada"]}
-    assert leitura_de_json(dados, "gemini").itens_na_imagem == ["pizza", "borda recheada"]
+    assert leitura_de_json(dados, "imagem").itens_na_imagem == ["pizza", "borda recheada"]
     del dados["itens_visiveis_na_imagem"]  # modelo que omitiu o campo: não quebra
-    assert leitura_de_json(dados, "gemini").itens_na_imagem == []
+    assert leitura_de_json(dados, "imagem").itens_na_imagem == []

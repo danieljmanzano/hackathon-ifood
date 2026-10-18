@@ -2,6 +2,8 @@
 import json
 from pathlib import Path
 
+from pydantic import SecretStr
+
 from app.core.config import get_settings
 from app.schemas.macro import MealCandidate
 from app.services.nutrition.modelos import Ingrediente, Leitura, Macros
@@ -11,7 +13,7 @@ DADOS = Path(__file__).resolve().parents[1] / "app/services/nutrition/dados"
 
 
 def settings(tmp_path, **extra):
-    base = dict(gemini_api_key="k", openrouter_api_key="k", nutrition_provider="openrouter", calorias_base_path=tmp_path / "produtos.json",
+    base = dict(openai_api_key=SecretStr("k"), openrouter_api_key="k", nutrition_provider="openai", calorias_base_path=tmp_path / "produtos.json",
                 calorias_dados_dir=DADOS, calorias_busca_web=True, calorias_buscar_bases=True,
                 calorias_estimar_sempre=True, calorias_amostras=1)
     base.update(extra)
@@ -33,7 +35,7 @@ def candidato_do_mcp() -> MealCandidate:
                      name=item["itemName"], description=item["itemDescription"], image_url=item["itemImageUrl"])
 
 
-def leitura(fonte="gemini", kcal=800.0, prot=35.0, carb=90.0, gord=30.0, peso=None, **extra) -> Leitura:
+def leitura(fonte="imagem", kcal=800.0, prot=35.0, carb=90.0, gord=30.0, peso=None, **extra) -> Leitura:
     dados = dict(fonte=fonte, macros=Macros(kcal, prot, carb, gord), faixa_min=kcal * 0.85, faixa_max=kcal * 1.15,
                  confianca=0.6, porcao_base="pizza inteira", peso_g=peso,
                  ingredientes=[Ingrediente("arroz", 200), Ingrediente("feijão", 100)],

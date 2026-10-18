@@ -5,21 +5,21 @@ from tests.nutricao_comum import leitura
 
 
 def test_consenso_com_uma_duas_e_tres_fontes():
-    uma = consenso([leitura("gemini", 800)])
+    uma = consenso([leitura("imagem", 800)])
     assert uma.macros.kcal == 800 and uma.dispersao is None
 
-    duas = consenso([leitura("gemini", 700), leitura("openrouter", 900)])
+    duas = consenso([leitura("imagem", 700), leitura("openrouter", 900)])
     assert duas.macros.kcal == 800
     assert abs(duas.dispersao - 0.25) < 1e-9
     assert duas.faixa_min <= 700 and duas.faixa_max >= 900
 
-    tres = consenso([leitura("gemini", 700), leitura("openrouter", 900), leitura("taco", 760)])
-    assert tres.macros.kcal == 760 and tres.fontes == ["gemini", "openrouter", "taco"]
+    tres = consenso([leitura("imagem", 700), leitura("openrouter", 900), leitura("taco", 760)])
+    assert tres.macros.kcal == 760 and tres.fontes == ["imagem", "openrouter", "taco"]
     assert consenso([]) is None
 
 
 def test_consenso_mediana_ignora_macro_ausente_e_pesos():
-    a = leitura("gemini", 800, peso=400)
+    a = leitura("imagem", 800, peso=400)
     b = leitura("openrouter", 800, prot=None, peso=None)
     junto = consenso([a, b])
     assert junto.macros.proteina_g == 35 and junto.peso_g == 400
@@ -31,7 +31,7 @@ def _info(kcal=700, method="web"):
 
 
 def test_fundir_online_vence_e_guarda_divergencia():
-    est = consenso([leitura("gemini", 500)])
+    est = consenso([leitura("imagem", 500)])
     f = fundir(_info(700), Macros(700, 30, 80, 25), est)
     assert f.method == "web" and f.macros.kcal == 700
     assert abs(f.divergencia - 0.4) < 1e-9
@@ -39,8 +39,8 @@ def test_fundir_online_vence_e_guarda_divergencia():
 
 
 def test_fundir_so_estimativa_e_metodo_por_numero_de_fontes():
-    assert fundir(None, None, consenso([leitura("gemini")])).method == "estimated"
-    assert fundir(None, None, consenso([leitura("gemini"), leitura("openrouter")])).method == "consensus"
+    assert fundir(None, None, consenso([leitura("imagem")])).method == "estimated"
+    assert fundir(None, None, consenso([leitura("imagem"), leitura("openrouter")])).method == "consensus"
     assert fundir(None, None, None) is None
 
 

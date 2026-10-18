@@ -36,7 +36,7 @@ def test_prazo_zero_devolve_pending_e_o_refresh_entrega_quando_termina(tmp_path)
 
 
 def test_refresh_sem_chaves_nao_inicia_nada(tmp_path):
-    s = settings(tmp_path, gemini_api_key="", openrouter_api_key="")
+    s = settings(tmp_path, openrouter_api_key="")
     rec = _rec("bg-2")
     assert service.refresh_recommendations([rec], s)[0].nutrition.state == "pending"
     assert not service._em_andamento
