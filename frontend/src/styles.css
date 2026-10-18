@@ -2333,6 +2333,9 @@ select {
   display: grid;
   gap: 12px;
 }
+.consumption-history {
+  margin-top: 28px;
+}
 .consumption-row {
   display: flex;
   gap: 14px;

@@ -118,7 +118,9 @@ export default function App() {
   const [entries, setEntries] = useState<Consumption[]>([]);
   const [fraction, setFraction] = useState("1");
   const [feedback, setFeedback] = useState("");
-  const [recordDate, setRecordDate] = useState("");
+  const [consumptionDraft, setConsumptionDraft] = useState<Consumption | null>(
+    null,
+  );
   const composer = useRef<HTMLTextAreaElement>(null);
 
   async function perform<T>(task: () => Promise<T>): Promise<T | undefined> {
@@ -324,6 +326,12 @@ export default function App() {
       );
     }
   }
+  function editConsumption(entry: Consumption) {
+    setConsumptionDraft(entry);
+    setFraction(String(entry.fraction));
+    setFeedback(entry.feedback);
+    open("consumption");
+  }
   function openConsumption() {
     if (
       !session?.order ||
@@ -336,10 +344,28 @@ export default function App() {
         e.order_id === session.order!.id &&
         e.item_id === session.selected!.candidate.item_id,
     );
-    setFraction(String(existing?.fraction || 1));
-    setFeedback(existing?.feedback || "");
-    setRecordDate(existing?.consumed_at || new Date().toISOString());
-    open("consumption");
+    // Keep the original date and nutrition snapshot when editing a saved entry.
+    editConsumption(
+      existing ?? {
+        order_id: session.order.id,
+        item_id: session.selected.candidate.item_id,
+        name: session.selected.candidate.name,
+        fraction: 1,
+        quantity: session.selected.quantity,
+        consumed_at: new Date().toISOString(),
+        // Recommendation estimates do not describe a customized plate.
+        nutrition:
+          session.selected.options.length === 0
+            ? (session.recommendations.find(
+                (r) =>
+                  r.candidate.item_id === session.selected!.candidate.item_id &&
+                  r.candidate.merchant_id ===
+                    session.selected!.candidate.merchant_id,
+              )?.nutrition ?? null)
+            : null,
+        feedback: "",
+      },
+    );
   }
   function persistConsumption(next: Consumption[]) {
     if (!session) return false;
@@ -355,36 +381,16 @@ export default function App() {
     }
   }
   function recordConsumption() {
-    if (
-      !session?.order ||
-      !session.selected ||
-      ![0.25, 0.5, 0.75, 1].includes(Number(fraction))
-    )
+    if (!consumptionDraft || ![0.25, 0.5, 0.75, 1].includes(Number(fraction)))
       return;
-    const id = session.selected.candidate.item_id;
-    const previous = entries.find(
-      (e) => e.order_id === session.order!.id && e.item_id === id,
-    );
-    // Recommendation estimates are not estimates for a customized plate.
-    const nutrition =
-      previous?.nutrition ??
-      (session.selected.options.length === 0
-        ? session.recommendations.find((r) => r.candidate.item_id === id)
-            ?.nutrition || null
-        : null);
     const entry: Consumption = {
-      order_id: session.order.id,
-      item_id: id,
-      name: session.selected.candidate.name,
+      ...consumptionDraft,
       fraction: Number(fraction),
-      quantity: session.selected.quantity,
-      consumed_at: recordDate,
-      nutrition,
       feedback,
     };
     const next = [
       ...entries.filter(
-        (e) => !(e.order_id === entry.order_id && e.item_id === id),
+        (e) => !(e.order_id === entry.order_id && e.item_id === entry.item_id),
       ),
       entry,
     ];
@@ -397,6 +403,20 @@ export default function App() {
   const today = entries.filter(
     (e) => dayKey(e.consumed_at) === dayKey(new Date()),
   );
+  const previousEntries = entries
+    .filter((e) => dayKey(e.consumed_at) < dayKey(new Date()))
+    .sort((a, b) => Date.parse(b.consumed_at) - Date.parse(a.consumed_at));
+  function deleteConsumption(entry: Consumption) {
+    if (
+      persistConsumption(
+        entries.filter(
+          (e) =>
+            !(e.order_id === entry.order_id && e.item_id === entry.item_id),
+        ),
+      )
+    )
+      setToast("Registro de consumo excluído.");
+  }
   const knownEntries = today.filter((e) => e.nutrition?.state === "ready");
   const knownCalories = knownEntries.reduce(
     (total, e) => total + e.nutrition!.calories! * e.fraction * e.quantity,
@@ -936,60 +956,11 @@ export default function App() {
                     </span>
                   </div>
                   {today.length ? (
-                    <div className="consumption-list">
-                      {today.map((entry) => (
-                        <article
-                          className="consumption-row"
-                          key={`${entry.order_id}-${entry.item_id}`}
-                        >
-                          <span className="consumption-icon">
-                            <Utensils size={21} />
-                          </span>
-                          <div>
-                            <h3>{entry.name}</h3>
-                            <p>
-                              {Math.round(entry.fraction * 100)}% de{" "}
-                              {entry.quantity} unidade
-                              {entry.quantity > 1 ? "s" : ""} consumida
-                              {entry.quantity > 1 ? "s" : ""} ·{" "}
-                              {entry.nutrition?.state === "ready"
-                                ? `${Math.round(entry.nutrition.minimum! * entry.fraction * entry.quantity)}–${Math.round(entry.nutrition.maximum! * entry.fraction * entry.quantity)} kcal`
-                                : "Calorias indisponíveis"}
-                            </p>
-                            {entry.feedback && (
-                              <small>Seu feedback: {entry.feedback}</small>
-                            )}
-                          </div>
-                          <button
-                            className="icon-button"
-                            aria-label={`Editar consumo de ${entry.name}`}
-                            onClick={openConsumption}
-                          >
-                            <Pencil size={17} />
-                          </button>
-                          <button
-                            className="icon-button danger"
-                            aria-label={`Excluir consumo de ${entry.name}`}
-                            onClick={() => {
-                              if (
-                                persistConsumption(
-                                  entries.filter(
-                                    (e) =>
-                                      !(
-                                        e.order_id === entry.order_id &&
-                                        e.item_id === entry.item_id
-                                      ),
-                                  ),
-                                )
-                              )
-                                setToast("Registro de consumo excluído.");
-                            }}
-                          >
-                            <Trash2 size={17} />
-                          </button>
-                        </article>
-                      ))}
-                    </div>
+                    <ConsumptionList
+                      entries={today}
+                      onEdit={editConsumption}
+                      onDelete={deleteConsumption}
+                    />
                   ) : (
                     <div className="empty-state">
                       <span className="empty-icon">
@@ -1012,6 +983,32 @@ export default function App() {
                         <ArrowRight size={16} />
                       </button>
                     </div>
+                  )}
+                  {previousEntries.length > 0 && (
+                    <section
+                      className="consumption-history"
+                      aria-label="Consumo de dias anteriores"
+                    >
+                      <div className="section-heading">
+                        <div>
+                          <h2>Dias anteriores</h2>
+                          <p>
+                            Consulte e corrija os registros salvos neste
+                            navegador.
+                          </p>
+                        </div>
+                        <span className="result-count">
+                          {previousEntries.length} registro
+                          {previousEntries.length !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                      <ConsumptionList
+                        entries={previousEntries}
+                        onEdit={editConsumption}
+                        onDelete={deleteConsumption}
+                        showDate
+                      />
+                    </section>
                   )}
                   {session.order && !consumed && (
                     <div className="pending-consumption">
@@ -1153,18 +1150,16 @@ export default function App() {
                           </h3>
                           <p>
                             {consumed
-                              ? "Você pode corrigir a quantidade no Meu dia."
+                              ? "Você pode editar o registro ou excluí-lo no Meu dia."
                               : "O pedido só entra no seu dia quando você confirmar quanto comeu."}
                           </p>
                         </div>
                         <button
                           className="primary-button"
-                          onClick={() =>
-                            consumed ? navigate("day") : openConsumption()
-                          }
+                          onClick={openConsumption}
                           disabled={session.order.status !== "submitted"}
                         >
-                          {consumed ? "Ver meu dia" : "Já comi"}
+                          {consumed ? "Editar consumo" : "Já comi"}
                           <ArrowRight size={15} />
                         </button>
                       </div>
@@ -1863,7 +1858,7 @@ export default function App() {
         </Modal>
       )}
 
-      {dialog === "consumption" && session?.selected && (
+      {dialog === "consumption" && consumptionDraft && (
         <Modal
           footer={chatBar}
           title="Quanto do pedido você comeu?"
@@ -1878,9 +1873,9 @@ export default function App() {
             }}
           >
             <p>
-              Considere as {session.selected.quantity} unidade(s) de{" "}
-              <strong>{session.selected.candidate.name}</strong>. Registre
-              somente a parte que você consumiu.
+              Considere as {consumptionDraft.quantity} unidade(s) de{" "}
+              <strong>{consumptionDraft.name}</strong>. Registre somente a parte
+              que você consumiu.
             </p>
             <fieldset>
               <legend>Quantidade consumida</legend>
@@ -1936,6 +1931,69 @@ export default function App() {
           </form>
         </Modal>
       )}
+    </div>
+  );
+}
+
+function ConsumptionList({
+  entries,
+  onEdit,
+  onDelete,
+  showDate = false,
+}: {
+  entries: Consumption[];
+  onEdit: (entry: Consumption) => void;
+  onDelete: (entry: Consumption) => void;
+  showDate?: boolean;
+}) {
+  return (
+    <div className="consumption-list">
+      {entries.map((entry) => (
+        <article
+          className="consumption-row"
+          key={`${entry.order_id}-${entry.item_id}`}
+        >
+          <span className="consumption-icon">
+            <Utensils size={21} />
+          </span>
+          <div>
+            <h3>{entry.name}</h3>
+            {showDate && (
+              <small>
+                <time dateTime={entry.consumed_at}>
+                  {new Intl.DateTimeFormat("pt-BR", {
+                    dateStyle: "long",
+                    timeZone: "America/Sao_Paulo",
+                  }).format(new Date(entry.consumed_at))}
+                </time>
+              </small>
+            )}
+            <p>
+              {Math.round(entry.fraction * 100)}% de {entry.quantity} unidade
+              {entry.quantity > 1 ? "s" : ""} consumida
+              {entry.quantity > 1 ? "s" : ""} ·{" "}
+              {entry.nutrition?.state === "ready"
+                ? `${Math.round(entry.nutrition.minimum! * entry.fraction * entry.quantity)}–${Math.round(entry.nutrition.maximum! * entry.fraction * entry.quantity)} kcal`
+                : "Calorias indisponíveis"}
+            </p>
+            {entry.feedback && <small>Seu feedback: {entry.feedback}</small>}
+          </div>
+          <button
+            className="icon-button"
+            aria-label={`Editar consumo de ${entry.name}`}
+            onClick={() => onEdit(entry)}
+          >
+            <Pencil size={17} />
+          </button>
+          <button
+            className="icon-button danger"
+            aria-label={`Excluir consumo de ${entry.name}`}
+            onClick={() => onDelete(entry)}
+          >
+            <Trash2 size={17} />
+          </button>
+        </article>
+      ))}
     </div>
   );
 }

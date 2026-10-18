@@ -45,6 +45,7 @@ O comando verifica os tipos e gera `dist/`. Para produção, sirva esses arquivo
 - Alerta quando entrega e adicionais ultrapassam o orçamento da busca.
 - Confirmação de demonstração com identificador retornado pelo backend; comprar nunca registra consumo automaticamente.
 - Meu dia com confirmação de 25%, 50%, 75% ou 100% do pedido, feedback opcional, edição e exclusão.
+- Registros de dias anteriores continuam disponíveis para edição e exclusão no Meu dia, com data original e informação nutricional preservadas. O resumo diário contabiliza apenas os registros de hoje.
 - Preferências, aversões e restrições separadas; orçamento e meta calórica opcionais.
 - Layout responsivo, navegação inferior no celular, diálogos nativos com foco, labels, link para pular navegação, foco visível e respeito a movimento reduzido.
 - Tratamento de indisponibilidade do servidor, sessão, endereço e busca; operações com bloqueio contra cliques repetidos.
