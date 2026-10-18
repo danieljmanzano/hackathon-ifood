@@ -90,7 +90,7 @@ def test_motivos_de_pulo_aparecem(tmp_path, capturar):
 
 def test_modo_economico_explica_o_que_dispensou(tmp_path, capturar):
     rodar(settings(tmp_path, calorias_estimar_sempre=False), bases=info_base())
-    assert "estimativa dispensada" in "\n".join(capturar)
+    assert "estimativas dispensadas" in "\n".join(capturar)
 
 
 def test_falha_de_etapa_vira_aviso_de_uma_linha(tmp_path, capturar):
@@ -137,3 +137,18 @@ def test_nivel_off_so_mostra_problemas():
 def test_configurar_logs_e_idempotente():
     configurar_logs("resumo"); configurar_logs("resumo")
     assert sum(isinstance(h.formatter, Legivel) for h in logging.getLogger("app").handlers) == 1
+
+
+def test_rotulo_distingue_itens_com_o_mesmo_comeco():
+    a = logs.rotulo("Marmita Parmegiana de frango")
+    b = logs.rotulo("Marmita Parmegiana de carne")
+    assert a != b and len(a) <= logs.LARGURA_ITEM and a.endswith("frango") and b.endswith("carne")
+    assert logs.rotulo("Pizza") == "Pizza"
+
+
+def test_modelo_que_diz_nao_ter_informacao_nao_falha_em_silencio(capturar):
+    from app.services.nutrition.etapas.estimar import leitura_de_json
+    dados = {"suficiente": False, "calorias": None, "justificativa": "nome genérico, sem descrição"}
+    assert leitura_de_json(dados, "openai") is None
+    texto = " ".join("\n".join(capturar).split())
+    assert "estimar A │ o modelo (openai) respondeu que NÃO há informação suficiente: nome genérico" in texto

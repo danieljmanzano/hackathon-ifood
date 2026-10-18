@@ -24,7 +24,7 @@ class Legivel(logging.Formatter):
         simbolo = SIMBOLO.get(record.levelno, "·")
         etapa = getattr(record, "etapa", None)
         if etapa:
-            return f"{hora} {simbolo} {getattr(record, 'item', ''):<22.22} │ {etapa:<12.12} │ {record.getMessage()}"
+            return f"{hora} {simbolo} {getattr(record, 'item', ''):<{LARGURA_ITEM}.{LARGURA_ITEM}} │ {etapa:<12.12} │ {record.getMessage()}"
         nome = record.name.removeprefix("app.").removeprefix("services.")
         return f"{hora} {simbolo} {record.levelname:<7} {nome}: {record.getMessage()}"
 
@@ -40,9 +40,20 @@ def configurar_logs(nivel: str = "resumo") -> None:
     raiz.setLevel(NIVEIS.get(nivel, logging.INFO))
 
 
+LARGURA_ITEM = 28
+
+
+def rotulo(nome: str, largura: int = LARGURA_ITEM) -> str:
+    """Nome curto que preserva começo e fim ("Marmita Parm…de frango" x "Marmita Parm…de carne")."""
+    if len(nome) <= largura:
+        return nome
+    fim = largura // 2 - 1
+    return nome[:largura - fim - 1] + "…" + nome[-fim:]
+
+
 def iniciar_item(nome: str) -> contextvars.Token:
     """Marca o item atual: todas as linhas seguintes (inclusive de tasks filhas) levam o nome dele."""
-    return _item.set(nome)
+    return _item.set(rotulo(nome))
 
 
 def curto(valor, limite: int = 180) -> str:

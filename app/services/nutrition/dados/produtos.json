@@ -102,6 +102,108 @@
       },
       "versao_pipeline": "calorias-v3"
     },
+    "a065ee1099d7": {
+      "calculado_em": "2026-10-18T06:39:25.749523+00:00",
+      "nome": "Marmita Parmegiana de carne",
+      "origem": "consensus",
+      "restaurante": "Campchopp Restaurante",
+      "resultado": {
+        "assumptions": [
+          "A marmita inclui os componentes clássicos de parmegiana de carne: arroz, carne empanada/frita, molho e queijo, mais batata frita como acompanhamento comum.",
+          "Não foi informada a composição exata; assumi porções médias de restaurante de delivery.",
+          "Considerei o peso total aproximado da marmita já pronta para consumo.",
+          "Há uma cama de arroz branco na base da embalagem, típica de marmitas executivas desse padrão e levemente visível sob a batata.",
+          "O bife à parmegiana é frito por imersão antes de receber molho e queijo.",
+          "Tamanho de embalagem padrão de marmita descartável redonda (nº 8 ou 9).",
+          "Soma pela TACO cobrindo 76% da massa: Batata frita→Batata, inglesa, frita, Arroz branco cozido (fundo da marmita)→Arroz, tipo 1, cozido, Molho de tomate→Tomate, molho industrializado, Queijo muçarela→Queijo, mozarela."
+        ],
+        "calories": 1057.0,
+        "carbs_g": 128.0,
+        "confidence": "medium",
+        "evidence": "Considerei uma marmita típica de parmegiana de carne com arroz, batata frita, bife empanado, molho de tomate e queijo gratinado. Como não há composição detalhada nem peso informado, a estimativa usa porções usuais de delivery e pode variar conforme quantidade de arroz, fritura e queijo.",
+        "fat_g": 50.0,
+        "maximum": 1400.0,
+        "method": "consensus",
+        "minimum": 769.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T06:39:25.748969Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 marmita de parmegiana de carne (~650 g) (~620 g, peso estimada)",
+        "portion_grams": 620.0,
+        "protein_g": 48.0,
+        "revisar": false,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "a6b5a1ae1d48": {
+      "calculado_em": "2026-10-18T06:39:32.202955+00:00",
+      "nome": "Marmita Parmegiana de frango",
+      "origem": "estimated",
+      "restaurante": "Campchopp Restaurante",
+      "resultado": {
+        "assumptions": [
+          "Assumi que a marmita vem com arroz e batata, padrão comum em parmegiana de delivery.",
+          "Assumi uma porção de frango à parmegiana com cobertura de queijo moderada.",
+          "Como não há informação de peso, usei uma porção média de restaurante para 1 unidade.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 980.0,
+        "carbs_g": 92.0,
+        "confidence": "medium",
+        "evidence": "Marmita parmegiana de frango normalmente inclui frango empanado/frito, molho de tomate, queijo e acompanhamento de arroz e/ou batata, o que eleva calorias e carboidratos. Como a descrição não detalha a composição, estimei uma marmita padrão de restaurante com porção completa e tamanho médio.",
+        "fat_g": 42.0,
+        "maximum": 1150.0,
+        "method": "estimated",
+        "minimum": 850.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T06:39:32.202729Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 marmita de parmegiana de frango (uma unidade servida no delivery) (~550 g, peso estimada)",
+        "portion_grams": 550.0,
+        "protein_g": 55.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "e3c0c2439a4a": {
+      "calculado_em": "2026-10-18T06:39:06.181334+00:00",
+      "nome": "Churrasco Burger.",
+      "origem": "estimated",
+      "restaurante": "Lifebox Burger -  Campinas",
+      "resultado": {
+        "assumptions": [
+          "Disco de carne bovina padrão de hamburgueria artesanal de cerca de 160 g in natura",
+          "Presença de bacon e vinagrete conforme visível nas camadas do sanduíche",
+          "Molhos cremosos à base de maionese distribuídos no topo e na base",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 985.0,
+        "carbs_g": 48.0,
+        "confidence": "medium",
+        "evidence": "Hambúrguer artesanal composto por pão brioche, disco de carne bovina alto (~160g cru), queijo derretido, bacon em fatias, vinagrete e maionese temperada, visualmente identificados na imagem.",
+        "fat_g": 65.0,
+        "maximum": 1180.0,
+        "method": "estimated",
+        "minimum": 820.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T06:39:06.180930Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 hambúrguer inteiro (~340 g) (~340 g, peso estimada)",
+        "portion_grams": 340.0,
+        "protein_g": 55.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
     "e7c8f5d4e77c": {
       "calculado_em": "2026-10-18T06:10:36.505470+00:00",
       "nome": "Frango grelhado da casa",

@@ -1,5 +1,6 @@
 """Cliente mínimo da OpenAI (Responses API) via HTTP: texto em JSON e busca na web."""
 import asyncio
+import base64
 import copy
 from typing import Any
 
@@ -70,6 +71,7 @@ async def responder(
     instrucoes: str = "",
     web: bool = False,
     schema: dict | None = None,
+    imagem: tuple[bytes, str] | None = None,
     model: str | None = None,
     settings: Settings | None = None,
 ) -> tuple[str, list[str]]:
@@ -83,7 +85,13 @@ async def responder(
         raise OpenAIError("OPENAI_API_KEY não configurada", status_code=500)
 
     modelo = model or settings.nutrition_model
-    payload: dict[str, Any] = {"model": modelo, "input": entrada}
+    if imagem is not None:
+        url = f"data:{imagem[1]};base64,{base64.b64encode(imagem[0]).decode()}"
+        corpo: Any = [{"role": "user", "content": [{"type": "input_text", "text": entrada},
+                                                    {"type": "input_image", "image_url": url}]}]
+    else:
+        corpo = entrada
+    payload: dict[str, Any] = {"model": modelo, "input": corpo}
     if schema is not None:
         payload["text"] = {"format": {"type": "json_schema", "name": "saida", "schema": _estrito(schema),
                                       "strict": True}}
@@ -105,7 +113,7 @@ async def responder(
                 except httpx.HTTPError as exc:
                     resposta, erro = None, f"rede ({exc!r})"
             if resposta is not None:
-                logs.detalhe("openai", f"{modelo}{' +web' if web else ''} → {resposta.status_code} em {t.texto}")
+                logs.detalhe("openai", f"{modelo}{' +web' if web else ''}{' +imagem' if imagem else ''} → {resposta.status_code} em {t.texto}")
                 if resposta.status_code == 200:
                     try:
                         dados = resposta.json()

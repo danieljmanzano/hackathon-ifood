@@ -150,3 +150,29 @@ def test_sem_chaves_de_openrouter_so_gemini_estima(tmp_path):
     assert r.state == "ready" and r.method == "estimated"
     m["estimar_a"].assert_not_called()
     m["consultar_bases"].assert_not_called()
+
+
+def test_estimativa_pesquisada_na_web_entra_no_consenso_e_nao_vira_fonte_oficial(tmp_path):
+    r, m = rodar(settings(tmp_path), web=leitura("web", 950, peso=330), a=leitura("openrouter", 900),
+                 b=leitura("gemini", 1000), imagem=(b"x", "image/jpeg"), casados=None)
+    assert r.method == "consensus" and r.calories == 950  # mediana de 900, 950 e 1000
+    assert r.source_name is None and r.source_url is None  # não é tabela oficial
+    assert any("suposição web" in x for x in r.assumptions)
+
+
+def test_modo_economico_estimativa_pesquisada_basta_e_poupa_os_estimadores(tmp_path):
+    r, m = rodar(settings(tmp_path, calorias_estimar_sempre=False), web=leitura("web", 950, peso=330))
+    assert r.state == "ready" and r.method == "estimated" and r.calories == 950
+    m["estimar_a"].assert_not_called()
+    m["estimar_b"].assert_not_called()
+
+
+def test_foto_chega_a_pesquisa_da_web(tmp_path):
+    foto = (b"x" * 10, "image/jpeg")
+    _, m = rodar(settings(tmp_path), web=leitura("web", 950), a=leitura("openrouter", 900), imagem=foto, casados=None)
+    assert m["buscar_na_web"].call_args.args[3] == foto
+
+
+def test_industrializado_com_tabela_continua_vencendo_as_estimativas(tmp_path):
+    r, _ = rodar(settings(tmp_path), web=info_web(), a=leitura("openrouter", 1700), casados=None)
+    assert r.method == "web" and r.source_name == "Pizza Express"

@@ -98,10 +98,8 @@ def test_perguntar_json_usa_o_provedor_escolhido(tmp_path):
 
 
 def test_web_usa_openai_e_aplica_a_mesma_checagem_de_fonte(tmp_path):
-    resposta = {"encontrado": True, "produto_na_fonte": "Pizza", "calorias": 1800, "faixa_min": 1700,
-                "faixa_max": 1900, "proteina_g": 70, "carbo_g": 220, "gordura_g": 60, "porcao_g": 700,
-                "porcao_base": "inteira", "fonte_nome": "Site", "fonte_url": "https://www.site.com.br/tabela",
-                "trecho_fonte": "1800 kcal", "justificativa": "j"}
+    from tests.test_nutricao_web import resposta_json
+    resposta = resposta_json(fonte_url="https://www.site.com.br/tabela")
     with patch.object(web, "responder", AsyncMock(return_value=(json.dumps(resposta), ["https://site.com.br/outra"]))), \
          patch.object(web, "search_web", AsyncMock()) as gemini, \
          patch.object(web, "perguntar_json", AsyncMock(return_value={"corresponde": True, "motivo": "m"})):
@@ -111,6 +109,25 @@ def test_web_usa_openai_e_aplica_a_mesma_checagem_de_fonte(tmp_path):
     with patch.object(web, "responder", AsyncMock(return_value=(json.dumps(resposta), ["https://fora.com/x"]))), \
          patch.object(web, "perguntar_json", AsyncMock(return_value={"corresponde": True, "motivo": "m"})):
         assert asyncio.run(buscar_na_web(_s(tmp_path), candidato(), None)) is None  # fonte não consultada
+
+
+def test_openai_recebe_a_foto_na_pesquisa_do_prato(tmp_path):
+    from tests.test_nutricao_web import FOTO, PRATO, resposta_json
+    resposta = resposta_json(**PRATO)
+    with patch.object(web, "responder", AsyncMock(return_value=(json.dumps(resposta), ["https://tabelanutri.com.br/x"]))) as r:
+        achado = asyncio.run(buscar_na_web(_s(tmp_path), candidato(), None, FOTO))
+    assert achado.fonte == "web" and r.call_args.kwargs["imagem"] == FOTO and r.call_args.kwargs["web"] is True
+
+
+def test_cliente_openai_monta_o_corpo_com_imagem_e_web(tmp_path):
+    import base64
+    _, chamadas = _responder(tmp_path, [httpx.Response(200, json={"output_text": "{}"})], web=True,
+                             imagem=(b"FOTO", "image/jpeg"))
+    corpo = json.loads(chamadas[0].content)
+    conteudo = corpo["input"][0]["content"]
+    assert corpo["input"][0]["role"] == "user" and corpo["tools"] == [{"type": "web_search"}]
+    assert conteudo[0]["type"] == "input_text" and conteudo[1]["type"] == "input_image"
+    assert conteudo[1]["image_url"] == "data:image/jpeg;base64," + base64.b64encode(b"FOTO").decode()
 
 
 def test_pipeline_no_modo_openai_exige_chave_openai_para_texto_e_web(tmp_path):

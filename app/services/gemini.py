@@ -96,6 +96,7 @@ async def analyze_image(
 async def search_web(
     prompt: str,
     *,
+    imagem: tuple[bytes, str] | None = None,
     model: str | None = None,
     settings: Settings | None = None,
 ) -> tuple[str, list[str]]:
@@ -104,7 +105,10 @@ async def search_web(
     A ferramenta de busca não combina com saída JSON forçada, então o JSON é pedido no prompt.
     """
     settings = settings or get_settings()
-    payload = {"contents": [{"parts": [{"text": prompt}]}], "tools": [{"google_search": {}}]}
+    partes: list[dict[str, Any]] = [{"text": prompt}]
+    if imagem is not None:
+        partes.append({"inline_data": {"mime_type": imagem[1], "data": base64.b64encode(imagem[0]).decode()}})
+    payload = {"contents": [{"parts": partes}], "tools": [{"google_search": {}}]}
     dados = await _gerar(payload, model, settings)
     dominios: list[str] = []
     try:

@@ -6,6 +6,7 @@ import math
 
 from jsonschema import validate
 
+from app.core import logs
 from app.core.config import Settings
 from app.schemas.macro import MealCandidate
 from app.services.gemini import analyze_image
@@ -35,6 +36,9 @@ def _numero(valor) -> float | None:
 def leitura_de_json(dados: dict, fonte: str) -> Leitura | None:
     """Converte a resposta validada em Leitura. None se o modelo disse que não há base para estimar."""
     if not dados["suficiente"]:
+        etapa = "estimar B" if fonte == "gemini" else "estimar A"
+        logs.info(etapa, f"o modelo ({fonte}) respondeu que NÃO há informação suficiente: "
+                         f"{logs.curto(dados['justificativa'], 200)}")
         return None
     kcal, minimo, maximo = _numero(dados["calorias"]), _numero(dados["faixa_min"]), _numero(dados["faixa_max"])
     if None in (kcal, minimo, maximo):
@@ -59,7 +63,7 @@ async def estimar_a(settings: Settings, candidate: MealCandidate, opcoes: list[s
     async def uma() -> Leitura | None:
         dados = await perguntar_json(settings, INSTRUCOES_ESTIMATIVA, prompt, SCHEMA_ESTIMATIVA,
                                      temperature=temperatura)
-        return leitura_de_json(dados, "openrouter")
+        return leitura_de_json(dados, settings.nutrition_provider)
 
     resultados = await asyncio.gather(*(uma() for _ in range(settings.calorias_amostras)), return_exceptions=True)
     leituras = [r for r in resultados if isinstance(r, Leitura)]
@@ -73,7 +77,7 @@ async def estimar_a(settings: Settings, candidate: MealCandidate, opcoes: list[s
     junto = consenso(leituras)
     base = leituras[0]
     return Leitura(
-        fonte="openrouter", macros=junto.macros, faixa_min=junto.faixa_min, faixa_max=junto.faixa_max,
+        fonte=settings.nutrition_provider, macros=junto.macros, faixa_min=junto.faixa_min, faixa_max=junto.faixa_max,
         confianca=junto.confianca_modelos, porcao_base=base.porcao_base, peso_g=junto.peso_g,
         ingredientes=base.ingredientes, suposicoes=junto.suposicoes, justificativa=base.justificativa,
     )

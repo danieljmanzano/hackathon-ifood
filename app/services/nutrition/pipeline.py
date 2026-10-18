@@ -20,7 +20,7 @@ from .etapas.ingredientes import casar_ingredientes, somar_ingredientes
 from .etapas.porcao import calcular_porcao, converter_em_gramas, extrair_porcao
 from .etapas.validar import validar
 from .etapas.web import buscar_na_web
-from .modelos import Estimativa, InfoOnline
+from .modelos import Estimativa, InfoOnline, Leitura
 
 PIPELINE_VERSION = "calorias-v3"
 ERROS_ETAPA = (AppError, json.JSONDecodeError, SchemaError, KeyError, EstimativaInvalida)
@@ -41,8 +41,12 @@ async def _nada():
 
 
 async def _online(settings: Settings, candidate: MealCandidate, opcoes: list[str] | None,
-                  descricao: str) -> InfoOnline | None:
-    """Bases de dados primeiro; a web só roda se elas não acharem."""
+                  descricao: str, imagem) -> InfoOnline | Leitura | None:
+    """Bases de dados primeiro; a web só roda se elas não acharem.
+
+    A web devolve uma InfoOnline (tabela oficial de produto industrializado) ou uma Leitura
+    (estimativa pesquisada para prato de restaurante, que entra no consenso).
+    """
     info = None
     if not settings.calorias_buscar_bases:
         logs.info("bases", "desligadas (CALORIAS_BUSCAR_BASES=false)")
@@ -59,9 +63,9 @@ async def _online(settings: Settings, candidate: MealCandidate, opcoes: list[str
         logs.info("web", "pulada: sem chave de busca "
                          f"({'OPENAI_API_KEY' if settings.nutrition_provider == 'openai' else 'GEMINI_API_KEY'})")
     elif not restaurante_valido(candidate):
-        logs.info("web", "pulada: restaurante simulado/inválido, não há o que pesquisar")
+        logs.info("web", "pulada: restaurante simulado/inválido (modo demonstração)")
     else:
-        info = await _seguro(buscar_na_web(settings, candidate, opcoes), "web")
+        info = await _seguro(buscar_na_web(settings, candidate, opcoes, imagem), "web")
     return info
 
 
@@ -72,8 +76,8 @@ def _descrever(l) -> str:
     return f"{m.kcal:.0f} kcal ({l.faixa_min:.0f}–{l.faixa_max:.0f}){macros}{peso} · confiança do modelo {l.confianca:.2f}"
 
 
-async def _estimativa(settings: Settings, candidate: MealCandidate, opcoes: list[str] | None,
-                      peso_g: float | None, imagem) -> Estimativa | None:
+async def _leituras(settings: Settings, candidate: MealCandidate, opcoes: list[str] | None,
+                    peso_g: float | None, imagem) -> list[Leitura]:
     """A (OpenRouter/OpenAI, texto) e B (Gemini, texto + imagem) em paralelo, mais a soma de ingredientes pela TACO."""
     if not settings.llm_api_key:
         logs.info("estimar A", f"pulada: sem chave do provedor de texto ({settings.nutrition_provider})")
@@ -122,6 +126,11 @@ async def _estimativa(settings: Settings, candidate: MealCandidate, opcoes: list
     elif not alimentos and settings.calorias_buscar_bases:
         logs.aviso("soma TACO", f"arquivo taco.csv não encontrado em {settings.calorias_dados_dir}")
 
+    return leituras
+
+
+def _consolidar(leituras: list[Leitura]) -> Estimativa | None:
+    """Consenso (mediana) entre todas as estimativas disponíveis: A, B, soma TACO e a pesquisada na web."""
     resultado = consenso(leituras)
     if resultado is None:
         logs.aviso("consenso", "nenhuma fonte de estimativa respondeu")
@@ -182,20 +191,23 @@ async def _calcular(settings: Settings, candidate: MealCandidate, opcoes: list[s
     descricao = montar_prompt(candidate, opcoes, porcao.gramas)
     logs.detalhe("prompt", logs.curto(descricao, 400))
 
-    online = _online(settings, candidate, opcoes, descricao)
-    estimativa = _estimativa(settings, candidate, opcoes, porcao.gramas, imagem)
-    est: Estimativa | None = None
+    online = _online(settings, candidate, opcoes, descricao, imagem)
+    leituras: list[Leitura] = []
     if settings.calorias_estimar_sempre:
         logs.info("modo", "estimativa roda em paralelo com as fontes online (mede a divergência)")
-        info, est = await asyncio.gather(online, estimativa)
+        achado, leituras = await asyncio.gather(online, _leituras(settings, candidate, opcoes, porcao.gramas, imagem))
     else:
-        info = await online
-        if info is None:
+        achado = await online
+        if achado is None:
             logs.info("modo", "econômico: nenhuma fonte online → rodando a estimativa")
-            est = await estimativa
+            leituras = await _leituras(settings, candidate, opcoes, porcao.gramas, imagem)
         else:
-            logs.info("modo", "econômico: fonte online achou → estimativa dispensada")
-            estimativa.close()
+            logs.info("modo", "econômico: a pesquisa online achou → estimativas dispensadas")
+
+    info = achado if isinstance(achado, InfoOnline) else None
+    if isinstance(achado, Leitura):  # estimativa pesquisada na web: mais uma estimativa no consenso
+        leituras = [*leituras, achado]
+    est: Estimativa | None = _consolidar(leituras) if leituras else None
 
     peso_estimado = (est.peso_g if est else None) or (info.porcao_g if info else None)
     gramas, origem_gramas, avisos = converter_em_gramas(porcao, peso_estimado)
@@ -210,7 +222,7 @@ async def _calcular(settings: Settings, candidate: MealCandidate, opcoes: list[s
         info = None
         if not settings.calorias_estimar_sempre and est is None:  # modo econômico: ainda não rodou
             logs.info("modo", "econômico: fonte descartada → rodando a estimativa")
-            est = await _estimativa(settings, candidate, opcoes, porcao.gramas, imagem)
+            est = _consolidar(await _leituras(settings, candidate, opcoes, porcao.gramas, imagem))
     elif info is not None:
         logs.info("porção", f"{info.fonte_nome} ({info.base}) → {info_macros.kcal:.0f} kcal para o prato"
                   + (f" (×{gramas / 100:.2f})" if info.base == "100g" and gramas else ""))
