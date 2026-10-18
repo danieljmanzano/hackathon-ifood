@@ -2,7 +2,7 @@ from datetime import date, datetime, timezone
 from typing import Annotated, Literal
 from uuid import uuid4
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
+from pydantic import AfterValidator, AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
 NonNegative = Annotated[float, Field(ge=0, allow_inf_nan=False)]
 Cents = Annotated[int, Field(ge=0, strict=True)]
@@ -315,9 +315,66 @@ class CheckoutSummary(Model):
     simulated: bool
 
 
+Rating = Annotated[int, Field(ge=1, le=5, strict=True)]
+
+
+class OrderAspects(Model):
+    """Notas por aspecto; null quando nem o usuário nem o comentário falaram dele."""
+    taste: Rating | None = None
+    delivery: Rating | None = None
+    value_for_money: Rating | None = None
+    portion_size: Rating | None = None
+
+
+class ReviewInterpretation(Model):
+    """Leitura estruturada do comentário livre, feita pelo LLM."""
+    rating: Rating | None = None
+    aspects: OrderAspects = Field(default_factory=OrderAspects)
+    summary: str = Field(default="", max_length=300)
+    tags: list[Annotated[str, Field(min_length=1, max_length=40)]] = Field(default_factory=list, max_length=5)
+
+
+class OrderReviewInput(Model):
+    """Avaliação rápida enviada junto da confirmação. Fica só no Macro: o MCP do iFood não recebe reviews."""
+    rating: Rating | None = None
+    comment: Annotated[str, AfterValidator(lambda text: text[:200])] = ""
+
+    @property
+    def empty(self) -> bool:
+        return self.rating is None and not self.comment
+
+
+class OrderReviewEdit(Model):
+    """Correção do usuário sobre a interpretação; substitui nota e aspectos inferidos."""
+    rating: Rating
+    aspects: OrderAspects = Field(default_factory=OrderAspects)
+
+
+class OrderReview(Model):
+    # rating e aspects são do usuário e prevalecem; interpretation é o que o LLM leu do comentário.
+    rating: Rating | None = None
+    comment: str = ""
+    aspects: OrderAspects = Field(default_factory=OrderAspects)
+    interpretation: ReviewInterpretation | None = None
+    interpretation_state: Literal["none", "pending", "done", "failed"] = "none"
+
+    @property
+    def effective_rating(self) -> int | None:
+        if self.rating is not None:
+            return self.rating
+        return self.interpretation.rating if self.interpretation else None
+
+    @property
+    def effective_aspects(self) -> dict[str, int | None]:
+        inferred = self.interpretation.aspects.model_dump() if self.interpretation else {}
+        return {key: value if value is not None else inferred.get(key)
+                for key, value in self.aspects.model_dump().items()}
+
+
 class ConfirmationInput(Model):
     version: str
     confirmed: Literal[True]
+    review: OrderReviewInput | None = None
 
 
 class OrderRecord(Model):
@@ -326,6 +383,7 @@ class OrderRecord(Model):
     status: Literal["submitted", "uncertain"]
     simulated: bool
     created_at: datetime = Field(default_factory=now)
+    review: OrderReview | None = None
 
 
 class ConsumptionEntry(Model):

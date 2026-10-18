@@ -9,6 +9,8 @@ import type {
   Profile,
   SelectedOption,
   Session,
+  OrderAspects,
+  OrderReviewInput,
   ReviewInput,
   UserReview,
   UserTastes,
@@ -99,8 +101,11 @@ export const api = {
   choices: () => request<CheckoutChoices>("/checkout/choices"),
   review: (delivery_id: string, payment_id: string) =>
     request<Session>("/checkout/review", { delivery_id, payment_id }),
-  confirm: (version: string) =>
-    request<Session>("/checkout/confirm", { version, confirmed: true }),
+  confirm: (version: string, review?: OrderReviewInput) =>
+    request<Session>("/checkout/confirm", { version, confirmed: true, review }),
+  order: () => request<Session>("/checkout/order"),
+  editOrderReview: (rating: number, aspects: OrderAspects) =>
+    request<Session>("/checkout/order/review", { rating, aspects }, "PUT"),
 };
 
 export const money = (cents: number) =>
