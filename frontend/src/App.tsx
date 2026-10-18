@@ -7,7 +7,7 @@ import { ChatPreferences } from "./ChatPreferences";
 import { AddressPicker } from "./Addresses";
 import { addressIntent, confirmsOrder, matchChoice, normalize, reportsContext, requestedQuantity, wantsNewOrder } from "./chat-flow";
 import { consumptionMigrated, loadConsumption, markConsumptionMigrated, saveConsumption } from "./storage";
-import type { Address, Assembly, Candidate, CheckoutChoices, NewAddress, Nutrition, OrderReviewInput, Recommendation, SelectedOption, Session } from "./types";
+import type { Address, Assembly, Candidate, SelectedItem, CheckoutChoices, NewAddress, Nutrition, OrderReviewInput, Recommendation, SelectedOption, Session } from "./types";
 
 type Phase = "address" | "discover" | "customize" | "delivery" | "payment" | "confirm" | "ordered";
 type ChatMessage = { id: string; role: "user" | "assistant"; text: string; recommendations?: Recommendation[] };
@@ -56,6 +56,8 @@ export default function App() {
   const [detail, setDetail] = useState<Candidate | null>(null);
   const [options, setOptions] = useState<SelectedOption[]>([]);
   const [quantity, setQuantity] = useState(1);
+  const [preview, setPreview] = useState<SelectedItem | null>(null);  // nutrientes do prato montado, sem comprar
+  const [previewBusy, setPreviewBusy] = useState(false);
   const [choices, setChoices] = useState<CheckoutChoices | null>(null);
   const [delivery, setDelivery] = useState("");
   const actionLock = useRef(false);
@@ -276,6 +278,26 @@ export default function App() {
   }
   const selectionTotal = detail ? quantity * (detail.price_cents + options.reduce((sum, o) =>
     sum + (detail.option_groups.find(g => g.id === o.group_id)?.options.find(option => option.id === o.option_id)?.price_cents ?? 0) * o.quantity, 0)) : 0;
+  // Mudou prato, complemento ou quantidade: a prévia anterior não vale mais.
+  useEffect(() => { setPreview(null); }, [detail?.item_id, options, quantity]);
+  const previewPending = preview?.nutrition.state === "pending";
+  useEffect(() => {
+    if (!previewPending || !detail) return;
+    let cancelled = false, tries = 0;
+    const timer = window.setInterval(async () => {
+      if (++tries > 40) { clearInterval(timer); return; }
+      try { const next = await api.previewNutrition(detail, quantity, options, false); if (!cancelled) setPreview(next); }
+      catch { /* tenta no próximo ciclo */ }
+    }, 3000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [previewPending]);
+  async function calculateNutrition() {
+    if (!detail || !validOptions || previewBusy) return;
+    setPreviewBusy(true); setError("");
+    try { setPreview(await api.previewNutrition(detail, quantity, options)); }
+    catch (reason) { setError(errorText(reason)); }
+    finally { setPreviewBusy(false); }
+  }
   async function continueWithDish(echo = true) {
     if (!detail || !validOptions || busy) return;
     if (echo) say("user", `Continuar com ${quantity} unidade${quantity > 1 ? "s" : ""} de ${detail.name}.`);
@@ -465,7 +487,12 @@ export default function App() {
           })}</fieldset>)}
         <div className="quantity-row"><span>Quantidade</span><Stepper value={quantity} label="quantidade de pratos" onChange={setQuantity} /></div>
         <div className="action-footer"><span><strong>{money(selectionTotal)}</strong><small>Entrega calculada na próxima etapa</small></span>
-          <button className="primary-button" disabled={disabled || !validOptions} onClick={() => void continueWithDish()}>Continuar com este prato</button></div>
+          <span className="action-buttons">
+            <button className="secondary-button" disabled={disabled || !validOptions || previewBusy} onClick={() => void calculateNutrition()}>
+              {previewBusy ? "Calculando…" : "Calcular nutrientes"}</button>
+            <button className="primary-button" disabled={disabled || !validOptions} onClick={() => void continueWithDish()}>Continuar com este prato</button></span></div>
+        {preview && <div className="preview-nutrition"><SelectedNutrition nutrition={preview.nutrition} quantity={preview.quantity} />
+          <small className="muted">Só uma prévia: nada foi escolhido nem comprado.</small></div>}
       </section>}
       {phase === "delivery" && choices && <section className="chat-action" aria-label="Escolher entrega"><h2>Qual entrega combina com você?</h2>
         {choices.delivery.map((choice, index) => <button className="choice-button" key={choice.id} disabled={disabled} onClick={() => chooseDelivery(choice.id)}>

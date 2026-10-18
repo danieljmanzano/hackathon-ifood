@@ -460,6 +460,47 @@
       },
       "versao_pipeline": "calorias-v3"
     },
+    "1d642b8329a966f249611b0f": {
+      "calculado_em": "2026-10-18T12:53:44.178383+00:00",
+      "nome": "Imperdíveis do Subway (Footlong 30cm)",
+      "origem": "consensus",
+      "restaurante": "Subway Maria Antônia Makenzie",
+      "resultado": {
+        "assumptions": [
+          "Assumi que 'Frango Ranch 30cm' corresponde ao sanduíche footlong padrão da rede com porção de proteína típica para 30 cm.",
+          "Assumi que 'Sem Molho' elimina completamente molhos adicionados e que não há queijo, vegetais extras ou adicionais além do alface listado.",
+          "Usei a imagem apenas como contexto geral não aplicável, pois foi informada como ilustrativa.",
+          "Soma pela TACO cobrindo 97% da massa: Pão aveia e mel integral com fibras (30 cm)→Pão, aveia, forma, Frango ranch→Frango, asa, com pele, crua.",
+          "Estimativa pesquisada na web com base em “Subway Frango Ranch (15 cm) + pão 9 Grãos Aveia e Mel; estimativa ajustada para 30 cm sem molho” — Subway Brasil – Tabela Nutricional (subway.com).",
+          "A descrição informa imagem ilustrativa; portanto não usei foto.",
+          "Usei a tabela oficial do Subway Brasil como referência e dobrei a porção de 15 cm para estimar 30 cm.",
+          "Como o item foi pedido sem molho, reduzi a estimativa em relação ao Frango Ranch padrão; o Subway não publica a quebra exata do molho, então a exclusão do molho foi estimada.",
+          "O pão Aveia e Mel tem calorias muito próximas ao pão-base usado na tabela oficial, então a diferença de pão altera pouco o total.",
+          "Foto ilustrativa: não foi usada para medir a porção.",
+          "Estimativas divergem entre si (dispersão 36%).",
+          "Complementos estimados à parte e somados ao item base: 1× Cheddar Fatiado ~40 kcal; 1× Molho Ranch - Novo! ~140 kcal; 1× Azeite ~45 kcal."
+        ],
+        "calories": 985.0,
+        "carbs_g": 90.5,
+        "confidence": "medium",
+        "evidence": "Considerei um footlong de 30 cm do Subway com proteína de frango ranch, pão integral com fibras/aveia e mel, apenas alface e sem molho. Sem os acompanhamentos extras, a maior parte das calorias vem do pão e da proteína já temperada, resultando em um sanduíche de porte médio-alto e macros moderados em carboidrato e proteína. Complementos: 1× Cheddar Fatiado ~40 kcal; 1× Molho Ranch - Novo! ~140 kcal; 1× Azeite ~45 kcal.",
+        "fat_g": 47.3,
+        "maximum": 1395.0,
+        "method": "consensus",
+        "minimum": 706.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T12:53:44.177476Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "1 sanduíche Footlong (30 cm) Subway com frango ranch, pão aveia e mel integral com fibras, alface e sem molho (~325 g, peso estimada) + 3 complemento(s)",
+        "portion_grams": 370.0,
+        "protein_g": 42.5,
+        "revisar": false,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
+    },
     "213cf2779ee7": {
       "calculado_em": "2026-10-18T07:06:04.818824+00:00",
       "nome": "Drumet Crocante da Asa",
@@ -808,6 +849,42 @@
         "portion_basis": "1 pizza margherita inteira de 330 g (~330 g, peso declarada)",
         "portion_grams": 330.0,
         "protein_g": 34.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
+    },
+    "392ef2757b446e6ab471dbf3": {
+      "calculado_em": "2026-10-18T12:52:06.942252+00:00",
+      "nome": "Mush Sub",
+      "origem": "estimated",
+      "restaurante": "Gairdin Cafe e Cha no Jardim Sp",
+      "resultado": {
+        "assumptions": [
+          "Estimativa pesquisada na web com base em “Sanduíche equivalente estimado com brioche, cogumelos brancos e queijo mozzarella low-moisture” — Food-info.org (dados USDA FoodData Central / Open Food Facts) (food-info.org).",
+          "Sem foto; a porção foi estimada pela descrição do item.",
+          "Assumi um sanduíche de cerca de 140 g no total.",
+          "Como 'mix de queijo' não especifica o tipo, usei mozzarella low-moisture part-skim como referência principal para o cálculo.",
+          "A cebolete foi tratada como contribuição nutricional desprezível.",
+          "Não considerei manteiga/óleo adicional de tostagem porque não foi mencionado na descrição.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 308.0,
+        "carbs_g": 38.2,
+        "confidence": "medium",
+        "evidence": "“Brioche sabor natural: per 100 g, 315 calories, 48.8 g carbohydrate, 6.8 g protein and 5.6 g fat. Mushrooms, white, raw: per 100 g, 22 calories, 4.1 g carbohydrate, 2.9 g protein and 0.4 g fat. Cheese, mozzarella, low moisture, part-skim, shredded: per 100 g, 304 calories, 8.1 g carbohydrate, 23.6 g protein and 19.7 g fat.” Item classificado como prato, pois é uma preparação do restaurante. Estimei o total somando uma porção típica de brioche, queijo e cogumelos: 70 g de brioche (220.5 kcal), 25 g de mozzarella de referência (76 kcal), 40 g de cogumelos (8.8 kcal) e 5 g de cebolete (~0 kcal), totalizando ~308 kcal. Macros estimados pela mesma lógica, com incerteza moderada por causa do tipo e da quantidade de queijo não informados.",
+        "fat_g": 9.0,
+        "maximum": 340.0,
+        "method": "estimated",
+        "minimum": 280.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T12:52:06.941548Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "sanduíche artesanal estimado (~140 g) com pão de brioche, mix de queijo, cogumelos paris e cebolete (~140 g, peso estimada)",
+        "portion_grams": 140.0,
+        "protein_g": 12.1,
         "revisar": true,
         "source_name": null,
         "source_url": null,
@@ -1294,6 +1371,42 @@
       },
       "versao_pipeline": "calorias-v3"
     },
+    "68c0fa1d06d984d5f3d59d32": {
+      "calculado_em": "2026-10-18T12:53:16.395029+00:00",
+      "nome": "Imperdíveis do Subway (Footlong 30cm)",
+      "origem": "estimated",
+      "restaurante": "Subway Maria Antônia Makenzie",
+      "resultado": {
+        "assumptions": [
+          "Considerei que a opção 'Frango Ranch 30cm' define o recheio principal do sanduíche.",
+          "Considerei apenas o vegetal explicitamente escolhido: alface.",
+          "A opção 'Aquecer' não altera de forma relevante as calorias e macros.",
+          "Como a foto é ilustrativa, não usei imagem para estimar porção.",
+          "Foto ilustrativa: não foi usada para medir a porção.",
+          "Apenas uma fonte de estimativa.",
+          "Complementos estimados à parte e somados ao item base: 1× Cheddar Fatiado ~40 kcal; 1× Molho Ranch - Novo! ~140 kcal; 1× Azeite ~45 kcal."
+        ],
+        "calories": 795.0,
+        "carbs_g": 68.5,
+        "confidence": "medium",
+        "evidence": "A estimativa usa a base de um Footlong Subway com frango ranch e pão integral com fibras, somando apenas o vegetal informado (alface) e o efeito mínimo do aquecimento. Como a descrição não informa que molho foi escolhido, considerei que o sabor Frango Ranch já traz o componente de molho/proteína do produto e mantive uma faixa moderada para a incerteza da composição exata. Complementos: 1× Cheddar Fatiado ~40 kcal; 1× Molho Ranch - Novo! ~140 kcal; 1× Azeite ~45 kcal.",
+        "fat_g": 40.3,
+        "maximum": 954.0,
+        "method": "estimated",
+        "minimum": 646.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T12:53:16.393159Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "1 sanduíche Footlong (30 cm) Subway com Frango Ranch, pão integral com fibras, alface, aquecido (~310 g, peso estimada) + 3 complemento(s)",
+        "portion_grams": 355.0,
+        "protein_g": 38.5,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
+    },
     "6e892d5b67d7e8c26d6a3478": {
       "calculado_em": "2026-10-18T11:49:08.188485+00:00",
       "nome": "Sanduíche de Frango Desfiado",
@@ -1329,6 +1442,42 @@
         "state": "ready"
       },
       "versao_pipeline": "calorias-v3"
+    },
+    "6f5b2dd960a647f0a59f0697": {
+      "calculado_em": "2026-10-18T12:52:35.604384+00:00",
+      "nome": "Filé de Frango à Parmegiana",
+      "origem": "estimated",
+      "restaurante": "Bar e Lanches Estadão",
+      "resultado": {
+        "assumptions": [
+          "Estimativa pesquisada na web com base em “Filé de frango à parmegiana (TBCA) + arroz polido cozido + batata inglesa frita” — TBCA (Tabela Brasileira de Composição de Alimentos) (tbca.net.br).",
+          "Sem foto, então não foi possível confirmar o tamanho real da porção.",
+          "Assumi um prato de restaurante padrão com 1 filé de frango à parmegiana em torno de 220 g, arroz branco em porção de acompanhamento (~150 g) e batata frita (~120 g).",
+          "Usei a composição TBCA do filé à parmegiana como referência principal e somei os acompanhamentos usando TBCA de arroz cozido e batata frita.",
+          "Calorias e macros do prato foram estimados por soma dos componentes, já que o restaurante não informa tabela nutricional própria.",
+          "Foto ilustrativa: não foi usada para medir a porção.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 1134.0,
+        "carbs_g": 112.6,
+        "confidence": "medium",
+        "evidence": "“\"Filé de frango à parmegiana (filé de peito de frango, à milanesa ... c/ molho de tomate ... muçarela, c/ sal)\"; porção \"Pedaço/ Unidade/ Fatia (M) (110 g)\" com \"Energia kcal 321\", \"Proteína 22,7\", \"Carboidrato total 13,7\", \"Lipídios 14,2\". Para o acompanhamento: \"Arroz polido, cozido, s/ óleo, s/ sal\" com 130 kcal/100 g, 2,38 g proteína, 30,0 g carboidratos, 0,41 g lipídios; e \"Batata, inglesa, frita (c/ óleo de soja), c/ sal\" com 248 kcal/100 g, 4,04 g proteína, 32,7 g carboidrato total, 11,9 g lipídios.” O prato é preparado pelo restaurante, então tratei como 'prato' e não como industrializado. A referência principal foi a TBCA para 'Filé de frango à parmegiana' (110 g = 321 kcal, 22,7 g proteína, 13,7 g carboidratos, 14,2 g gorduras). Para aproximar o prato do iFood, estimei uma porção maior do filé (~220 g) e somei arroz branco cozido e batata frita com tabelas TBCA correspondentes. Assim, o total estimado fica em cerca de 1134 kcal, com margem realista para variação de óleo, queijo e tamanho das porções servidas no restaurante.",
+        "fat_g": 57.0,
+        "maximum": 1280.0,
+        "method": "estimated",
+        "minimum": 980.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T12:52:35.603510Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "1 prato estimado: filé de frango à parmegiana (~220 g) + arroz branco cozido (~150 g) + batata frita (~120 g) (~490 g, peso estimada)",
+        "portion_grams": 490.0,
+        "protein_g": 53.9,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
     },
     "7010c8aef286": {
       "calculado_em": "2026-10-18T09:05:47.642432+00:00",
@@ -2435,6 +2584,40 @@
         "state": "ready"
       },
       "versao_pipeline": "calorias-v3"
+    },
+    "f133725608cfb557d470f35a": {
+      "calculado_em": "2026-10-18T12:51:57.266738+00:00",
+      "nome": "Subs 15 cm",
+      "origem": "estimated",
+      "restaurante": "Subway Saladas - Maria Antônia Makenzie",
+      "resultado": {
+        "assumptions": [
+          "Estimativa pesquisada na web com base em “Pão Italiano Branco (porção base Subway)” — Subway Brasil - Tabela Nutricional Oficial (sbw-cms.zamp.com.br).",
+          "O item do iFood não trouxe composição nem opções escolhidas; assumi a base mais próxima disponível na tabela oficial da Subway.",
+          "Considerei apenas a porção base de pão, sem proteínas, queijos, molhos ou vegetais adicionais.",
+          "Como não há especificação de recheio, a incerteza é alta e a faixa foi ampliada.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 254.0,
+        "carbs_g": 47.0,
+        "confidence": "medium",
+        "evidence": "“\"PÃES\" ... \"Italiano Branco\" ... \"85 g\" ... \"254 kcal\" ... \"47 g\" ... \"11 g\" ... \"3 g\". Valores energéticos e de nutrientes dos alimentos preparados nos restaurantes Subway. ([sbw-cms.zamp.com.br](https://sbw-cms.zamp.com.br/Tabela_Nutricional_02_01_2023_fa9b77005f/Tabela_Nutricional_02_01_2023_fa9b77005f.pdf?utm_source=openai))” Usei a tabela nutricional oficial da Subway Brasil, que informa para o pão Italiano Branco a porção de 85 g com 254 kcal, 47 g de carboidratos, 11 g de proteínas e 3 g de gorduras. Como o item foi listado sem opções escolhidas, ele foi estimado como a porção base mais próxima disponível na fonte. Se houver recheio/composição específica no pedido, os valores reais devem ser maiores. ([sbw-cms.zamp.com.br](https://sbw-cms.zamp.com.br/Tabela_Nutricional_02_01_2023_fa9b77005f/Tabela_Nutricional_02_01_2023_fa9b77005f.pdf?utm_source=openai))",
+        "fat_g": 3.0,
+        "maximum": 320.0,
+        "method": "estimated",
+        "minimum": 230.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T12:51:57.266061Z",
+        "pipeline_version": "calorias-v4",
+        "portion_basis": "porção base de pão italiano branco Subway usada como proxy para o item \"Subs 15 cm\" sem opções informadas (~85 g, peso estimada)",
+        "portion_grams": 85.0,
+        "protein_g": 11.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v4"
     },
     "f8117560928d": {
       "calculado_em": "2026-10-18T07:06:01.688656+00:00",

@@ -302,3 +302,39 @@ def test_alvo_escolhido_pelo_modelo_vale_mais_que_o_casamento_de_palavras(caplog
         assert alvo.item_id == "a1"  # id fora das sugestões: volta ao casamento de palavras
     texto = "\n".join(caplog.messages)
     assert "o modelo escolheu este alvo" in texto and "quer o combo" in texto and "não está nas sugestões" in texto
+
+
+def test_previa_de_nutricao_nao_escolhe_o_prato(tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+    from app.core.config import Settings, get_settings
+    import app.main as main
+    from app.api.endpoints import macro
+
+    cfg = Settings(_env_file=None, database_path=tmp_path / "p.sqlite3", ifood_mode="mock", intent_llm_enabled=False,
+                   openrouter_api_key="", openai_api_key="", calorias_base_path=tmp_path / "n.json")
+    monkeypatch.setattr(main, "get_settings", lambda: cfg)
+    app = main.create_app()
+    app.dependency_overrides[get_settings] = lambda: cfg
+    chamadas = []
+
+    async def estimar(selecionado, settings, aguardar=True):
+        chamadas.append(aguardar)
+        return nutricao(610, prot=33)
+
+    monkeypatch.setattr(macro, "estimate_selected", estimar)
+    with TestClient(app) as client:
+        client.get("/api/session")
+        client.put("/api/session/address", json={"address_id": "demo-address"})
+        item = client.post("/api/chat", json={"text": "quero uma pizza", "message_id": "p1"}).json()["recommendations"][0]["candidate"]
+        detalhe = client.get(f"/api/items/{item['merchant_id']}/{item['item_id']}").json()
+        obrigatorias = [{"group_id": g["id"], "option_id": g["options"][0]["id"], "quantity": 1}
+                        for g in detalhe["option_groups"] if g["min_selections"] > 0]
+        corpo = {"merchant_id": item["merchant_id"], "item_id": item["item_id"], "quantity": 2, "options": obrigatorias}
+        antes = client.get("/api/session").json()
+        r = client.post("/api/selection/preview?aguardar=false", json=corpo)
+        assert r.status_code == 200, r.text
+        assert r.json()["nutrition"]["calories"] == 610 and r.json()["quantity"] == 2 and chamadas == [False]
+        depois = client.get("/api/session").json()
+        assert depois["selected"] is None and depois == antes  # nada foi escolhido nem gravado na sessão
+        invalido = client.post("/api/selection/preview", json={**corpo, "options": []})
+        assert invalido.status_code == 422 or not obrigatorias

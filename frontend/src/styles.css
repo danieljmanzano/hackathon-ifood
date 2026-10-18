@@ -133,6 +133,8 @@ summary { cursor: pointer; font-weight: 600; font-size: 12px; }
 .secondary-button { border: 1px solid var(--line); background: #fff; }
 .action-footer { display: flex; gap: 15px; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); padding-top: 20px; margin-top: 16px; }
 .action-footer > span { display: flex; flex-direction: column; gap: 4px; }
+.action-buttons { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.preview-nutrition { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
 .action-footer strong { font-size: 18px; }
 .action-footer small { color: var(--muted); font-size: 10px; }
 .choice-button { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: #fff; margin-top: 12px; text-align: left; font-size: 13px; }

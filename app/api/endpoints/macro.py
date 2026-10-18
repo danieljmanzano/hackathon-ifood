@@ -38,6 +38,7 @@ from app.schemas.macro import (
     OrderReview,
     OrderReviewEdit,
     OrderReviewInput,
+    SelectedItem,
     SelectionInput,
     Session,
     UserProfile,
@@ -815,6 +816,28 @@ async def selection(
                       Message(role='assistant', text='Prato escolhido. Vamos selecionar a entrega e o pagamento.')])[-40:]
 
     return mutate_session(request, session, update)
+
+
+@router.post("/selection/preview", response_model=SelectedItem)
+async def selection_preview(
+    payload: SelectionInput,
+    aguardar: bool = True,
+    session: Session = Depends(current_session),
+    provider: MockIFood = Depends(get_provider),
+    settings: Settings = Depends(get_settings),
+):
+    """Calorias e macros do prato com as opções escolhidas, SEM escolher o prato: a sessão não muda.
+
+    `aguardar=true` inicia o cálculo e espera o prazo da resposta; se ainda estiver "pending", a tela chama de novo com
+    `aguardar=false` até terminar (reaproveita o cálculo em andamento ou o resultado já guardado).
+    """
+    editable(session)
+    if not session.address or not offered(session, payload.merchant_id, payload.item_id):
+        raise MacroError("Escolha um item da busca atual ou do cardápio aberto.", 422)
+    candidate = await provider.item(payload.merchant_id, payload.item_id, session.address)
+    selected_item = select(candidate, payload)
+    nutrition = await estimate_selected(selected_item, settings, aguardar=aguardar)
+    return selected_item.model_copy(update={"nutrition": nutrition})
 
 
 @router.get("/selection/nutrition", response_model=Session)
