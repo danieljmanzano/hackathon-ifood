@@ -1,4 +1,8 @@
 export interface NutritionPreferences {
+  min_calories: number | null;
+  max_protein_g: number | null;
+  min_carbs_g: number | null;
+  min_fat_g: number | null;
   goals: ("high_protein" | "low_carb" | "low_fat" | "low_calorie")[];
   max_calories: number | null;
   min_protein_g: number | null;
@@ -243,7 +247,7 @@ export interface Order {
 }
 export interface Session {
   nutrition_search?: {id: string; state: "pending" | "complete"; tested: number; accepted: number; approximate?: number; batches: number; reason: string | null} | null;
-  last_chat_action?: "search" | "context" | null;
+  last_chat_action?: "search" | "context" | "preferences" | null;
   request_intent?: MealIntent | null;
   id: string;
   mode: "mock" | "live";

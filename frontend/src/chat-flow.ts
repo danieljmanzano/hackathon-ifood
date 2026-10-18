@@ -25,3 +25,10 @@ export function requestedQuantity(text: string): number | undefined {
   const value = Number(match[1]);
   return value >= 1 && value <= 20 ? value : undefined;
 }
+
+/** Encaminha comandos explícitos de perfil ao backend, mesmo durante uma compra ou sem endereço. */
+export function preferenceCommand(text: string): boolean {
+  const value = normalize(text);
+  const scope = /(?:meu|minha)\s+(?:minim[oa]|maxim[oa])|preferencias?|perfil|metas?|objetivo|limites?|orcamento|restricoes|alergias|ingredientes? (?:que|preferidos|favoritos)|alimentos? (?:que|preferidos|favoritos)|gostos?/;
+  return scope.test(value) && /^(?:por favor[, ]*)?(?:(?:quero que voce|quero|pode|voce pode|gostaria que voce|preciso que voce)\s+)?(?:salve|salvar|guarde|guardar|registre|registrar|atualize|atualizar|mude|mudar|altere|alterar|defina|definir|ajuste|ajustar|remova|remover|retire|retirar|adicione|adicionar|inclua|incluir|limpe|limpar|apague|apagar|esqueca|esquecer|substitua|substituir)\b/.test(value);
+}

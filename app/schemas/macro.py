@@ -27,6 +27,18 @@ class NutritionPreferences(Model):
     min_protein_g: NonNegative | None = None
     max_carbs_g: NonNegative | None = None
     max_fat_g: NonNegative | None = None
+    min_calories: NonNegative | None = None
+    max_protein_g: NonNegative | None = None
+    min_carbs_g: NonNegative | None = None
+    min_fat_g: NonNegative | None = None
+
+    @model_validator(mode="after")
+    def valid_ranges(self):
+        for lower, upper in (("min_calories", "max_calories"), ("min_protein_g", "max_protein_g"),
+                             ("min_carbs_g", "max_carbs_g"), ("min_fat_g", "max_fat_g")):
+            if getattr(self, lower) is not None and getattr(self, upper) is not None and getattr(self, lower) > getattr(self, upper):
+                raise ValueError("O mínimo nutricional não pode ser maior que o máximo.")
+        return self
 
     @property
     def active(self) -> bool:
@@ -461,7 +473,7 @@ class Session(Model):
     recommendations: list[Recommendation] = Field(default_factory=list)
     recent_recommendations: list[tuple[str, str]] = Field(default_factory=list, max_length=18)
     request_intent: MealIntent | None = None
-    last_chat_action: Literal['search', 'context'] | None = None
+    last_chat_action: Literal['search', 'context', 'preferences'] | None = None
     selected: SelectedItem | None = None
     summary: CheckoutSummary | None = None
     order: OrderRecord | None = None

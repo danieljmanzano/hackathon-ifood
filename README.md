@@ -374,3 +374,31 @@ O progresso separa `accepted` (aprovados) de `approximate` (alternativas).
 Orçamento, disponibilidade, restrições e limites numéricos continuam sendo
 aplicados. Se um limite numérico não puder ser verificado, essa opção não entra
 nas alternativas. Com um ou dois aprovados, retornam apenas os aprovados.
+
+### Preferências opcionais e edição explícita pelo chat
+
+O painel Preferências permite definir, por prato, mínimo e máximo de calorias,
+proteína, carboidratos e gordura. Todos os limites são opcionais e começam vazios;
+o sistema não preenche números a partir do objetivo, treino ou histórico.
+Metas diárias continuam separadas dos intervalos por prato. Intervalos com mínimo
+maior que máximo são recusados pelo frontend e pelo backend.
+
+O agente pode salvar alterações quando o usuário pedir explicitamente, por exemplo:
+
+- “Salve nas minhas preferências entre 20 e 40 g de proteína e até 600 kcal”.
+- “Adicione frango e legumes aos ingredientes que gosto”.
+- “Adicione cebola aos ingredientes que prefiro evitar”.
+- “Remova meu máximo de proteína”.
+
+“Quero frango até 600 kcal hoje” aplica o limite à busca atual e não muda o perfil.
+Perguntas, negativas e pedidos condicionais não autorizam alterações. O comando
+pode ser enviado antes de selecionar endereço e durante um pedido; não cria busca,
+não altera carrinho e não confirma compra. A resposta confirma a alteração salva.
+
+A skill do agente `user_preferences` em `app/skills/preferencias.py` interpreta o
+pedido em operações tipadas quando o LLM está habilitado; comandos comuns de
+limites e ingredientes também têm interpretação local. O backend exige evidência
+na mensagem, números/unidades explícitos, campos permitidos e validação do perfil
+completo antes de persistir. Uma proposta inválida mantém todas as preferências.
+Mudanças são gravadas no SQLite da sessão, reaparecem no painel e valem para as
+próximas buscas. Campos omitidos e dados de compra são preservados.
