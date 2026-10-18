@@ -13,7 +13,7 @@ Este documento reúne quatro dos seis entregáveis. Os outros dois estão em arq
 | 05 | Documento Técnico Resumido | [Seção 05](#05--documento-técnico-resumido) |
 | 06 | Feedback sobre os MCPs | [`06-feedback-mcp.md`](06-feedback-mcp.md) |
 
-Código: https://github.com/danieljmanzano/hackaton-ifood
+Código: https://github.com/danieljmanzano/hackathon-ifood
 
 ---
 
