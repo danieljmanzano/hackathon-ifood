@@ -1,0 +1,38 @@
+flowchart LR
+    A["🍽️ Prato e complementos"] --> B{"Resultado<br/>no cache?"}
+
+    B -->|Sim| R["📊 Calorias e macros<br/>faixa, fonte e confiança"]
+    B -->|Não| C["🔎 Consultar fontes"]
+
+    C --> D["📚 Bases nutricionais<br/>produtos e TACO"]
+    D -->|Sem correspondência| E["🌐 Busca na web"]
+
+    C --> F["🤖 Estimativas por IA<br/>texto e foto"]
+    F --> G["🥗 Cálculo por ingredientes<br/>com apoio da TACO"]
+
+    D --> H["⚖️ Combinar resultados"]
+    E --> H
+    F --> H
+    G --> H
+
+    H --> I["✅ Ajustar porção<br/>e validar nutrientes"]
+    I --> J{"Dados<br/>suficientes?"}
+    J -->|Sim| K["💾 Salvar no cache"]
+    K --> R
+    J -->|Não| L["⚠️ Nutrição indisponível"]
+
+    classDef entrada fill:#DBEAFE,stroke:#2563EB,color:#172554
+    classDef decisao fill:#FEF3C7,stroke:#D97706,color:#78350F
+    classDef fontes fill:#CCFBF1,stroke:#0D9488,color:#134E4A
+    classDef ia fill:#EDE9FE,stroke:#7C3AED,color:#3B0764
+    classDef validacao fill:#FFEDD5,stroke:#EA580C,color:#7C2D12
+    classDef resultado fill:#DCFCE7,stroke:#16A34A,color:#14532D
+    classDef falha fill:#FEE2E2,stroke:#DC2626,color:#7F1D1D
+
+    class A entrada
+    class B,J decisao
+    class C,D,E fontes
+    class F,G ia
+    class H,I validacao
+    class K,R resultado
+    class L falha

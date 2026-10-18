@@ -12,6 +12,12 @@ Equipe "iFood Benefícios" · Hackathon SEMCOMP × iFood 2026
 
 <sub>Fonte editável: [`diagramas/fluxo-solucao.mmd`](diagramas/fluxo-solucao.mmd)</sub>
 
+## Preferências e filtragem
+
+[Ver o diagrama horizontal de preferências](diagramas/README.md#preferências-e-filtragem).
+Ele mostra como o perfil e o pedido atual orientam os filtros, o ranking e a
+verificação nutricional. [Fonte editável em Mermaid](diagramas/preferencias-filtragem.mmd).
+
 ## Etapas
 
 1. **Endereço.** A conversa usa os endereços da conta do iFood (`listAddresses`). Se houver mais de um, a pessoa escolhe no chat. Ela também pode cadastrar um novo (`createAddress`) ou trocar depois.
