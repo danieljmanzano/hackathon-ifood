@@ -4,16 +4,17 @@ import { api, money } from "./api";
 import { Brand, MealCard, SelectedNutrition, Spinner, Stepper } from "./components";
 import { OrderReviewCard } from "./Reviews";
 import { ChatPreferences } from "./ChatPreferences";
-import { confirmsOrder, matchChoice, normalize, reportsContext, requestedQuantity, wantsNewOrder } from "./chat-flow";
+import { AddressPicker } from "./Addresses";
+import { addressIntent, confirmsOrder, matchChoice, normalize, reportsContext, requestedQuantity, wantsNewOrder } from "./chat-flow";
 import { consumptionMigrated, loadConsumption, markConsumptionMigrated, saveConsumption } from "./storage";
-import type { Address, Candidate, CheckoutChoices, OrderReviewInput, Recommendation, SelectedOption, Session } from "./types";
+import type { Address, Candidate, CheckoutChoices, NewAddress, OrderReviewInput, Recommendation, SelectedOption, Session } from "./types";
 
 type Phase = "address" | "discover" | "customize" | "delivery" | "payment" | "confirm" | "ordered";
 type ChatMessage = { id: string; role: "user" | "assistant"; text: string; recommendations?: Recommendation[] };
 const greeting = "Oi! Me conte o que você quer comer e como está seu dia. Posso considerar seus gostos, suas avaliações e seu objetivo para encontrar um prato que combine com você.";
 const prompts = ["Treinei hoje e estou com muita fome", "Quero algo leve até R$ 30", "Meu objetivo é ganhar massa e hoje só comi frutas"];
 const phaseLabels: Record<Phase, string> = {
-  address: "Endereço do iFood", discover: "Sua próxima refeição", customize: "Seu prato",
+  address: "Endereço de entrega", discover: "Sua próxima refeição", customize: "Seu prato",
   delivery: "Entrega", payment: "Pagamento", confirm: "Revisão do pedido", ordered: "Pedido confirmado",
 };
 const errorText = (error: unknown) => error instanceof Error ? error.message : "Não foi possível concluir. Tente novamente.";
@@ -24,6 +25,8 @@ export default function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [phase, setPhase] = useState<Phase>("discover");
   const [addresses, setAddresses] = useState<Address[]>([]);
+  const [addressReturn, setAddressReturn] = useState<Phase | null>(null);
+  const [addingAddress, setAddingAddress] = useState(false);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -62,7 +65,7 @@ export default function App() {
     try {
       let current = await api.session();
       const available = !current.address ? await api.addresses() : [];
-      setAddresses(available);
+      setAddresses(available); setAddingAddress(!current.address && !available.length);
       if (!current.address && available.length === 1 && !current.order) current = await api.address(available[0].id);
       // Mantém os consumos antigos na personalização, sem uma tela de diário.
       if (!consumptionMigrated(current.id)) {
@@ -136,12 +139,38 @@ export default function App() {
     return () => { cancelled = true; clearInterval(timer); };
   }, [selectedNutritionPending, session?.selected?.candidate.item_id]);
 
+  async function openAddresses(add = false) {
+    if (!session || busy) return;
+    if (session.order) { say("assistant", "Este pedido já foi confirmado. Diga “novo pedido” para escolher outro endereço."); return; }
+    const available = await perform(api.addresses);
+    if (!available) return;
+    setAddresses(available); setAddingAddress(add || !available.length);
+    if (phase !== "address") setAddressReturn(session.address ? phase : null);
+    setPhase("address");
+    say("assistant", add || !available.length ? "Vamos cadastrar o endereço. Digite rua, número e cidade abaixo." : "Escolha onde receber a entrega ou adicione um novo endereço.");
+  }
+  function keepAddress() {
+    if (!addressReturn) return;
+    setPhase(addressReturn); setAddressReturn(null); setAddingAddress(false);
+  }
+  function addressChanged(next: Session, address: Address) {
+    setSession(next); setPhase("discover"); setActiveSearch(null); setDetail(null); setChoices(null); setDelivery("");
+    setAddressReturn(null); setAddingAddress(false);
+    say("assistant", `Entrega em ${address.label}: ${address.formatted}. O que você quer comer?`);
+  }
   async function selectAddress(address: Address, echo = true) {
-    const next = await perform(() => api.address(address.id));
-    if (!next) return;
-    setSession(next); setPhase("discover"); setActiveSearch(null);
     if (echo) say("user", `Usar ${address.label}.`);
-    say("assistant", "Endereço selecionado. O que você quer comer?");
+    if (addressReturn && session?.address?.id === address.id) { keepAddress(); say("assistant", "Mantive o endereço atual."); return; }
+    const next = await perform(() => api.address(address.id));
+    if (next) addressChanged(next, address);
+  }
+  async function createAddress(payload: NewAddress) {
+    const created = await perform(() => api.createAddress(payload));
+    if (!created?.session.address) return false;
+    setAddresses(created.addresses);
+    say("user", `Adicionar ${payload.address}.`);
+    addressChanged(created.session, created.session.address);
+    return true;
   }
   async function search(message: string) {
     if (!session) return;
@@ -237,6 +266,8 @@ export default function App() {
     }
     say("user", value);
     if (wantsNewOrder(value)) { await startNewOrder(); return; }
+    const addressRequest = addressIntent(value);
+    if (addressRequest) { await openAddresses(addressRequest === "add"); return; }
     if (phase === "ordered" && /^avalia[cç][aã]o\s*:/i.test(value)) {
       const comment = value.replace(/^avalia[cç][aã]o\s*:\s*/i, "");
       if (comment.length > 200 || !comment) say("assistant", "Escreva uma avaliação com até 200 caracteres depois de “avaliação:”.");
@@ -247,7 +278,7 @@ export default function App() {
     if (phase === "address") {
       const option = matchChoice(value, addresses, a => a.label);
       if (option) await selectAddress(option, false);
-      else say("assistant", "Escolha um dos endereços já cadastrados no iFood. O cadastro de endereços continua no aplicativo.");
+      else say("assistant", "Escolha um endereço pelo nome ou número, ou diga “adicionar endereço” para cadastrar outro.");
       return;
     }
     if (phase === "customize" && detail) {
@@ -296,7 +327,7 @@ export default function App() {
     else await search(value);
   }
   function submit(event: FormEvent) { event.preventDefault(); void send(text); }
-  const placeholder = phase === "customize" ? "Ex.: arroz integral, 2 unidades, continuar…" : phase === "delivery" ? "Qual entrega você prefere?" : phase === "payment" ? "Qual forma de pagamento?" : phase === "confirm" ? "Escreva “confirmar pedido” para finalizar…" : phase === "ordered" ? "Avaliação: conte como foi, ou diga “novo pedido”…" : "Conte sua fome, seu objetivo ou o que quer comer…";
+  const placeholder = phase === "address" ? "Escolha pelo nome ou número, ou diga “adicionar endereço”…" : phase === "customize" ? "Ex.: arroz integral, 2 unidades, continuar…" : phase === "delivery" ? "Qual entrega você prefere?" : phase === "payment" ? "Qual forma de pagamento?" : phase === "confirm" ? "Escreva “confirmar pedido” para finalizar…" : phase === "ordered" ? "Avaliação: conte como foi, ou diga “novo pedido”…" : "Conte sua fome, seu objetivo ou o que quer comer…";
   const disabled = busy || loading || !session;
 
   return <div className="chat-app">
@@ -304,7 +335,8 @@ export default function App() {
     <header className="chat-header"><div className="chat-header-inner">
       <div className="chat-brand"><Brand /><span className="ifood-context">Seu assistente no iFood</span></div>
       <div className="chat-header-actions">
-        <span className="host-address" title={session?.address?.formatted}><MapPin size={15} /><span>{session?.address?.label ?? "Endereço do iFood"}</span></span>
+        <button className="host-address" title={session?.address ? `Entregar em ${session.address.formatted}. Trocar endereço` : "Escolher endereço"}
+          disabled={disabled || phase === "address"} onClick={() => void openAddresses()}><MapPin size={15} /><span>{session?.address?.label ?? "Escolher endereço"}</span><ChevronDown size={13} /></button>
         <button className="context-button" aria-label="Preferências da conversa" aria-expanded={preferencesOpen} aria-controls="chat-preferences" disabled={!session}
           onClick={() => setPreferencesOpen(open => !open)}><Settings2 size={17} /><span>Preferências</span><ChevronDown size={13} /></button>
       </div>
@@ -333,11 +365,9 @@ export default function App() {
       </div>
       {!loading && messages.length === 1 && phase === "discover" && <div className="starter-prompts" aria-label="Exemplos para começar">{prompts.map(prompt =>
         <button key={prompt} disabled={disabled} onClick={() => void send(prompt)}>{prompt}</button>)}</div>}
-      {phase === "address" && !loading && <section className="chat-action" aria-label="Endereço do iFood"><h2>Qual endereço do iFood vamos usar?</h2>
-        {addresses.map((address, index) => <button className="choice-button" key={address.id} disabled={disabled} onClick={() => void selectAddress(address)}>
-          <span>{index + 1}. {address.label}</span><small>{address.formatted}</small></button>)}
-        {!addresses.length && <p>Escolha ou cadastre seu endereço no iFood e atualize esta conversa.</p>}
-      </section>}
+      {phase === "address" && !loading && session && <AddressPicker addresses={addresses} current={session.address} simulated={session.mode === "mock"}
+        busy={busy} disabled={disabled} adding={addingAddress} onAdding={setAddingAddress} onSelect={address => void selectAddress(address)}
+        onGeocode={address => perform(() => api.geocode(address))} onCreate={createAddress} onCancel={addressReturn ? keepAddress : undefined} />}
       {phase === "customize" && detail && <section className="chat-action" aria-label="Montar prato">
         <span className="action-caption">Vamos montar seu pedido</span><h2>{detail.name}</h2><p className="muted">{detail.description}</p>
         {detail.option_groups.map(group => <fieldset className="option-group" key={group.id}><legend>{group.name}</legend>
@@ -368,7 +398,8 @@ export default function App() {
           <div><dt>Pratos e complementos</dt><dd>{money(session.summary.subtotal_cents)}</dd></div>
           <div><dt>Taxa de entrega</dt><dd>{money(session.summary.delivery.fee_cents)}</dd></div>
           <div className="order-total"><dt>Total</dt><dd>{money(session.summary.total_cents)}</dd></div></dl>
-        <div className="summary-adjustments"><button disabled={disabled} onClick={() => setPhase("delivery")}>Alterar entrega</button>
+        <div className="summary-adjustments"><button disabled={disabled} onClick={() => void openAddresses()}>Alterar endereço</button>
+          <button disabled={disabled} onClick={() => setPhase("delivery")}>Alterar entrega</button>
           <button disabled={disabled} onClick={() => setPhase("payment")}>Alterar pagamento</button></div>
         <p className="small muted">Pedido de demonstração. Confirme somente depois de conferir os itens e o total.</p>
         <button className="primary-button confirm-order" disabled={disabled || session.mode !== "mock"} onClick={() => void confirmOrder()}>
