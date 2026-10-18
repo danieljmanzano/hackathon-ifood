@@ -1,0 +1,1097 @@
+{
+  "data": {
+    "guides": {
+      "nodes": [
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides"
+          },
+          "frontmatter": {
+            "title": "Overview",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides"
+          },
+          "frontmatter": {
+            "title": "Visão geral",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides"
+          },
+          "frontmatter": {
+            "title": "Visión general",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/authentication"
+          },
+          "frontmatter": {
+            "title": "Autenticación",
+            "step": 2,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/authentication"
+          },
+          "frontmatter": {
+            "title": "Authentication",
+            "step": 2,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps"
+          },
+          "frontmatter": {
+            "title": "MCPs",
+            "step": 1,
+            "sidebarGroup": "MCPs"
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/authentication"
+          },
+          "frontmatter": {
+            "title": "Autenticação",
+            "step": 2,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps"
+          },
+          "frontmatter": {
+            "title": "MCPs",
+            "step": 1,
+            "sidebarGroup": "MCPs"
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps"
+          },
+          "frontmatter": {
+            "title": "MCPs",
+            "step": 1,
+            "sidebarGroup": "MCPs"
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/first-steps"
+          },
+          "frontmatter": {
+            "title": "First steps",
+            "step": 0,
+            "sidebarGroup": "Primeiros passos"
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/first-steps"
+          },
+          "frontmatter": {
+            "title": "Primeiros passos",
+            "step": 0,
+            "sidebarGroup": "Primeiros passos"
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/first-steps"
+          },
+          "frontmatter": {
+            "title": "Primeros pasos",
+            "step": 0,
+            "sidebarGroup": "Primeiros passos"
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/authentication/erros"
+          },
+          "frontmatter": {
+            "title": "Errores",
+            "step": 5,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/authentication/erros"
+          },
+          "frontmatter": {
+            "title": "Errors",
+            "step": 5,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/authentication/erros"
+          },
+          "frontmatter": {
+            "title": "Erros",
+            "step": 5,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/authentication/escopos"
+          },
+          "frontmatter": {
+            "title": "Scopes",
+            "step": 4,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/authentication/escopos"
+          },
+          "frontmatter": {
+            "title": "Scopes",
+            "step": 4,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/authentication/implementacao"
+          },
+          "frontmatter": {
+            "title": "Implementation",
+            "step": 3,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/authentication/escopos"
+          },
+          "frontmatter": {
+            "title": "Escopos",
+            "step": 4,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/authentication/implementacao"
+          },
+          "frontmatter": {
+            "title": "Implementación",
+            "step": 3,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/authentication/implementacao"
+          },
+          "frontmatter": {
+            "title": "Implementação",
+            "step": 3,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/authentication/introducao"
+          },
+          "frontmatter": {
+            "title": "Introduction",
+            "step": 1,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/authentication/introducao"
+          },
+          "frontmatter": {
+            "title": "Introdução",
+            "step": 1,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/authentication/jornadas"
+          },
+          "frontmatter": {
+            "title": "Authentication journeys",
+            "step": 2,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/authentication/jornadas"
+          },
+          "frontmatter": {
+            "title": "Jornadas de autenticação",
+            "step": 2,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/authentication/introducao"
+          },
+          "frontmatter": {
+            "title": "Introducción",
+            "step": 1,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/account"
+          },
+          "frontmatter": {
+            "title": "User MCP",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/authentication/jornadas"
+          },
+          "frontmatter": {
+            "title": "Jornadas de autenticación",
+            "step": 2,
+            "sidebarGroup": "Autenticação"
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/account"
+          },
+          "frontmatter": {
+            "title": "User MCP",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/account"
+          },
+          "frontmatter": {
+            "title": "User MCP",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/discovery"
+          },
+          "frontmatter": {
+            "title": "Offer Discovery MCP",
+            "step": 2,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/discovery"
+          },
+          "frontmatter": {
+            "title": "Offer Discovery MCP",
+            "step": 2,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/discovery"
+          },
+          "frontmatter": {
+            "title": "Offer Discovery MCP",
+            "step": 2,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/order"
+          },
+          "frontmatter": {
+            "title": "Order Tracking",
+            "step": 4,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/order"
+          },
+          "frontmatter": {
+            "title": "Order Tracking",
+            "step": 4,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/order"
+          },
+          "frontmatter": {
+            "title": "Order Tracking",
+            "step": 4,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/cart"
+          },
+          "frontmatter": {
+            "title": "Cart",
+            "step": 3,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/cart"
+          },
+          "frontmatter": {
+            "title": "Cart",
+            "step": 3,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/cart"
+          },
+          "frontmatter": {
+            "title": "Cart",
+            "step": 3,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/first-steps/agent"
+          },
+          "frontmatter": {
+            "title": "Create agent",
+            "step": 3,
+            "sidebarGroup": "Primeiros passos"
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/first-steps/agent"
+          },
+          "frontmatter": {
+            "title": "Crear agente",
+            "step": 3,
+            "sidebarGroup": "Primeiros passos"
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/first-steps/agent"
+          },
+          "frontmatter": {
+            "title": "Criar agente",
+            "step": 3,
+            "sidebarGroup": "Primeiros passos"
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/first-steps/account"
+          },
+          "frontmatter": {
+            "title": "Create account",
+            "step": 1,
+            "sidebarGroup": "Primeiros passos"
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/first-steps/account"
+          },
+          "frontmatter": {
+            "title": "Crear cuenta",
+            "step": 1,
+            "sidebarGroup": "Primeiros passos"
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/first-steps/account"
+          },
+          "frontmatter": {
+            "title": "Criar conta",
+            "step": 1,
+            "sidebarGroup": "Primeiros passos"
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/first-steps/install-mcp"
+          },
+          "frontmatter": {
+            "title": "Instalar MCP",
+            "step": 2,
+            "sidebarGroup": "Primeiros passos"
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/first-steps/install-mcp"
+          },
+          "frontmatter": {
+            "title": "Install MCP",
+            "step": 2,
+            "sidebarGroup": "Primeiros passos"
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/first-steps/test-account"
+          },
+          "frontmatter": {
+            "title": "Create test account",
+            "step": 4,
+            "sidebarGroup": "Primeiros passos"
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/first-steps/install-mcp"
+          },
+          "frontmatter": {
+            "title": "Instalar MCP",
+            "step": 2,
+            "sidebarGroup": "Primeiros passos"
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/first-steps/test-account"
+          },
+          "frontmatter": {
+            "title": "Criar conta de teste",
+            "step": 4,
+            "sidebarGroup": "Primeiros passos"
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/first-steps/test-account"
+          },
+          "frontmatter": {
+            "title": "Crear cuenta de prueba",
+            "step": 4,
+            "sidebarGroup": "Primeiros passos"
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/account/erros"
+          },
+          "frontmatter": {
+            "title": "Errors",
+            "step": 3,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/account/casos-de-uso"
+          },
+          "frontmatter": {
+            "title": "Use cases",
+            "step": 4,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/account/erros"
+          },
+          "frontmatter": {
+            "title": "Errores",
+            "step": 3,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/account/erros"
+          },
+          "frontmatter": {
+            "title": "Erros",
+            "step": 3,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/account/casos-de-uso"
+          },
+          "frontmatter": {
+            "title": "Casos de uso",
+            "step": 4,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/account/tools"
+          },
+          "frontmatter": {
+            "title": "Tools",
+            "step": 2,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/account/introducao"
+          },
+          "frontmatter": {
+            "title": "Introduction",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/account/tools"
+          },
+          "frontmatter": {
+            "title": "Tools",
+            "step": 2,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/account/tools"
+          },
+          "frontmatter": {
+            "title": "Tools",
+            "step": 2,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/account/introducao"
+          },
+          "frontmatter": {
+            "title": "Introducción",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/account/introducao"
+          },
+          "frontmatter": {
+            "title": "Introdução",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/discovery/casos-de-uso"
+          },
+          "frontmatter": {
+            "title": "Casos de uso",
+            "step": 4,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/discovery/casos-de-uso"
+          },
+          "frontmatter": {
+            "title": "Use cases",
+            "step": 4,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/discovery/erros"
+          },
+          "frontmatter": {
+            "title": "Errors",
+            "step": 3,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/discovery/erros"
+          },
+          "frontmatter": {
+            "title": "Errores",
+            "step": 3,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/discovery/erros"
+          },
+          "frontmatter": {
+            "title": "Erros",
+            "step": 3,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/discovery/introducao"
+          },
+          "frontmatter": {
+            "title": "Introduction",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/discovery/introducao"
+          },
+          "frontmatter": {
+            "title": "Introducción",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/discovery/casos-de-uso"
+          },
+          "frontmatter": {
+            "title": "Casos de uso",
+            "step": 4,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/discovery/tools"
+          },
+          "frontmatter": {
+            "title": "Tools",
+            "step": 2,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/discovery/introducao"
+          },
+          "frontmatter": {
+            "title": "Introdução",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/account/casos-de-uso"
+          },
+          "frontmatter": {
+            "title": "Casos de uso",
+            "step": 4,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/discovery/tools"
+          },
+          "frontmatter": {
+            "title": "Tools",
+            "step": 2,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/order/casos-de-uso"
+          },
+          "frontmatter": {
+            "title": "Casos de uso",
+            "step": 4,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/order/casos-de-uso"
+          },
+          "frontmatter": {
+            "title": "Casos de uso",
+            "step": 4,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/order/erros"
+          },
+          "frontmatter": {
+            "title": "Errors",
+            "step": 3,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/order/erros"
+          },
+          "frontmatter": {
+            "title": "Errores",
+            "step": 3,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/order/introducao"
+          },
+          "frontmatter": {
+            "title": "Introduction",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/order/erros"
+          },
+          "frontmatter": {
+            "title": "Erros",
+            "step": 3,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/discovery/tools"
+          },
+          "frontmatter": {
+            "title": "Tools",
+            "step": 2,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/order/introducao"
+          },
+          "frontmatter": {
+            "title": "Introducción",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/cart/casos-de-uso"
+          },
+          "frontmatter": {
+            "title": "Use Cases",
+            "step": 4,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/cart/erros"
+          },
+          "frontmatter": {
+            "title": "Error Handling",
+            "step": 5,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/order/introducao"
+          },
+          "frontmatter": {
+            "title": "Introdução",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/cart/erros"
+          },
+          "frontmatter": {
+            "title": "Manejo de errores",
+            "step": 5,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/cart/erros"
+          },
+          "frontmatter": {
+            "title": "Tratamento de Erros",
+            "step": 5,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/order/tools"
+          },
+          "frontmatter": {
+            "title": "Tools",
+            "step": 2,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/order/tools"
+          },
+          "frontmatter": {
+            "title": "Tools",
+            "step": 2,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/cart/casos-de-uso"
+          },
+          "frontmatter": {
+            "title": "Casos de uso",
+            "step": 4,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/order/casos-de-uso"
+          },
+          "frontmatter": {
+            "title": "Use cases",
+            "step": 4,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/cart/introducao"
+          },
+          "frontmatter": {
+            "title": "Introducción",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/cart/introducao"
+          },
+          "frontmatter": {
+            "title": "Introdução",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/cart/introducao"
+          },
+          "frontmatter": {
+            "title": "Introduction",
+            "step": 1,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "es-CO",
+            "pageId": "/content/pages/docs/guides/mcps/cart/tools"
+          },
+          "frontmatter": {
+            "title": "Herramientas",
+            "step": 2,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "en-US",
+            "pageId": "/content/pages/docs/guides/mcps/cart/tools"
+          },
+          "frontmatter": {
+            "title": "Tools",
+            "step": 2,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/order/tools"
+          },
+          "frontmatter": {
+            "title": "Tools",
+            "step": 2,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/cart/tools"
+          },
+          "frontmatter": {
+            "title": "Tools",
+            "step": 2,
+            "sidebarGroup": null
+          }
+        },
+        {
+          "fields": {
+            "filename": "pt-BR",
+            "pageId": "/content/pages/docs/guides/mcps/cart/casos-de-uso"
+          },
+          "frontmatter": {
+            "title": "Casos de Uso",
+            "step": 4,
+            "sidebarGroup": null
+          }
+        }
+      ]
+    }
+  }
+}
