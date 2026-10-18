@@ -1,4 +1,4 @@
-# 06 · Feedback sobre os MCPs do iFood
+# 06 · Feedback sobre os MCPs
 
 Equipe "iFood Benefícios" · Hackathon SEMCOMP × iFood 2026
 
