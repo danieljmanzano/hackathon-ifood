@@ -44,9 +44,16 @@ async def _gerar(payload: dict[str, Any], model: str | None, settings: Settings)
 
                 if response.status_code == 200:
                     try:
-                        return response.json()
+                        dados = response.json()
                     except ValueError as exc:
                         raise GeminiError("Resposta inesperada do Gemini") from exc
+                    if current != models[0]:
+                        logs.info("gemini", f"RESERVA respondeu: {current} no lugar de {models[0]} em {t.texto}")
+                        logs.info("gemini", f"resposta da reserva: {logs.curto(_texto_ou_vazio(dados), 500) or '(vazia)'}")
+                    elif attempt > 0:
+                        logs.info("gemini", f"{current} respondeu na tentativa {attempt + 1}/{settings.gemini_retries}"
+                                            f" em {t.texto}")
+                    return dados
 
                 errors.append(f"{current}: {response.status_code} {response.text[:150]}")
                 logs.aviso("gemini", f"{current}: {response.status_code} {logs.curto(response.text, 110)}")
@@ -57,6 +64,13 @@ async def _gerar(payload: dict[str, Any], model: str | None, settings: Settings)
                 await asyncio.sleep(2 ** (attempt + 1))
 
     raise GeminiError("Todos os modelos falharam:\n" + "\n".join(errors))
+
+
+def _texto_ou_vazio(dados: dict[str, Any]) -> str:
+    try:
+        return _texto(dados)
+    except GeminiError:
+        return ""
 
 
 def _texto(dados: dict[str, Any]) -> str:

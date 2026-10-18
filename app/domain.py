@@ -34,6 +34,57 @@ def search_terms(request: MealRequest) -> tuple[str, int | None]:
     return intent.provider_query, intent.budget_cents
 
 
+# Palavras que descrevem o formato do prato, não o sabor/tipo: ficam de fora ao comparar os pratos.
+_DESCRITIVAS = {"com", "para", "sem", "dos", "das", "caseiro", "caseira", "caseiros", "caseiras", "inteiro", "inteira",
+                "inteiros", "inteiras", "artesanal", "artesanais", "tradicional", "especial", "grande", "pequeno",
+                "pequena", "fatia", "fatias", "pedaco", "pedacos", "unidade", "unidades", "combo", "porcao"}
+
+
+def _singular(palavra: str) -> str:
+    return palavra[:-1] if len(palavra) > 3 and palavra.endswith("s") else palavra
+
+
+def tipo_do_prato(nome: str, comida_pedida: str = "") -> str:
+    """Sabor/tipo principal do prato: a primeira palavra que o distingue ("Bolo de Cenoura com Ganache" -> "cenoura").
+
+    Ignora a própria comida pedida ("bolo"), conectivos e palavras de formato. Vazio se não houver como distinguir.
+    """
+    pedida = {_singular(w) for w in normalized(comida_pedida).split()}
+    for palavra in normalized(nome).split():
+        if len(palavra) > 2 and palavra not in _DESCRITIVAS and _singular(palavra) not in pedida:
+            return _singular(palavra)
+    return ""
+
+
+def _escolher_variados(ordered: list[Recommendation], limit: int, comida_pedida: str) -> list[Recommendation]:
+    """Segue a ordem do ranking, mas pula quem repete o tipo (e, na 1ª passada, o restaurante) de quem já entrou."""
+    escolhidos: list[Recommendation] = []
+    tipos: set[str] = set()
+    restaurantes: set[str] = set()
+    for exigir_restaurante_novo in (True, False):
+        for rec in ordered:
+            if len(escolhidos) == limit:
+                return escolhidos
+            tipo = tipo_do_prato(rec.candidate.name, comida_pedida)
+            if rec in escolhidos or (tipo and tipo in tipos):
+                continue
+            if exigir_restaurante_novo and rec.candidate.merchant_id in restaurantes:
+                continue
+            escolhidos.append(rec)
+            tipos.add(tipo)
+            restaurantes.add(rec.candidate.merchant_id)
+    return (escolhidos + [r for r in ordered if r not in escolhidos])[:limit]  # faltou variedade: completa pela ordem
+
+
+def _motivos_em_portugues(excluded: Counter, budget: int | None) -> dict[str, int]:
+    """Descartes do ranking com rótulos legíveis (vão no diagnóstico que o planejador de busca lê)."""
+    rotulos = {"unavailable": "restaurante fechado/indisponível", "vegetarian": "não vegetariano",
+               "dislike": "contém algo que você não gosta", "restriction": "bate com uma restrição",
+               "search_mismatch": "sem relação com a busca", "already_shown": "já mostrado antes nesta conversa",
+               "budget": f"acima do orçamento de R$ {budget / 100:.2f}" if budget is not None else "acima do orçamento"}
+    return {rotulos.get(motivo, motivo): n for motivo, n in excluded.items()}
+
+
 def rank(
     candidates: list[MealCandidate],
     request: MealRequest,
@@ -44,7 +95,9 @@ def rank(
     intent: MealIntent | None = None,
     nutrition_by_item: dict[tuple[str, str], NutritionResult] | None = None,
     limit: int = 3,
+    diagnostico: dict | None = None,
 ) -> list[Recommendation]:
+    """`diagnostico` (opcional) recebe quantos candidatos cada filtro descartou, em português, para o planejador."""
     started = time.perf_counter()
     excluded = Counter()
     details = {}
@@ -58,12 +111,13 @@ def rank(
 
     intent = apply_profile_preferences(intent or parse_intent(request), profile)
     nutrition_by_item = nutrition_by_item or {}
-    query = intent.food_query
+    query = " ".join([intent.food_query, *intent.search_queries])  # o modelo pode ter proposto vários termos
     generic = {"almoco", "jantar", "comida", "comer", "algo", "opcao", "opcoes", "refeicao", "com", "por", "favor", "uma", "que", "tem"}
     words = [w for w in normalized(query).split() if len(w) > 2 and w not in generic]
     recently_shown = recently_shown or []
     ranked = []
     has_search_matches = False
+
     for candidate in candidates:
         text = normalized(candidate.name + " " + candidate.description)
         search_text = text + " " + normalized(" ".join(
@@ -73,6 +127,9 @@ def rank(
         has_search_matches = has_search_matches or relevance > 0
         if not candidate.available:
             reject(candidate, "unavailable")
+            continue
+        if intent.avoid_repeats and (candidate.merchant_id, candidate.item_id) in recently_shown:
+            reject(candidate, "already_shown")  # pediu "diferente/outro/variado": o que já viu não volta
             continue
         if "vegetarian" in intent.goals and candidate.simulated and "vegetarian" not in candidate.features.tags:
             reject(candidate, "vegetarian")
@@ -164,18 +221,24 @@ def rank(
             if entry[0] == 0:
                 reject(entry[3].candidate, "search_mismatch")
         ranked = [entry for entry in ranked if entry[0] > 0]
+    if diagnostico is not None:
+        diagnostico.update(_motivos_em_portugues(excluded, budget))
     ordered = [r for _, _, _, r in sorted(ranked, key=lambda entry: (
         -entry[0], -entry[1], -entry[2], entry[3].candidate.merchant_id, entry[3].candidate.item_id
     ))]
-    # Mostra alternativas de restaurantes diferentes antes de repetir uma cozinha.
-    chosen, merchants = [], set()
-    for recommendation in ordered:
-        if recommendation.candidate.merchant_id not in merchants:
-            chosen.append(recommendation)
-            merchants.add(recommendation.candidate.merchant_id)
-        if len(chosen) == limit:
-            break
-    chosen = (chosen + [r for r in ordered if r not in chosen])[:limit]
+    if intent.avoid_repeats:
+        # Pediu variedade: um prato de cada tipo ("cenoura", "chocolate"...), de restaurantes diferentes quando der.
+        chosen = _escolher_variados(ordered, limit, intent.food_query)
+    else:
+        # Mostra alternativas de restaurantes diferentes antes de repetir uma cozinha.
+        chosen, merchants = [], set()
+        for recommendation in ordered:
+            if recommendation.candidate.merchant_id not in merchants:
+                chosen.append(recommendation)
+                merchants.add(recommendation.candidate.merchant_id)
+            if len(chosen) == limit:
+                break
+        chosen = (chosen + [r for r in ordered if r not in chosen])[:limit]
     event("ranking.completed", candidate_count=len(candidates), eligible_count=len(ordered),
           excluded=dict(excluded), result_count=len(chosen),
           selected=[dict(position=i + 1, **details[id(rec)]) for i, rec in enumerate(chosen)],

@@ -33,11 +33,31 @@ class Settings(BaseSettings):
         "openrouter/free",
     ]
     openrouter_timeout: float = 60.0
+    # Quando a busca não acha nada, um modelo replaneja (outras consultas, relaxar o orçamento padrão) ou explica.
+    busca_replanejar: bool = True
+    busca_max_replanejamentos: int = Field(default=1, ge=0, le=2)
+    busca_prazo_total_segundos: float = Field(default=28, gt=0, le=29)  # o frontend desiste aos 30 s
+    busca_replanejar_timeout_seconds: float = Field(default=10, gt=0, le=20)
+    # No modo live o planejador pode explorar o iFood com tools de LEITURA do MCP (categorias, restaurantes, cardápio).
+    busca_mcp_ferramentas: bool = True
+    busca_max_passos_planejador: int = Field(default=2, ge=1, le=3)  # perguntas ao modelo por rodada (1 pode ser exploração)
+    # Por privacidade os logs da busca só têm contagens. Ligue para ver consultas e respostas dos modelos (depuração).
+    busca_log_conteudo: bool = False
+    # Quanto da conversa o agente de busca lê (0 desliga): últimas N mensagens, cortadas em M caracteres cada.
+    busca_historico_mensagens: int = Field(default=6, ge=0, le=20)
+    busca_historico_max_caracteres: int = Field(default=300, ge=50, le=1000)
     intent_llm_enabled: bool = True
     intent_llm_timeout_seconds: float = Field(default=18, gt=0, le=20)
     # Interpretação da avaliação livre do pedido; roda em segundo plano, então tolera mais tempo.
     review_llm_enabled: bool = True
     review_llm_timeout_seconds: float = Field(default=30, gt=0, le=60)
+
+    # Se o provedor de texto falhar (cota, 429, fora do ar), tenta o outro, desde que a chave dele exista:
+    # OpenRouter -> OpenAI (pago) e OpenAI -> OpenRouter. Vale para a busca, o agente e o pipeline de calorias.
+    llm_fallback: bool = True
+    # Quanto o provedor principal pode demorar antes de a reserva assumir. Sem isso, a cadeia de modelos
+    # gratuitos do OpenRouter pode gastar todo o prazo da chamada e a reserva nunca chega a rodar.
+    llm_fallback_apos_segundos: float = Field(default=20, gt=0, le=120)
 
     # OpenAI (usada quando NUTRITION_PROVIDER=openai; a chave e o modelo ficam na seção de nutrição abaixo)
     openai_base_url: str = "https://api.openai.com/v1"
@@ -98,9 +118,10 @@ class Settings(BaseSettings):
 
     @property
     def llm_api_key(self) -> str:
-        """Chave do provedor de texto escolhido."""
-        return (self.openai_api_key.get_secret_value() if self.nutrition_provider == "openai"
-                else self.openrouter_api_key)
+        """Chave do provedor de texto escolhido (ou a do outro, se faltar e o fallback estiver ligado)."""
+        openai, openrouter = self.openai_api_key.get_secret_value(), self.openrouter_api_key
+        principal, outro = (openai, openrouter) if self.nutrition_provider == "openai" else (openrouter, openai)
+        return principal or (outro if self.llm_fallback else "")
 
     @property
     def web_api_key(self) -> str:

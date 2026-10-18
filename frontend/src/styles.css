@@ -105,6 +105,13 @@ summary { cursor: pointer; font-weight: 600; font-size: 12px; }
 .nutrition-details p { margin: 7px 0; }
 .nutrition-details a { color: var(--red-dark); }
 .nutrition-macros { display: flex; flex-wrap: wrap; gap: 8px; }
+.nutrition-badge-group { display: flex; flex-wrap: wrap; align-items: center; align-self: flex-start; gap: 6px; }
+.macro-chips { display: inline-flex; flex-wrap: wrap; gap: 5px; }
+.macro-chip { font-size: 10px; background: var(--surface); color: var(--muted); border-radius: 6px; padding: 3px 7px; }
+.macro-chip b { margin-right: 2px; color: var(--ink); }
+.selected-nutrition .macro-chips { margin-top: 4px; }
+.selected-nutrition.ready .macro-chip { background: #eef6f0; color: #326c44; font-size: 10px; }
+.selected-nutrition.ready .macro-chip b { color: #326c44; }
 .chat-action { margin: 26px 0 26px 42px; max-width: 660px; border: 1px solid var(--line); border-radius: 13px; padding: 24px; background: #fff; }
 .chat-action h2 { font-size: 18px; margin-bottom: 12px; letter-spacing: -.4px; }
 .chat-action > p { font-size: 13px; }

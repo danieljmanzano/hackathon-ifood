@@ -4,7 +4,6 @@ import time
 from collections import Counter
 from datetime import date, timedelta
 from typing import Annotated
-
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
@@ -53,6 +52,8 @@ from app.services.llm_meal_intent import interpret_intent
 from app.services.nutrition_preferences import apply_profile_preferences, update_explanation
 from app.services.nutrition.service import cached_candidates
 from app.services.diet_context import GOAL_LABELS, apply_diet_context, build_diet_context, local_date, split_daily_message
+from app.services.busca_agente import buscar
+from app.services.conversa import montar as montar_conversa, resumo_para_log as resumo_conversa
 
 router = APIRouter()
 _mock_provider = MockIFood()
@@ -238,6 +239,7 @@ async def search(
     provider: MockIFood = Depends(get_provider),
     settings: Settings = Depends(get_settings),
 ):
+    inicio = time.monotonic()  # o laço da busca respeita o prazo total (o frontend desiste aos 30 s)
     with trace_search(session.mode) as trace:
         response.headers["X-Search-Id"] = trace.id
         editable(session)
@@ -254,30 +256,41 @@ async def search(
               known_counts=diet_context.known_counts)
         trace.stage = "intent"
         started = time.perf_counter()
+        # O agente lê as últimas mensagens e a busca anterior para entender "mais barato", "outra opção"...
+        conversa = montar_conversa(session, settings)
+        event("conversation.ready", **resumo_conversa(conversa))
         interpreted = await interpret_intent(payload.model_copy(update={"text": meal_text}), settings,
-                                            diet_context=diet_context if has_diet_context else None)
+                                            diet_context=diet_context if has_diet_context else None,
+                                            conversa=conversa)
         intent = apply_profile_preferences(apply_diet_context(interpreted, diet_context, meal_text), session.profile)
         event("intent.ready", source=intent.interpretation_source, goals=intent.goals,
               fallback_reason=intent.fallback_reason, duration_ms=elapsed_ms(started))
-        query, budget = intent.provider_query, intent.budget_cents
-        if budget is None:
-            budget = session.profile.default_budget_cents
-        trace.stage = "catalog"
-        started = time.perf_counter()
-        candidates = await provider.search(query, session.address, budget)
-        event("catalog.completed", provider=type(provider).__name__, candidate_count=len(candidates),
-              has_budget=budget is not None, query_terms=len(query.split()), duration_ms=elapsed_ms(started))
-        trace.stage = "reviews"
-        started = time.perf_counter()
-        context = review_context(request.app.state.db, session.profile.id, session.mode == "mock", session.profile)
-        event("reviews.ready", history_count=len(context.history), community_count=len(context.community),
-              processed_count=len(context.processed), duration_ms=elapsed_ms(started))
-        trace.stage = "ranking"
         nutritional = intent.nutrition_preferences.active
-        nutrition_by_item = cached_candidates(candidates, settings) if nutritional else {}
-        recommendations = rank(candidates, payload, session.profile, budget, context,
-                               session.recent_recommendations, intent=intent,
-                               nutrition_by_item=nutrition_by_item, limit=12 if nutritional else 3)
+        avaliacoes = {}
+
+        def contexto_de_avaliacoes():
+            """Calculado depois da busca no catálogo (ordem dos eventos) e uma vez só, mesmo com várias rodadas."""
+            if "contexto" not in avaliacoes:
+                trace.stage = "reviews"
+                started = time.perf_counter()
+                ctx = review_context(request.app.state.db, session.profile.id, session.mode == "mock", session.profile)
+                event("reviews.ready", history_count=len(ctx.history), community_count=len(ctx.community),
+                      processed_count=len(ctx.processed), duration_ms=elapsed_ms(started))
+                avaliacoes["contexto"] = ctx
+            return avaliacoes["contexto"]
+
+        # Busca com laço de agente (app/services/busca_agente.py): sem resultado, um modelo replaneja ou explica.
+        # O ranking nutricional do catálogo (cache) entra por `rank_extra`, a cada rodada.
+        resultado = await buscar(
+            payload, session, provider, settings, intent, contexto_de_avaliacoes, inicio, texto_pedido=meal_text,
+            conversa=conversa, trace=trace,
+            rank_extra=lambda found: {
+                "nutrition_by_item": cached_candidates(found, settings) if nutritional else {},
+                "limit": 12 if nutritional else 3,
+            })
+        candidates, budget, recommendations = resultado.candidates, resultado.budget, resultado.recommendations
+        nutrition_by_item = resultado.extra.get("nutrition_by_item", {})
+        aviso_vazio, aviso_adaptacao = resultado.aviso_vazio, resultado.aviso_adaptacao
         trace.stage = "nutrition"
         started = time.perf_counter()
         recommendations = await enrich_recommendations(
@@ -293,7 +306,7 @@ async def search(
                   known_count=sum(n.state == "ready" for n in nutrition_by_item.values()),
                   goal_count=len(intent.nutrition_preferences.goals))
             trace.stage = "ranking"
-            recommendations = rank(candidates, payload, session.profile, budget, context,
+            recommendations = rank(candidates, payload, session.profile, budget, contexto_de_avaliacoes(),
                                    session.recent_recommendations, intent=intent,
                                    nutrition_by_item=nutrition_by_item)
             trace.stage = "nutrition"
@@ -315,8 +328,10 @@ async def search(
                 ("Busquei opções considerando: " + ", ".join(intent.labels) + ". Confira os detalhes de cada sugestão."
                  if intent.labels else "Encontrei estas opções. Escolha um prato para ver os complementos.")
                 if recommendations
-                else "Não encontrei opções com esses filtros. Ajuste o orçamento ou suas preferências e busque novamente."
+                else aviso_vazio  # por que não houve resultado (app/services/busca_agente.py)
             )
+            if recommendations and aviso_adaptacao:
+                message = aviso_adaptacao + " " + message
             if recommendations and intent.context_summary:
                 message = intent.context_summary + " " + message
             s.messages = (
@@ -504,7 +519,7 @@ async def menu(
 
 
 @router.get("/recommendations/nutrition", response_model=Session)
-def recommendations_nutrition(
+async def recommendations_nutrition(  # async: reiniciar um cálculo perdido exige o loop de eventos (create_task)
     request: Request,
     session: Session = Depends(current_session),
     settings: Settings = Depends(get_settings),

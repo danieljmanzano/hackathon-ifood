@@ -6,6 +6,7 @@ import httpx
 
 from app.core import logs
 from app.schemas.macro import MealCandidate
+from app.skills import item_pedido
 
 MAX_IMAGEM_BYTES = 5 * 1024 * 1024
 RESTAURANTES_INVALIDOS = {"", "não informado", "nao informado", "desconhecido", "n/a", "na", "null", "none", "-"}
@@ -21,22 +22,10 @@ def foto_ilustrativa(candidate: MealCandidate) -> bool:
 
 
 def montar_prompt(candidate: MealCandidate, opcoes: list[str] | None, peso_g: float | None = None) -> str:
-    if opcoes:
-        texto_opcoes = "Opções escolhidas:\n" + "\n".join(f"- {o}" for o in opcoes)
-    elif opcoes is None and candidate.option_groups:
-        grupos = []
-        for g in candidate.option_groups:
-            regra = "obrigatório" if g.min_selections else "opcional"
-            grupos.append(f"- {g.name} ({regra}, até {g.max_selections}): " + ", ".join(o.name for o in g.options))
-        texto_opcoes = ("Opções ainda não escolhidas. Estime para a combinação mais provável e reflita a variação "
-                        "entre as opções na faixa:\n" + "\n".join(grupos))
-    else:
-        texto_opcoes = "Opções escolhidas: nenhuma"
-    peso = f"\nPeso informado do prato: {peso_g:g} g" if peso_g else ""
-    return (f"Nome: {candidate.name}\n"
-            f"Restaurante: {candidate.merchant_name}\n"
-            f"Descrição: {candidate.description or '(sem descrição)'}\n"
-            f"{texto_opcoes}{peso}")
+    """Texto do prato que vai nos pedidos ao modelo (o formato fica em app/skills/item_pedido.py)."""
+    grupos = [(g.name, bool(g.min_selections), g.max_selections, [o.name for o in g.options])
+              for g in candidate.option_groups]
+    return item_pedido.descrever(candidate.name, candidate.merchant_name, candidate.description, opcoes, grupos, peso_g)
 
 
 async def baixar_imagem(url: str | None, timeout: float) -> tuple[bytes, str] | None:

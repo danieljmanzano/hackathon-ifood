@@ -36,6 +36,7 @@ class Leitura:
     porcao_base: str = ""
     peso_g: float | None = None
     ingredientes: list[Ingrediente] = field(default_factory=list)
+    itens_na_imagem: list[str] = field(default_factory=list)  # o que o modelo disse VER na foto (para conferência)
     suposicoes: list[str] = field(default_factory=list)
     justificativa: str = ""
 

@@ -60,7 +60,12 @@ async def chat_completion(
             if response.status_code == 200:
                 try:
                     texto = response.json()["choices"][0]["message"]["content"] or ""
-                    if log_content:
+                    if current != models[0]:
+                        logs.info("openrouter", f"RESERVA respondeu: {current} no lugar de {models[0]} "
+                                                f"({len(errors)} falha(s) antes) em {t.texto}")
+                        if log_content:  # o pedido da busca pede para não registrar conteúdo
+                            logs.info("openrouter", f"resposta da reserva: {logs.curto(texto, 500) or '(vazia)'}")
+                    elif log_content:
                         logs.detalhe("openrouter", f"resposta: {logs.curto(texto, 300)}")
                     return texto
                 except (KeyError, IndexError, ValueError):

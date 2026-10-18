@@ -18,6 +18,7 @@ from mcp.client.streamable_http import create_mcp_http_client, streamable_http_c
 from mcp.shared.auth import OAuthClientMetadata, OAuthToken
 from mcp.types import PaginatedRequestParams
 
+from app.core import logs
 from app.core.config import Settings
 from app.core.exceptions import MacroError
 from app.schemas.macro import (Address, AddressCandidate, CreateAddressInput, GeocodeResult, MealCandidate,
@@ -25,6 +26,8 @@ from app.schemas.macro import (Address, AddressCandidate, CreateAddressInput, Ge
 from app.services.ifood_mcp import FileTokenStorage
 
 READ_TOOLS = {"listAddresses", "searchOffers", "browseOffers", "getItem", "getMerchant", "listItemTaxonomy"}
+MAX_CONSULTAS = 4  # consultas por busca (cada uma é uma chamada ao iFood)
+RESTAURANTES_RESERVA = 3  # restaurantes lidos quando nenhum item aparece
 MENU_PAGES = 3  # até 75 itens por restaurante
 # Única escrita liberada: salvar endereço (não cobra nem cria pedido). Carrinho e checkout seguem bloqueados.
 ADDRESS_TOOL = "createAddress"
@@ -260,13 +263,31 @@ class MCPIFood:
         except (KeyError, TypeError, ValueError):
             raise MacroError("Resposta de endereço difere do contrato documentado.", 502) from None
 
+    async def chamar_ferramentas(self, chamadas: list[tuple[str, dict]]) -> list[dict]:
+        """Executa chamadas de LEITURA já validadas (busca_mcp.preparar), em paralelo, numa só conexão.
+
+        Cada resultado é {"ok": True, "dados": {...}} ou {"ok": False, "erro": "..."}; uma falha não derruba as outras.
+        As travas de `_call_in` continuam valendo: só READ_TOOLS e argumentos conferidos com o schema real.
+        """
+        async with self.connection() as session:
+            tools = await self.tools(session)
+
+            async def uma(nome: str, argumentos: dict) -> dict:
+                try:
+                    return {"ok": True, "dados": await self._call_in(session, tools, nome, argumentos)}
+                except MacroError as e:
+                    return {"ok": False, "erro": e.message}
+            return list(await asyncio.gather(*(uma(n, a) for n, a in chamadas)))
+
+    def _q(self, texto: str) -> str:
+        """Consulta nos logs: derivada do pedido do usuário, então só aparece com BUSCA_LOG_CONTEUDO=true."""
+        return f"“{texto}”" if self.settings.busca_log_conteudo else "(oculta)"
+
     async def search(self, query: str, address: Address, budget_cents: int | None):
-        refinements = {"onlyOpen": True}
-        if budget_cents is not None:
-            refinements["maxItemPrice"] = budget_cents / 100
-        data = await self.call_read("searchOffers", {
-            "query": query, "resultKind": "ITEM", "merchantType": "RESTAURANT", "pageSize": 10,
-            "userLocation": {"latitude": address.latitude, "longitude": address.longitude}, "refinements": refinements})
+        return await self.search_many([query], address, budget_cents)
+
+    @staticmethod
+    def _itens(data: dict) -> list[MealCandidate]:
         try:
             return [MealCandidate(merchant_id=i["merchant"]["merchantId"], merchant_name=i["merchant"]["merchantName"],
                                   item_id=i["itemId"], name=i["itemName"], description="Consulte os detalhes para ver a composição.",
@@ -275,6 +296,98 @@ class MCPIFood:
                     for i in data["results"]]
         except (KeyError, TypeError, ValueError, ArithmeticError):
             raise MacroError("Resultado de busca difere do contrato documentado.", 502) from None
+
+    @staticmethod
+    def itens_de_resposta(dados: dict) -> list[MealCandidate]:
+        """Converte uma resposta de itens do MCP em candidatos (usado também pelo agente de busca)."""
+        return MCPIFood._itens(dados)
+
+    async def _buscar_itens(self, session, tools, query: str, address: Address, budget_cents: int | None,
+                            somente_abertos: bool = True, refinamentos: dict | None = None):
+        refinements = {"onlyOpen": True} if somente_abertos else {}
+        refinements.update(refinamentos or {})  # já saneados por busca_mcp.sanear_refinamentos
+        if budget_cents is not None:
+            refinements["maxItemPrice"] = budget_cents / 100
+        logs.info("ifood", f"searchOffers ITEM consulta {self._q(query)} · {'só abertos' if somente_abertos else 'inclui fechados'}"
+                           f" · preço máx.={refinements.get('maxItemPrice', 'sem limite')}")
+        data = await self._call_in(session, tools, "searchOffers", {
+            "query": query, "resultKind": "ITEM", "merchantType": "RESTAURANT", "pageSize": 10,
+            "userLocation": {"latitude": address.latitude, "longitude": address.longitude}, "refinements": refinements})
+        itens = self._itens(data)
+        logs.info("ifood", f"consulta {self._q(query)} → {len(itens)} itens")
+        return itens
+
+    async def _itens_de_restaurantes(self, session, tools, termo: str, address: Address) -> list[MealCandidate]:
+        """Reserva: acha restaurantes abertos pelo termo (culinária) e lê um trecho do cardápio de cada um."""
+        local = {"latitude": address.latitude, "longitude": address.longitude}
+        logs.info("ifood", f"nenhum item achado; procurando RESTAURANTES para {self._q(termo)}")
+        data = await self._call_in(session, tools, "searchOffers", {
+            "query": termo, "resultKind": "MERCHANT", "merchantType": "RESTAURANT", "pageSize": 10,
+            "userLocation": local, "refinements": {"onlyOpen": True}})
+        try:
+            abertos = [m for m in data["results"] if m.get("isOpen") is True][:RESTAURANTES_RESERVA]
+        except (KeyError, TypeError):
+            raise MacroError("Resultado de busca difere do contrato documentado.", 502) from None
+        logs.info("ifood", f"{len(abertos)} restaurantes abertos: " + ", ".join(m["merchantName"] for m in abertos))
+
+        async def cardapio(m: dict) -> list[MealCandidate]:
+            dados = await self._call_in(session, tools, "browseOffers", {
+                "merchantType": "RESTAURANT", "resultKind": "ITEM", "pageSize": 25, "userLocation": local,
+                "refinements": {"merchantId": m["merchantId"]}})
+            return [c for c in self._itens(dados) if c.merchant_id == m["merchantId"]]
+
+        paginas = await asyncio.gather(*(cardapio(m) for m in abertos), return_exceptions=True)
+        itens = [c for p in paginas if not isinstance(p, BaseException) for c in p]
+        logs.info("ifood", f"{len(itens)} itens lidos dos cardápios desses restaurantes")
+        return itens
+
+    async def search_many(self, queries: list[str], address: Address, budget_cents: int | None,
+                          cuisine: str | None = None, refinamentos: dict | None = None) -> list[MealCandidate]:
+        """Várias consultas numa só conexão (em paralelo), sem repetidos. Sem itens, tenta restaurantes."""
+        queries = list(dict.fromkeys(q for q in queries if q.strip()))[:MAX_CONSULTAS] or ["refeição"]
+        async with self.connection() as session:
+            tools = await self.tools(session)
+            respostas = await asyncio.gather(
+                *(self._buscar_itens(session, tools, q, address, budget_cents, refinamentos=refinamentos)
+                  for q in queries),
+                return_exceptions=True)
+            erros = [r for r in respostas if isinstance(r, BaseException)]
+            if len(erros) == len(respostas):
+                raise erros[0]
+            for e in erros:
+                logs.aviso("ifood", f"uma consulta falhou: {logs.curto(e)}")
+            vistos, itens = set(), []
+            for lista in respostas:
+                for c in [] if isinstance(lista, BaseException) else lista:
+                    if (c.merchant_id, c.item_id) not in vistos:
+                        vistos.add((c.merchant_id, c.item_id))
+                        itens.append(c)
+            logs.info("ifood", f"{len(itens)} itens distintos em {len(queries)} consultas")
+            if not itens:
+                itens = await self._itens_de_restaurantes(session, tools, cuisine or queries[0], address)
+            if not itens:
+                itens = await self._itens_fechados(session, tools, queries, address, budget_cents)
+            return itens
+
+    async def _itens_fechados(self, session, tools, queries: list[str], address: Address,
+                              budget_cents: int | None) -> list[MealCandidate]:
+        """Nada aberto: confere se o item existe com o restaurante fechado, para avisar o usuário com precisão.
+
+        Os itens voltam com available=False; o ranking os descarta e a mensagem diz "todos fechados".
+        """
+        logs.info("ifood", "nada aberto; conferindo se existem itens em restaurantes fechados")
+        respostas = await asyncio.gather(
+            *(self._buscar_itens(session, tools, q, address, budget_cents, somente_abertos=False)
+              for q in queries[:2]), return_exceptions=True)
+        vistos, itens = set(), []
+        for lista in respostas:
+            for c in [] if isinstance(lista, BaseException) else lista:
+                if (c.merchant_id, c.item_id) not in vistos:
+                    vistos.add((c.merchant_id, c.item_id))
+                    itens.append(c)
+        if itens:
+            logs.info("ifood", f"{len(itens)} itens existem, mas os restaurantes estão fechados")
+        return itens
 
     async def merchants(self, address: Address) -> list[MerchantSummary]:
         """Restaurantes abertos perto do endereço, do mais próximo ao mais distante."""

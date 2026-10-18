@@ -1,7 +1,7 @@
 """Ingredientes do prato casados com a TACO e somados (casar_tbca + somar_ingredientes)."""
 from app.core.config import Settings
 from ..modelos import Ingrediente, Leitura, Macros
-from ..prompts import INSTRUCOES_CASAR, SCHEMA_CASAR
+from app.skills import nutricao_ingredientes
 from .bases import Alimento, candidatos
 from .llm import perguntar_json
 
@@ -16,11 +16,10 @@ async def casar_ingredientes(settings: Settings, ingredientes: list[Ingrediente]
     casados: dict[str, Alimento | None] = {i.nome: None for i in ingredientes}
     if not com_candidatos:
         return casados
-    blocos = []
-    for nome, lista in com_candidatos.items():
-        linhas = "\n".join(f"  {i}: {a.nome} ({a.categoria})" for i, a in enumerate(lista))
-        blocos.append(f"Ingrediente: {nome}\n{linhas}")
-    dados = await perguntar_json(settings, INSTRUCOES_CASAR, "\n\n".join(blocos), SCHEMA_CASAR)
+    pedido = nutricao_ingredientes.pedido_casar(
+        {nome: [(a.nome, a.categoria) for a in lista] for nome, lista in com_candidatos.items()})
+    dados = await perguntar_json(settings, nutricao_ingredientes.INSTRUCOES_CASAR, pedido,
+                                 nutricao_ingredientes.SCHEMA_CASAR)
     for item in dados["escolhas"]:
         lista = com_candidatos.get(item["ingrediente"])
         indice = item["escolha"]

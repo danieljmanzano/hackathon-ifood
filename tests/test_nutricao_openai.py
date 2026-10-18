@@ -9,7 +9,8 @@ from pydantic import SecretStr
 from app import run
 from app.core.exceptions import AppError
 from app.services import openai_client
-from app.services.nutrition.etapas import llm, web
+from app.services import llm_texto
+from app.services.nutrition.etapas import web
 from app.services.nutrition.etapas.web import buscar_na_web
 from tests.nutricao_comum import candidato, settings
 from tests.test_nutricao_pipeline import rodar, info_base, leitura
@@ -86,13 +87,14 @@ def test_sem_chave_openai_erro_claro(tmp_path):
 
 
 def test_perguntar_json_usa_o_provedor_escolhido(tmp_path):
+    from app.services.nutrition.etapas import llm
     schema = {"type": "object", "properties": {"ok": {"type": "boolean"}}, "required": ["ok"]}
-    with patch.object(llm, "responder", AsyncMock(return_value=('{"ok": true}', []))) as oa, \
-         patch.object(llm, "chat_completion", AsyncMock(return_value='{"ok": true}')) as orr:
+    with patch.object(llm_texto, "responder", AsyncMock(return_value=('{"ok": true}', []))) as oa, \
+         patch.object(llm_texto, "chat_completion", AsyncMock(return_value='{"ok": true}')) as orr:
         assert asyncio.run(llm.perguntar_json(_s(tmp_path), "sys", "p", schema)) == {"ok": True}
         oa.assert_awaited_once(); orr.assert_not_called()
-    with patch.object(llm, "responder", AsyncMock()) as oa, \
-         patch.object(llm, "chat_completion", AsyncMock(return_value='{"ok": true}')) as orr:
+    with patch.object(llm_texto, "responder", AsyncMock()) as oa, \
+         patch.object(llm_texto, "chat_completion", AsyncMock(return_value='{"ok": true}')) as orr:
         asyncio.run(llm.perguntar_json(settings(tmp_path), "sys", "p", schema))
         orr.assert_awaited_once(); oa.assert_not_called()
 
@@ -131,7 +133,8 @@ def test_cliente_openai_monta_o_corpo_com_imagem_e_web(tmp_path):
 
 
 def test_pipeline_no_modo_openai_exige_chave_openai_para_texto_e_web(tmp_path):
-    s = settings(tmp_path, nutrition_provider="openai", openai_api_key=SecretStr(""), openrouter_api_key="k", gemini_api_key="k")
+    s = settings(tmp_path, nutrition_provider="openai", openai_api_key=SecretStr(""), openrouter_api_key="k",
+                 gemini_api_key="k", llm_fallback=False)
     r, m = rodar(s, b=leitura("gemini", 800), imagem=(b"x", "image/jpeg"), casados=None)
     assert r.state == "ready"  # Gemini estima sozinho
     m["estimar_a"].assert_not_called(); m["consultar_bases"].assert_not_called(); m["buscar_na_web"].assert_not_called()

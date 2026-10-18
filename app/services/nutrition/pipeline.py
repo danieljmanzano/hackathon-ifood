@@ -96,7 +96,15 @@ async def _leituras(settings: Settings, candidate: MealCandidate, opcoes: list[s
         if leitura is not None:
             logs.info(nome, f"{_descrever(leitura)} ({t.texto} no total)")
             logs.detalhe(nome, f"justificativa: {logs.curto(leitura.justificativa, 300)}")
-            logs.detalhe(nome, f"ingredientes: {', '.join(f'{i.nome} {i.gramas:.0f} g' for i in leitura.ingredientes) or '—'}")
+            ingredientes = ", ".join(f"{i.nome} {i.gramas:.0f} g" for i in leitura.ingredientes) or "—"
+            if nome == "estimar B":  # o único que enxerga a foto: mostra o que ele viu ao lado do que estimou
+                if leitura.itens_na_imagem:
+                    logs.info(nome, "viu na foto: " + "; ".join(leitura.itens_na_imagem))
+                else:
+                    logs.aviso(nome, "não listou nada visível na foto (a imagem pode não ter sido lida; confira o link)")
+                logs.info(nome, f"ingredientes estimados: {ingredientes}")
+            else:
+                logs.detalhe(nome, f"ingredientes: {ingredientes}")
     leituras = [x for x in (a, b) if x is not None]
 
     alimentos = carregar_taco(str(settings.calorias_dados_dir)) if settings.calorias_buscar_bases else ()
@@ -185,7 +193,7 @@ async def _calcular(settings: Settings, candidate: MealCandidate, opcoes: list[s
     if ilustrativa:
         logs.info("imagem", "ignorada: a descrição diz que a foto é ilustrativa")
     elif imagem:
-        logs.info("imagem", f"baixada ({len(imagem[0]) // 1024} KB, {imagem[1]})")
+        logs.info("imagem", f"baixada ({len(imagem[0]) // 1024} KB, {imagem[1]}) · abra para conferir: {candidate.image_url}")
     else:
         logs.info("imagem", "indisponível" + ("" if candidate.image_url else " (item sem foto)") + " → só texto")
     descricao = montar_prompt(candidate, opcoes, porcao.gramas)

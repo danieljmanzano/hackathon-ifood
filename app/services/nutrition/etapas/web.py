@@ -5,7 +5,6 @@ Dois resultados possíveis, conforme o tipo do item:
 - prato (comida de restaurante): não existe tabela; o modelo pesquisa uma ESTIMATIVA, olhando a foto, a partir de
   pratos equivalentes -> Leitura (entra no consenso junto com as outras estimativas).
 """
-import json
 import math
 from urllib.parse import urlparse
 
@@ -18,7 +17,7 @@ from app.services.gemini import search_web
 from app.services.openai_client import responder
 from ..entrada import extrair_json, montar_prompt
 from ..modelos import InfoOnline, Ingrediente, Leitura, Macros
-from ..prompts import INSTRUCOES_JUIZ_WEB, INSTRUCOES_WEB, SCHEMA_JUIZ_WEB, SCHEMA_WEB
+from app.skills import nutricao_juiz_web, nutricao_web
 from .llm import perguntar_json
 
 
@@ -39,8 +38,8 @@ CONFIANCA_WEB = {"baixa": 0.35, "media": 0.5, "alta": 0.65}  # estimativa pesqui
 async def _pesquisar(settings: Settings, prompt: str, imagem: tuple[bytes, str] | None) -> tuple[str, list[str]]:
     """Texto da resposta e as fontes realmente consultadas, pelo provedor escolhido (com a foto, se houver)."""
     if settings.nutrition_provider == "openai":
-        return await responder(prompt, instrucoes="Pesquise na web e responda somente com JSON.", web=True,
-                               schema=SCHEMA_WEB, imagem=imagem, settings=settings)
+        return await responder(prompt, instrucoes=nutricao_web.INSTRUCAO_CURTA_OPENAI, web=True,
+                               schema=nutricao_web.SCHEMA, imagem=imagem, settings=settings)
     return await search_web(prompt, imagem=imagem, settings=settings)
 
 
@@ -50,9 +49,7 @@ def _opcional(v) -> float | None:
 
 async def buscar_na_web(settings: Settings, candidate: MealCandidate, opcoes: list[str] | None,
                         imagem: tuple[bytes, str] | None = None) -> InfoOnline | Leitura | None:
-    prompt = (f"{INSTRUCOES_WEB}\n\nFormato (JSON Schema):\n{json.dumps(SCHEMA_WEB, ensure_ascii=False)}\n\n"
-              f"Pesquise a informação nutricional deste item"
-              f"{' (a foto dele está anexada)' if imagem else ' (sem foto)'}.\n\n{montar_prompt(candidate, opcoes)}")
+    prompt = nutricao_web.pedido(montar_prompt(candidate, opcoes), com_foto=bool(imagem))
     fornecedor = "OpenAI web_search" if settings.nutrition_provider == "openai" else "Gemini + Google Search"
     logs.info("web", f"pesquisando \"{candidate.name}\" de {candidate.merchant_name} via {fornecedor}"
                      f"{' com a foto' if imagem else ' (sem foto)'}")
@@ -62,8 +59,14 @@ async def buscar_na_web(settings: Settings, candidate: MealCandidate, opcoes: li
     logs.detalhe("web", "domínios consultados: " + (", ".join(sorted({dominio(c) for c in consultados})) or "nenhum"))
     logs.detalhe("web", f"resposta: {logs.curto(texto, 400)}")
     dados = extrair_json(texto)
-    validate(dados, SCHEMA_WEB)
+    validate(dados, nutricao_web.SCHEMA)
     logs.info("web", f"o modelo classificou o item como: {dados['tipo_item']}")
+    if imagem is not None:
+        vistos = [str(i).strip() for i in dados.get("itens_na_foto", []) if str(i).strip()]
+        if vistos:
+            logs.info("web", "viu na foto: " + "; ".join(vistos))
+        else:
+            logs.aviso("web", "não listou nada visível na foto (a imagem pode não ter sido lida)")
 
     if not dados["encontrado"]:
         logs.info("web", "o modelo não achou base para "
@@ -103,6 +106,7 @@ def _estimativa_pesquisada(dados: dict, macros: Macros, faixa, fonte: str) -> Le
         fonte="web", macros=macros, faixa_min=min(minimo, kcal), faixa_max=max(maximo, kcal),
         confianca=CONFIANCA_WEB[dados["confianca"]], porcao_base=dados["porcao_base"],
         peso_g=_opcional(dados["porcao_g"]), ingredientes=ingredientes,
+        itens_na_imagem=[str(i).strip() for i in dados.get("itens_na_foto", []) if str(i).strip()],
         suposicoes=[f"Estimativa pesquisada na web com base em “{dados['produto_na_fonte']}” — {fonte}.",
                     *dados["suposicoes"]],
         justificativa=f"“{dados['trecho_fonte'].strip()}” {dados['justificativa']}".strip(),
@@ -114,10 +118,10 @@ async def _tabela_oficial(settings, candidate, opcoes, dados: dict, macros: Macr
     logs.info("web", f"candidata: {macros.kcal:.0f} kcal em {dominio(dados['fonte_url'])} "
                      f"(\"{dados['produto_na_fonte']}\")")
     juiz = await perguntar_json(
-        settings, INSTRUCOES_JUIZ_WEB,
-        f"Pedido:\n{montar_prompt(candidate, opcoes)}\n\nEncontrado na web:\nProduto: {dados['produto_na_fonte']}\n"
-        f"Fonte: {dados['fonte_nome']} ({dados['fonte_url']})\nTrecho: {dados['trecho_fonte']}\n"
-        f"Base dos valores: {dados['porcao_base']}", SCHEMA_JUIZ_WEB)
+        settings, nutricao_juiz_web.INSTRUCOES,
+        nutricao_juiz_web.pedido(montar_prompt(candidate, opcoes), dados["produto_na_fonte"], dados["fonte_nome"],
+                                 dados["fonte_url"], dados["trecho_fonte"], dados["porcao_base"]),
+        nutricao_juiz_web.SCHEMA)
     if not juiz["corresponde"]:
         logs.info("web", f"descartada: juiz diz que é outro produto ({logs.curto(juiz['motivo'], 160)})")
         return None
