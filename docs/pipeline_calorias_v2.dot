@@ -1,0 +1,135 @@
+digraph pipeline_calorias_v2 {
+    rankdir=TB;
+    newrank=true;
+    nodesep=0.35;
+    ranksep=0.45;
+    node [shape=box, style="rounded,filled", fillcolor="#F1EFE8", fontname="Helvetica", fontsize=11];
+    edge [fontname="Helvetica", fontsize=10, color="#73726c"];
+
+    // ---------- Entrada ----------
+    carregar    [label="Item do MCP (getItem)\nou tests/fixtures/getItem_pizza.json"];
+    normalizar  [label="normalizar_item()\nMealCandidate: nome, restaurante,\ndescrição, imagem_url, opções"];
+    salvo       [label="[novo] consultar_produto_salvo()\nbase local produtos.json\nchave: merchantId + itemId + optionIds", fillcolor="#FAEEDA"];
+    hit         [label="produto na base?\n(mesma versão do pipeline)", shape=diamond, fillcolor="#FAEEDA"];
+    porcao      [label="[novo] extrair_porcao()\npeso (g, kg, ml, l), tamanho (cm),\n\"serve N\" de nome e descrição (PT e EN)"];
+    prompt      [label="montar_prompt()\ntexto + peso declarado\nJSON Schema (kcal, proteína, carbo, gordura)"];
+
+    // ---------- Fontes online: bases primeiro, web por último ----------
+    decisao1    [label="[mudou] BUSCAR_BASES = True?", shape=diamond, fillcolor="#FAEEDA"];
+    bases       [label="[mudou] consultar_bases()\nTACO: busca por título (rapidfuzz)\n+ juiz OpenRouter com abstenção", fillcolor="#EEEDFE"];
+    decisaoB    [label="[novo] juiz aprovou\num candidato?", shape=diamond, fillcolor="#FAEEDA"];
+    decisaoW    [label="[mudou] BUSCA_WEB = True e\nrestaurante válido?\n(só se as bases falharam)", shape=diamond, fillcolor="#FAEEDA"];
+    busca       [label="buscar_na_web()\nGemini + Google Search (grounding)", fillcolor="#EEEDFE"];
+    decisao2    [label="encontrado = true e\nfonte_url entre os sites\nconsultados?", shape=diamond, fillcolor="#FAEEDA"];
+    juiz        [label="verificar_correspondencia()\nOpenRouter juiz: mesmo prato,\nmesmo tamanho e adicionais?", fillcolor="#EEEDFE"];
+    decisao3    [label="corresponde?", shape=diamond, fillcolor="#FAEEDA"];
+    oficial     [label="info_online\nmetodo = database | web\nmacros + base (item ou 100 g)\n+ fonte_nome + fonte_url", fillcolor="#EEEDFE"];
+
+    // ---------- Estimativa (CALORIAS_ESTIMAR_SEMPRE) ----------
+    modo        [label="[novo] CALORIAS_ESTIMAR_SEMPRE?\nligado: roda em paralelo (mede divergência)\ndesligado: só se bases e web falharem", shape=diamond, fillcolor="#FAEEDA"];
+    imagem      [label="baixar_imagem()\nbytes + MIME (se falhar, só texto;\nfoto ilustrativa não é usada)", fillcolor="#E1F5EE"];
+    estimar     [label="[mudou] estimar_calorias() A\nOpenRouter, só texto\nN amostras", fillcolor="#E1F5EE"];
+    estimar_b   [label="[mudou] estimar_calorias_b() B\nGemini + texto + imagem\nmacros, peso e ingredientes", fillcolor="#E1F5EE"];
+    decompor    [label="decompor_ingredientes()\nsaem de B (ou A); OpenRouter\nsó se nenhum trouxe", fillcolor="#E1F5EE"];
+    casar       [label="[mudou] casar_taco()\nrapidfuzz + 1 chamada em lote\nde juiz OpenRouter (com abstenção)", fillcolor="#E1F5EE"];
+    somar       [label="somar_ingredientes()\nTACO x gramas de cada um\n(exige 70% da massa casada)", fillcolor="#E1F5EE"];
+    consenso    [label="consenso_estimativas()\njunta: A + B + TACO (qualquer subconjunto)\nmediana + dispersão", fillcolor="#FAECE7", color="#993C1D", penwidth=2, peripheries=2];
+    estimativa  [label="estimativa\nmedia, faixa_min, faixa_max,\npeso_g, dispersão", fillcolor="#E1F5EE"];
+
+    // ---------- Trilha das gramas ----------
+    gramas      [label="converter_em_gramas()\njunta: porção declarada\n> peso estimado (imagem/ingredientes)", fillcolor="#FAECE7", color="#993C1D", penwidth=2, peripheries=2];
+    calcular    [label="calcular_porcao()\nvalores x gramas\n(se a fonte for por 100 g)", fillcolor="#FAECE7", color="#993C1D", penwidth=2, peripheries=2];
+    descarta    [label="fonte por 100 g sem gramas:\ndescartada (vira aviso)"];
+
+    // ---------- Junções finais ----------
+    fundir      [label="fundir_fontes()\njunta: info_online > estimativa\n(guarda a divergência)", fillcolor="#FAECE7", color="#993C1D", penwidth=2, peripheries=2];
+    validar     [label="validar()\njunta: dispersão + divergência + porção\nAtwater, limites -> confiança 0..1", fillcolor="#FAECE7", color="#993C1D", penwidth=2, peripheries=2];
+    decisao4    [label="confiança >= limiar?\n(CALORIAS_LIMIAR_CONFIANCA)", shape=diamond, fillcolor="#FAEEDA"];
+    revisao     [label="marcar_revisao()\nrevisar = true + motivo"];
+    indisp      [label="state = unavailable\n(nenhuma fonte respondeu)"];
+    gravar      [label="[novo] salvar_produto()\nproduto.json (atômico; manual nunca\né sobrescrito)", fillcolor="#FAEEDA"];
+
+    saida       [label="NutritionResult (API) e markdown nos scripts\ncalorias + macros + faixa + confiança\n+ método + fontes + suposições"];
+
+    // ---------- Arestas sequenciais ----------
+    carregar -> normalizar -> salvo -> hit;
+    hit -> saida [label="sim"];
+    hit -> porcao [label="não"];
+    porcao -> prompt;
+    prompt -> decisao1;
+    prompt -> modo;
+
+    // ---------- Bases primeiro, web por último ----------
+    decisao1 -> bases [label="sim"];
+    bases -> decisaoB;
+    decisaoB -> oficial [label="sim"];
+    decisaoB -> decisaoW [label="não", style=dashed];
+    decisao1 -> decisaoW [label="não", style=dashed];
+    decisaoW -> busca [label="sim"];
+    busca -> decisao2;
+    decisao2 -> juiz [label="sim"];
+    juiz -> decisao3;
+    decisao3 -> oficial [label="sim"];
+
+    // ---------- Estimativa em paralelo ----------
+    modo -> imagem [label="ligado"];
+    modo -> imagem [label="desligado: só após\nonline falhar", style=dashed];
+    imagem -> estimar;
+    imagem -> estimar_b;
+    estimar   -> decompor;
+    estimar_b -> decompor;
+    decompor -> casar -> somar;
+    consenso -> estimativa;
+
+    // ---------- Arestas que entram em junções (coral) ----------
+    estimar   -> consenso [color="#993C1D", penwidth=1.5];
+    estimar_b -> consenso [color="#993C1D", penwidth=1.5];
+    somar     -> consenso [color="#993C1D", penwidth=1.5];
+
+    porcao     -> gramas [color="#993C1D", penwidth=1.5, label="peso declarado"];
+    estimativa -> gramas [color="#993C1D", penwidth=1.5, label="peso estimado"];
+
+    oficial -> calcular [color="#993C1D", penwidth=1.5];
+    gramas  -> calcular [color="#993C1D", penwidth=1.5];
+    calcular -> descarta [label="sem gramas", style=dashed];
+    descarta -> fundir [style=dashed];
+
+    calcular   -> fundir [color="#993C1D", penwidth=1.5];
+    estimativa -> fundir [color="#993C1D", penwidth=1.5];
+
+    fundir  -> validar [color="#993C1D", penwidth=1.5];
+    gramas  -> validar [color="#993C1D", penwidth=1.5, label="porção"];
+    fundir  -> indisp  [label="sem nenhuma fonte", style=dashed];
+
+    // ---------- Caminhos de falha das fontes (tracejados) ----------
+    decisao2 -> fundir [label="não", style=dashed];
+    decisao3 -> fundir [label="não", style=dashed];
+
+    // ---------- Decisão final ----------
+    validar -> decisao4;
+    decisao4 -> gravar  [label="sim"];
+    decisao4 -> revisao [label="não"];
+    revisao -> gravar;
+    gravar -> saida;
+    indisp -> saida;
+
+    { rank=same; decisao1; modo; }
+
+    // ---------- Legenda ----------
+    subgraph cluster_legenda {
+        label="Legenda"; fontname="Helvetica"; fontsize=11; style="rounded"; color="#B4B2A9";
+        l1 [label="etapa: uma entrada", fontsize=10];
+        l2 [label="junção: várias saídas\nviram uma entrada", fontsize=10, fillcolor="#FAECE7", color="#993C1D", penwidth=2, peripheries=2];
+        l3 [label="[novo] / [mudou] = diferença\nem relação ao pipeline v1", fontsize=10];
+        la [label="", shape=point, width=0.05];
+        lb [label="", shape=point, width=0.05];
+        lc [label="", shape=point, width=0.05];
+        ld [label="", shape=point, width=0.05];
+        le [label="", shape=point, width=0.05];
+        lf [label="", shape=point, width=0.05];
+        la -> lb [label=" saída vira entrada"];
+        lc -> ld [label=" entra numa junção", color="#993C1D", penwidth=1.5];
+        le -> lf [label=" só se a anterior falhar", style=dashed];
+        l1 -> l2 -> l3 [style=invis];
+    }
+}
