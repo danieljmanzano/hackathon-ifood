@@ -143,12 +143,21 @@ async def diagnostic(
     return await provider.diagnostic()
 
 
-@router.get("/addresses")
+async def available_addresses(request: Request, session: Session, provider) -> list[Address]:
+    """Endereços do iFood; no mock, o fixo de demonstração mais os cadastrados localmente."""
+    found = await provider.addresses()
+    if provider.simulated:
+        found += request.app.state.db.mock_addresses(session.profile.id)
+    return found
+
+
+@router.get("/addresses", response_model=list[Address])
 async def addresses(
+    request: Request,
     session: Session = Depends(current_session),
     provider: MockIFood = Depends(get_provider),
 ):
-    return await provider.addresses()
+    return await available_addresses(request, session, provider)
 
 
 @router.post("/addresses/geocode", response_model=GeocodeResult)
@@ -170,17 +179,22 @@ async def create_address(
     session: Session = Depends(current_session),
     provider: MockIFood = Depends(get_provider),
 ):
-    """Etapa 2: salva o candidato confirmado na conta do iFood e já o seleciona para a entrega."""
+    """Etapa 2: salva o candidato confirmado (na conta do iFood ou, no mock, localmente) e já o seleciona."""
     editable(session)
-    live_only(provider, "create_address")
-    before = {a.id for a in await provider.addresses()}
-    new_id = await provider.create_address(payload)
-    available_addresses = await provider.addresses()
-    created = next((a for a in available_addresses if a.id == new_id), None) or next(
-        (a for a in available_addresses if a.id not in before), None
-    )
-    if created is None:
-        raise MacroError("Endereço salvo no iFood, mas ainda não apareceu na lista. Recarregue os endereços.", 502)
+    if provider.simulated:
+        created = provider.new_address(payload)
+        request.app.state.db.save_mock_address(session.profile.id, created)
+        found = await available_addresses(request, session, provider)
+    else:
+        live_only(provider, "create_address")
+        before = {a.id for a in await provider.addresses()}
+        new_id = await provider.create_address(payload)
+        found = await provider.addresses()
+        created = next((a for a in found if a.id == new_id), None) or next(
+            (a for a in found if a.id not in before), None
+        )
+        if created is None:
+            raise MacroError("Endereço salvo no iFood, mas ainda não apareceu na lista. Recarregue os endereços.", 502)
 
     def update(s: Session):
         s.address = created
@@ -188,7 +202,7 @@ async def create_address(
         s.summary = None
         s.recommendations = []
 
-    return AddressCreated(session=mutate_session(request, session, update), addresses=available_addresses)
+    return AddressCreated(session=mutate_session(request, session, update), addresses=found)
 
 
 @router.put("/session/address", response_model=Session)
@@ -199,8 +213,7 @@ async def set_address(
     provider: MockIFood = Depends(get_provider),
 ):
     editable(session)
-    available_addresses = await provider.addresses()
-    address = next((a for a in available_addresses if a.id == payload.address_id), None)
+    address = next((a for a in await available_addresses(request, session, provider) if a.id == payload.address_id), None)
     if address is None:
         raise MacroError("Selecione um endereço da lista atual.", 422)
 

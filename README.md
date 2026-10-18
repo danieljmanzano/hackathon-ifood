@@ -4,7 +4,7 @@ Aplicação centralizada com frontend em React/TypeScript/Vite e backend em Fast
 
 ## Experiência centrada no chat
 
-O Macro funciona como um assistente complementar ao iFood. A entrada é a conversa: recomendações, montagem do prato, escolha de entrega e pagamento, revisão do total e confirmação aparecem no próprio chat. As telas de visão geral, Meu dia, restaurantes, cardápios independentes e Meus pedidos foram retiradas, assim como o painel de metas e o cadastro próprio de endereços. A conversa utiliza endereços já recebidos do iFood; quando é necessário escolher entre eles, a escolha acontece no chat.
+O Macro funciona como um assistente complementar ao iFood. A entrada é a conversa: recomendações, montagem do prato, escolha de entrega e pagamento, revisão do total e confirmação aparecem no próprio chat. As telas de visão geral, Meu dia, restaurantes, cardápios independentes e Meus pedidos foram retiradas, assim como o painel de metas. O endereço de entrega é escolhido no chat: clique no endereço do cabeçalho ou diga **“trocar endereço”** para escolher outro, e **“adicionar endereço”** para cadastrar um novo (no modo live ele é salvo na conta do iFood; no mock, só localmente). O iFood não oferece edição nem exclusão de endereços.
 
 O atalho **Preferências** abre uma configuração compacta na conversa. Você também pode dizer “meu objetivo é ganhar massa e hoje só comi frutas”: o objetivo e o relato ficam salvos para as próximas sugestões. Se a mensagem contiver também um pedido de comida, a busca acontece em seguida, sem duplicar os alimentos registrados. Descrições não geram macros automaticamente.
 

@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from pathlib import Path
 import sqlite3
 
-from app.schemas.macro import ConsumptionRecord, FoodDiaryEntry, Session
+from app.schemas.macro import Address, ConsumptionRecord, FoodDiaryEntry, Session
 from app.schemas.reviews import ProcessedReview, Review, UserTastes
 
 
@@ -40,6 +40,23 @@ class Database:
                 "CREATE TABLE IF NOT EXISTS consumption (user_id TEXT NOT NULL, order_id TEXT NOT NULL, "
                 "item_id TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(user_id, order_id, item_id))"
             )
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS mock_addresses (user_id TEXT NOT NULL, id TEXT NOT NULL, "
+                "payload TEXT NOT NULL, PRIMARY KEY(user_id, id))"
+            )
+
+    def mock_addresses(self, user_id: str) -> list[Address]:
+        """Endereços fictícios cadastrados no modo mock (no live, o iFood guarda os endereços)."""
+        with self.transaction() as connection:
+            rows = connection.execute(
+                "SELECT payload FROM mock_addresses WHERE user_id = ? ORDER BY rowid", (user_id,)
+            ).fetchall()
+        return [Address.model_validate_json(row[0]) for row in rows]
+
+    def save_mock_address(self, user_id: str, address: Address):
+        with self.transaction() as connection:
+            connection.execute("INSERT INTO mock_addresses VALUES (?, ?, ?) ON CONFLICT(user_id, id) "
+                               "DO UPDATE SET payload=excluded.payload", (user_id, address.id, address.model_dump_json()))
 
     def food_entries(self, user_id: str) -> list[FoodDiaryEntry]:
         with self.transaction() as connection:

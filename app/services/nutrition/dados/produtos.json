@@ -1,5 +1,38 @@
 {
   "produtos": {
+    "06446e689e8d": {
+      "calculado_em": "2026-10-18T10:58:37.383170+00:00",
+      "nome": "Pão com manteiga na chapa",
+      "origem": "consensus",
+      "restaurante": "Padaria e Conveniência Docemar",
+      "resultado": {
+        "assumptions": [
+          "Pão francês típico de padaria pesa cerca de 60 g.",
+          "Quantidade de manteiga aplicada na chapa estimada em 10 g.",
+          "Valores nutricionais médios: pão ~250 kcal/100g, 9g proteína, 49g carboidrato, 3,2g gordura; manteiga ~717 kcal/100g, 0,9g proteína, 0,1g carboidrato, 81g gordura.",
+          "Soma pela TACO cobrindo 86% da massa: pão francês→Pão, trigo, francês."
+        ],
+        "calories": 216.0,
+        "carbs_g": 35.2,
+        "confidence": "medium",
+        "evidence": "Estimativa baseada em um pão francês de aproximadamente 60 g com 10 g de manteiga derretida na chapa, usando valores nutricionais médios para cada ingrediente.",
+        "fat_g": 6.1,
+        "maximum": 261.0,
+        "method": "consensus",
+        "minimum": 159.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T10:58:37.365221Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 unidade (pão com manteiga na chapa) (~70 g, peso estimada)",
+        "portion_grams": 70.0,
+        "protein_g": 5.5,
+        "revisar": false,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
     "06c3b8619625": {
       "calculado_em": "2026-10-18T07:54:31.498622+00:00",
       "nome": "Batata Frita com Cheddar e Bacon em Cubos da Ostentação",
@@ -401,6 +434,39 @@
       },
       "versao_pipeline": "calorias-v3"
     },
+    "26abf7742006": {
+      "calculado_em": "2026-10-18T10:53:36.625031+00:00",
+      "nome": "Hambúrguer de frango",
+      "origem": "estimated",
+      "restaurante": "Burger da Praça (demo)",
+      "resultado": {
+        "assumptions": [
+          "Considerei pão de hambúrguer comum, sem gergelim.",
+          "Considerei hambúrguer de frango grelhado de tamanho médio, sem empanar.",
+          "Não incluí molhos, queijo ou acompanhamentos, pois não foram ذکرados na descrição.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 355.0,
+        "carbs_g": 31.0,
+        "confidence": "medium",
+        "evidence": "Estimativa baseada em um sanduíche simples de delivery com pão padrão, hambúrguer de frango grelhado e vegetais leves. Sem molhos ou queijos informados, então a maior variação vem do tamanho do hambúrguer e do pão.",
+        "fat_g": 13.0,
+        "maximum": 430.0,
+        "method": "estimated",
+        "minimum": 300.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T10:53:36.623237Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 hambúrguer de frango com pão, alface e tomate (~190 g, peso estimada)",
+        "portion_grams": 190.0,
+        "protein_g": 29.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
     "329daa6125c2": {
       "calculado_em": "2026-10-18T08:45:59.493612+00:00",
       "nome": "Bolos Caseiros Inteiros",
@@ -432,6 +498,37 @@
         "portion_basis": "1 bolo caseiro inteiro (~750 g) (~750 g, peso estimada)",
         "portion_grams": 750.0,
         "protein_g": 38.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "3ed931e33863": {
+      "calculado_em": "2026-10-18T10:58:39.195953+00:00",
+      "nome": "Pão na chapa",
+      "origem": "estimated",
+      "restaurante": "Padaria Nova Cintra",
+      "resultado": {
+        "assumptions": [
+          "Soma pela TACO cobrindo 100% da massa: pão francês→Pão, trigo, francês.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 150.0,
+        "carbs_g": 29.3,
+        "confidence": "medium",
+        "evidence": "Ingredientes estimados e somados com a Tabela TACO.",
+        "fat_g": 1.6,
+        "maximum": 180.0,
+        "method": "estimated",
+        "minimum": 120.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T10:58:39.193096Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "soma dos ingredientes (~50 g, peso estimada)",
+        "portion_grams": 50.0,
+        "protein_g": 4.0,
         "revisar": true,
         "source_name": null,
         "source_url": null,
@@ -478,6 +575,40 @@
       },
       "versao_pipeline": "calorias-v3"
     },
+    "4bbd7d29dcec": {
+      "calculado_em": "2026-10-18T10:53:05.243622+00:00",
+      "nome": "Prato de homus",
+      "origem": "estimated",
+      "restaurante": "Cedro Árabe (demo)",
+      "resultado": {
+        "assumptions": [
+          "Assumi 3 unidades médias de falafel.",
+          "Assumi 1 pão sírio médio incluído no prato.",
+          "Assumi porção padrão de restaurante para homus e tabule, sem peso informado.",
+          "Assumi uso moderado de azeite no homus e no tabule.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 680.0,
+        "carbs_g": 68.0,
+        "confidence": "medium",
+        "evidence": "Considerei uma porção típica de homus como base, acompanhada de tabule, 3 falafels e 1 pão sírio. É um prato relativamente denso em carboidratos e gorduras por causa do homus, do falafel frito e do pão, com proteína moderada do grão-de-bico.",
+        "fat_g": 32.0,
+        "maximum": 860.0,
+        "method": "estimated",
+        "minimum": 560.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T10:53:05.241331Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 prato de restaurante com homus, tabule, falafel e pão sírio (~480 g, peso estimada)",
+        "portion_grams": 480.0,
+        "protein_g": 24.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
     "4c3221aa9b32": {
       "calculado_em": "2026-10-18T06:10:36.505090+00:00",
       "nome": "Prato de grão-de-bico",
@@ -506,6 +637,41 @@
         "portion_grams": 420.0,
         "protein_g": 18.0,
         "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "500ea66add43": {
+      "calculado_em": "2026-10-18T10:53:40.893879+00:00",
+      "nome": "Sanduíche de carne",
+      "origem": "consensus",
+      "restaurante": "Pão da Esquina (demo)",
+      "resultado": {
+        "assumptions": [
+          "pão tipo francês sem gordura adicionada",
+          "carne desfiada de bovino cozida sem tempero grosso",
+          "queijo cheddar padrão",
+          "cebola crua em quantidade moderada",
+          "ausência de molhos ou acompanhamentos",
+          "Soma pela TACO cobrindo 100% da massa: pão francês→Pão, trigo, francês, carne desfiada cozida→Carne, bovina, paleta, sem gordura, cozida, queijo cheddar→Queijo, prato, cebola crua→Cebola, crua."
+        ],
+        "calories": 533.0,
+        "carbs_g": 54.4,
+        "confidence": "medium",
+        "evidence": "Estimativa baseada em pão francês (2 fatias ~100g), carne desfiada cozida (~80g), queijo cheddar (~20g) e cebola (~10g). Valores nutricionais típicos por 100g foram aplicados e somados.",
+        "fat_g": 18.4,
+        "maximum": 640.0,
+        "method": "consensus",
+        "minimum": 425.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T10:53:40.891139Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "sanduíche unitário (~210 g) (~210 g, peso estimada)",
+        "portion_grams": 210.0,
+        "protein_g": 35.7,
+        "revisar": false,
         "source_name": null,
         "source_url": null,
         "state": "ready"
@@ -546,6 +712,73 @@
       },
       "versao_pipeline": "calorias-v3"
     },
+    "57a8e949930d": {
+      "calculado_em": "2026-10-18T10:52:18.871135+00:00",
+      "nome": "Falafel no pão",
+      "origem": "estimated",
+      "restaurante": "Cedro Árabe (demo)",
+      "resultado": {
+        "assumptions": [
+          "Pão sírio de tamanho médio (~70 g).",
+          "Falafel equivalente a cerca de 4 unidades médias, fritas.",
+          "Homus em porção moderada, sem molhos extras além do descrito.",
+          "Salada simples sem maionese ou azeite extra relevante.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 470.0,
+        "carbs_g": 58.0,
+        "confidence": "medium",
+        "evidence": "Considerei um pão sírio médio recheado com cerca de 4 falafels, uma camada de homus e salada simples. É uma estimativa razoável para um sanduíche vegetariano de delivery, com principal incerteza na quantidade de falafel, homus e no tamanho do pão.",
+        "fat_g": 20.0,
+        "maximum": 560.0,
+        "method": "estimated",
+        "minimum": 390.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T10:52:18.868663Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 sanduíche de pão sírio com falafel, homus e salada (~270 g, peso estimada)",
+        "portion_grams": 270.0,
+        "protein_g": 16.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "5941ac673889": {
+      "calculado_em": "2026-10-18T10:50:41.521595+00:00",
+      "nome": "Sanduíche de frango",
+      "origem": "consensus",
+      "restaurante": "Pão da Esquina (demo)",
+      "resultado": {
+        "assumptions": [
+          "Cada fatia de pão integral pesa aproximadamente 50 g.",
+          "O frango corresponde a um peito grelhado de cerca de 80 g.",
+          "Alface e tomate são usados em quantidades típicas de sanduíche.",
+          "Soma pela TACO cobrindo 100% da massa: pão integral→Pão, trigo, forma, integral, frango grelhado→Frango, peito, sem pele, grelhado, alface→Alface, americana, crua, tomate→Tomate, com semente, cru."
+        ],
+        "calories": 386.0,
+        "carbs_g": 48.4,
+        "confidence": "medium",
+        "evidence": "Estimativa baseada em porções típicas: duas fatias de pão integral (~100 g), peito de frango grelhado (~80 g), alface (~10 g) e tomate (~20 g). Os valores nutricionais foram calculados usando tabelas padrão para cada ingrediente.",
+        "fat_g": 5.9,
+        "maximum": 465.0,
+        "method": "consensus",
+        "minimum": 307.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T10:50:41.516796Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "sanduíche unitário (~210 g, peso estimada)",
+        "portion_grams": 210.0,
+        "protein_g": 34.7,
+        "revisar": false,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
     "60ba5db11ba1": {
       "calculado_em": "2026-10-18T08:05:25.147039+00:00",
       "nome": "Sanduiche natural",
@@ -574,6 +807,39 @@
         "portion_basis": "1 sanduíche natural médio (~180 g) (~180 g, peso estimada)",
         "portion_grams": 180.0,
         "protein_g": 20.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "642cfbc1b7de": {
+      "calculado_em": "2026-10-18T10:54:29.951226+00:00",
+      "nome": "Falafel com salada",
+      "origem": "estimated",
+      "restaurante": "Verde no Prato (demo)",
+      "resultado": {
+        "assumptions": [
+          "Assumi que a porção inclui aproximadamente 4 a 5 unidades médias de falafel.",
+          "Assumi salada simples sem molho cremoso adicional.",
+          "Assumi homus em quantidade moderada, sem azeite extra visível ou pão acompanhando.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 430.0,
+        "carbs_g": 48.0,
+        "confidence": "medium",
+        "evidence": "Estimei uma porção típica de delivery com cerca de 4 a 5 bolinhos de falafel, uma porção pequena de salada e 2 a 3 colheres de homus. O falafel e o homus concentram a maior parte das calorias e gorduras, enquanto a salada contribui pouco para energia total.",
+        "fat_g": 20.0,
+        "maximum": 520.0,
+        "method": "estimated",
+        "minimum": 350.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T10:54:29.948965Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 prato individual de falafel com salada e homus (~320 g, peso estimada)",
+        "portion_grams": 320.0,
+        "protein_g": 15.0,
         "revisar": true,
         "source_name": null,
         "source_url": null,
@@ -640,6 +906,73 @@
         "protein_g": 7.4,
         "revisar": false,
         "source_name": "TACO",
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "735b9835f84a": {
+      "calculado_em": "2026-10-18T10:52:10.569181+00:00",
+      "nome": "Tapioca de frango",
+      "origem": "estimated",
+      "restaurante": "Sertão na Mesa (demo)",
+      "resultado": {
+        "assumptions": [
+          "Assumi uma tapioca média padrão, sem manteiga adicional.",
+          "Assumi recheio com quantidade moderada de queijo e frango.",
+          "Não houve informação de peso, então estimei pela porção típica de delivery.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 335.0,
+        "carbs_g": 38.0,
+        "confidence": "medium",
+        "evidence": "Considerei uma tapioca média feita com goma de mandioca e recheio de frango desfiado com queijo. A maior incerteza está na quantidade de goma e de queijo, que podem variar bastante entre porções de delivery.",
+        "fat_g": 10.0,
+        "maximum": 420.0,
+        "method": "estimated",
+        "minimum": 280.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T10:52:10.567043Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 tapioca recheada de tamanho médio, como servida no delivery (~180 g, peso estimada)",
+        "portion_grams": 180.0,
+        "protein_g": 20.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "753c4965d1e8": {
+      "calculado_em": "2026-10-18T10:52:36.075340+00:00",
+      "nome": "Falafel no pão",
+      "origem": "estimated",
+      "restaurante": "Cedro Árabe (demo)",
+      "resultado": {
+        "assumptions": [
+          "Considerei cerca de 4 a 5 bolinhos/porção generosa de falafel.",
+          "Assumi homus em quantidade moderada, como camada de recheio.",
+          "Assumi salada simples sem molhos calóricos adicionais.",
+          "Não há peso informado, então estimei o tamanho típico de um sanduíche de delivery.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 480.0,
+        "carbs_g": 56.0,
+        "confidence": "medium",
+        "evidence": "Estimativa baseada em um pão sírio recheado com porção típica de falafel, uma camada de homus e salada. O falafel e o homus concentram a maior parte das calorias e gorduras, enquanto o pão contribui principalmente com carboidratos.",
+        "fat_g": 20.0,
+        "maximum": 580.0,
+        "method": "estimated",
+        "minimum": 390.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T10:52:36.072617Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 sanduíche de pão sírio com falafel, homus e salada (~290 g, peso estimada)",
+        "portion_grams": 290.0,
+        "protein_g": 15.0,
+        "revisar": true,
+        "source_name": null,
         "source_url": null,
         "state": "ready"
       },
@@ -827,6 +1160,39 @@
         "portion_grams": 350.0,
         "protein_g": 17.5,
         "revisar": false,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "8d2f686a390b": {
+      "calculado_em": "2026-10-18T10:59:40.946320+00:00",
+      "nome": "Pão com manteiga na chapa",
+      "origem": "estimated",
+      "restaurante": "Padaria e Conveniência Docemar",
+      "resultado": {
+        "assumptions": [
+          "Considerei um pão francês médio de padaria (~50 g).",
+          "Assumi cerca de 8 g de manteiga aplicada na chapa.",
+          "Sem foto, então não foi possível ajustar o tamanho real da porção.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 205.0,
+        "carbs_g": 28.0,
+        "confidence": "medium",
+        "evidence": "Estimativa baseada em um pão francês padrão com manteiga derretida/grelhada. O pão responde pela maior parte dos carboidratos, e a manteiga adiciona a maior parte da gordura e das calorias.",
+        "fat_g": 7.5,
+        "maximum": 250.0,
+        "method": "estimated",
+        "minimum": 170.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T10:59:40.943933Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 pão francês com manteiga na chapa (1 unidade servida) (~70 g, peso estimada)",
+        "portion_grams": 70.0,
+        "protein_g": 5.8,
+        "revisar": true,
         "source_name": null,
         "source_url": null,
         "state": "ready"
@@ -1105,6 +1471,75 @@
       },
       "versao_pipeline": "calorias-v3"
     },
+    "b54ee2dd7973": {
+      "calculado_em": "2026-10-18T10:58:37.368116+00:00",
+      "nome": "Combo 1 pão na chapa + 1 café coado 160ml",
+      "origem": "estimated",
+      "restaurante": "Padaria Madadayo",
+      "resultado": {
+        "assumptions": [
+          "Assumi pão francês padrão de padaria, aberto e aquecido na chapa.",
+          "Assumi manteiga em quantidade típica de chapa, cerca de 10 g.",
+          "Assumi café coado sem açúcar e volume aproximado de 160 ml, compatível com o peso total informado.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 338.0,
+        "carbs_g": 44.0,
+        "confidence": "medium",
+        "evidence": "Considerei um pão francês na chapa com manteiga e um café coado sem açúcar. O peso informado de 160 g foi usado como verdade; a maior parte das calorias vem do pão e da manteiga, enquanto o café contribui quase nada.",
+        "fat_g": 13.0,
+        "maximum": 390.0,
+        "method": "estimated",
+        "minimum": 300.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T10:58:37.364215Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 combo com 1 pão na chapa + 1 café coado de 160 ml (~160 g, peso declarada)",
+        "portion_grams": 160.0,
+        "protein_g": 10.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "b65fcca4cc92": {
+      "calculado_em": "2026-10-18T10:52:31.152278+00:00",
+      "nome": "Smash da casa",
+      "origem": "consensus",
+      "restaurante": "Burger da Praça (demo)",
+      "resultado": {
+        "assumptions": [
+          "Tamanho médio de um smash burger (patty ~100g)",
+          "Queijo tipo cheddar ou similar",
+          "Pão tipo brioche ou comum de hambúrguer",
+          "Molho da casa semelhante a maionese temperada",
+          "Picles em quantidade mínima para acentuar sabor",
+          "Soma pela TACO cobrindo 88% da massa: carne bovina→Carne, bovina, acém, moído, cru, queijo→Queijo, minas, frescal, pão→Pão, trigo, forma, integral.",
+          "Estimativas divergem entre si (dispersão 37%)."
+        ],
+        "calories": 478.0,
+        "carbs_g": 28.8,
+        "confidence": "medium",
+        "evidence": "Estimativa baseada em tamanhos típicos de um smash burger: 100g de carne bovina, 30g de queijo, 50g de pão, 10g de picles e 15g de molho. Os valores nutricionais foram obtidos de tabelas padrão para cada ingrediente.",
+        "fat_g": 26.4,
+        "maximum": 680.0,
+        "method": "consensus",
+        "minimum": 298.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T10:52:31.150381Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "hambúrguer unitário (~205 g, peso estimada)",
+        "portion_grams": 205.0,
+        "protein_g": 31.2,
+        "revisar": false,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
     "c56556d42ede": {
       "calculado_em": "2026-10-18T07:05:07.055976+00:00",
       "nome": "Coca Cola 220ml",
@@ -1132,6 +1567,72 @@
         "portion_grams": 220.0,
         "protein_g": 0.0,
         "revisar": false,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "c82d07bb2157": {
+      "calculado_em": "2026-10-18T10:52:52.889415+00:00",
+      "nome": "Shawarma de frango",
+      "origem": "estimated",
+      "restaurante": "Cedro Árabe (demo)",
+      "resultado": {
+        "assumptions": [
+          "Considerei uma porção típica de delivery, sem fritura adicional.",
+          "Assumi molho de alho em quantidade moderada, como costuma vir em shawarma.",
+          "Não houve informação de peso informado, então o peso foi estimado.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 480.0,
+        "carbs_g": 40.0,
+        "confidence": "medium",
+        "evidence": "Estimativa baseada em um shawarma padrão de delivery com pão sírio, porção moderada de frango, salada leve e molho de alho. O molho e a quantidade de frango são os principais fatores de variação calórica e de gordura.",
+        "fat_g": 22.0,
+        "maximum": 590.0,
+        "method": "estimated",
+        "minimum": 390.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T10:52:52.887983Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 unidade de shawarma de frango (pão sírio com frango, salada e molho de alho) (~300 g, peso estimada)",
+        "portion_grams": 300.0,
+        "protein_g": 31.0,
+        "revisar": true,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "e21a379c0646": {
+      "calculado_em": "2026-10-18T10:54:57.697796+00:00",
+      "nome": "Bowl de falafel",
+      "origem": "estimated",
+      "restaurante": "Folha & Grão (demo)",
+      "resultado": {
+        "assumptions": [
+          "Considerei um bowl padrão de delivery, sem molho extra além do homus.",
+          "Assumi cerca de 4 unidades pequenas de falafel.",
+          "Assumi arroz integral cozido e homus em porções usuais de bowl.",
+          "Apenas uma fonte de estimativa."
+        ],
+        "calories": 505.0,
+        "carbs_g": 59.0,
+        "confidence": "medium",
+        "evidence": "Estimei um bowl típico com porções moderadas de arroz integral, falafel, pepino e homus. O homus e o falafel concentram a maior parte das calorias e gorduras, enquanto o arroz responde pela maior parte dos carboidratos.",
+        "fat_g": 22.0,
+        "maximum": 610.0,
+        "method": "estimated",
+        "minimum": 420.0,
+        "motivo_revisao": "Apenas uma fonte de estimativa.",
+        "obtained_at": "2026-10-18T10:54:57.696200Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 bowl médio de ~400 g (~400 g, peso estimada)",
+        "portion_grams": 400.0,
+        "protein_g": 16.0,
+        "revisar": true,
         "source_name": null,
         "source_url": null,
         "state": "ready"
@@ -1201,6 +1702,74 @@
         "protein_g": 124.8,
         "revisar": false,
         "source_name": "TACO",
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "ecdbc2d0d1eb": {
+      "calculado_em": "2026-10-18T10:53:01.429108+00:00",
+      "nome": "Torrada de abacate",
+      "origem": "consensus",
+      "restaurante": "Pão da Esquina (demo)",
+      "resultado": {
+        "assumptions": [
+          "Assumi 1 fatia de pão tipo artesanal/tostado de tamanho médio.",
+          "Assumi cerca de 1/2 abacate pequeno ou equivalente em pasta/fatias (~80 g).",
+          "Assumi 1 ovo inteiro preparado sem excesso de óleo ou manteiga.",
+          "Assumi tomate em pequenas fatias como cobertura.",
+          "Soma pela TACO cobrindo 75% da massa: abacate→Abacate, cru, ovo→Ovo, de galinha, inteiro, cru, tomate→Tomate, com semente, cru.",
+          "Estimativas divergem entre si (dispersão 48%)."
+        ],
+        "calories": 265.0,
+        "carbs_g": 18.1,
+        "confidence": "medium",
+        "evidence": "Considerei uma fatia de pão tostado com uma porção moderada de abacate, 1 ovo e algumas fatias de tomate. O valor calórico fica principalmente do pão, do abacate e do ovo, com baixa contribuição do tomate.",
+        "fat_g": 16.5,
+        "maximum": 390.0,
+        "method": "consensus",
+        "minimum": 146.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T10:53:01.427009Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 torrada de abacate (1 unidade servida) (~185 g, peso estimada)",
+        "portion_grams": 185.0,
+        "protein_g": 11.6,
+        "revisar": false,
+        "source_name": null,
+        "source_url": null,
+        "state": "ready"
+      },
+      "versao_pipeline": "calorias-v3"
+    },
+    "edd28e685fce": {
+      "calculado_em": "2026-10-18T10:52:28.785591+00:00",
+      "nome": "Sanduíche de atum",
+      "origem": "consensus",
+      "restaurante": "Pão da Esquina (demo)",
+      "resultado": {
+        "assumptions": [
+          "Considerei 2 fatias de pão integral de tamanho padrão.",
+          "Assumi atum escorrido, com pequena quantidade de molho ou umidade, sem maionese pesada.",
+          "Assumi porção pequena de cenoura ralada e folhas em quantidade discreta.",
+          "Soma pela TACO cobrindo 91% da massa: pão integral→Pão, trigo, forma, integral, atum→Atum, conserva em óleo, cenoura→Cenoura, crua."
+        ],
+        "calories": 313.0,
+        "carbs_g": 36.9,
+        "confidence": "medium",
+        "evidence": "Estimei um sanduíche simples de pão integral com uma porção moderada de atum, um pouco de cenoura e folhas, sem maionese explícita. O principal aporte vem do pão e do atum; a gordura varia conforme o atum esteja em água ou com algum molho/óleo.",
+        "fat_g": 8.9,
+        "maximum": 390.0,
+        "method": "consensus",
+        "minimum": 240.0,
+        "motivo_revisao": null,
+        "obtained_at": "2026-10-18T10:52:28.783795Z",
+        "pipeline_version": "calorias-v3",
+        "portion_basis": "1 sanduíche unitário (~160 g, peso estimada)",
+        "portion_grams": 160.0,
+        "protein_g": 21.9,
+        "revisar": false,
+        "source_name": null,
         "source_url": null,
         "state": "ready"
       },
