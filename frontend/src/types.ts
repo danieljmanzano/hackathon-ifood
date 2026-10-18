@@ -167,12 +167,29 @@ export interface Summary {
   version: string;
   simulated: boolean;
 }
+export type OrderAspects = { [K in keyof ReviewAspects]?: number | null };
+export interface ReviewInterpretation {
+  rating: number | null;
+  aspects: OrderAspects;
+  summary: string;
+  tags: string[];
+}
+export interface OrderReviewInput {
+  rating: number | null;
+  comment: string;
+}
+export interface OrderReview extends OrderReviewInput {
+  aspects: OrderAspects;
+  interpretation: ReviewInterpretation | null;
+  interpretation_state: "none" | "pending" | "done" | "failed";
+}
 export interface Order {
   id: string;
   cart_id: string;
   status: "submitted" | "uncertain";
   simulated: boolean;
   created_at: string;
+  review?: OrderReview | null;
 }
 export interface Session {
   request_intent?: MealIntent | null;
